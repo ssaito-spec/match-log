@@ -854,17 +854,11 @@ function generateOutput() {
     fmtStr = preset.dataset.per==='2' ? `${preset.dataset.min}分ハーフ` : `${preset.dataset.min}分×${preset.dataset.per}`;
   } else { fmtStr = `${formatMinutes}分×${formatPeriods}`; }
 
-  // Check if all opponents are the same
-  const allOpps = matches.map(m => m.opponent).filter(Boolean);
-  const uniqueOpps = [...new Set(allOpps)];
-  const sameOpponent = uniqueOpps.length === 1;
-
   let lines = [];
   let header = `${dateStr} ${type}`;
   if (tournament) header += ` ${tournament}`;
-  if (sameOpponent) header += ` vs${uniqueOpps[0]}`;
   lines.push(header);
-  lines.push(`@${venue}`);
+  lines.push(`会場：${venue}`);
   lines.push(`試合形式${fmtStr}`);
   lines.push('');
 
@@ -898,9 +892,8 @@ function generateOutput() {
     Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(p); });
     const scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
 
-    let matchLine = `(${i+1}試合目)`;
-    if (!sameOpponent && m.opponent) matchLine += ` vs${m.opponent}`;
-    lines.push(matchLine);
+    lines.push(`(${i+1}試合目)`);
+    if (m.opponent) lines.push(`対戦相手：${m.opponent}`);
     lines.push(`出場選手：${pStr}`);
     lines.push(`スコア：${us}-${opp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
