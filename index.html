@@ -21,7 +21,6 @@
     color: #333;
   }
 
-  /* Card */
   .card {
     background: #fff;
     border-radius: 12px;
@@ -39,7 +38,6 @@
     gap: 6px;
   }
 
-  /* Form elements */
   label {
     display: block;
     font-size: 12px;
@@ -64,6 +62,34 @@
     outline: none;
     border-color: #4a90d9;
     background: #fff;
+  }
+
+  /* Chips (shared) */
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    background: #fafafa;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip.active {
+    background: #4a90d9;
+    color: #fff;
+    border-color: #4a90d9;
   }
 
   /* Player chips */
@@ -100,7 +126,17 @@
     border-color: #f59e0b;
   }
 
-  /* GK row */
+  .player-count {
+    display: inline-block;
+    background: #4a90d9;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+
   .gk-row {
     margin-top: 8px;
     display: flex;
@@ -130,8 +166,23 @@
     font-weight: 700;
     color: #999;
   }
+  .result-badge {
+    font-size: 20px;
+    font-weight: 900;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .result-badge.win { background: #e8f5e9; color: #2e7d32; }
+  .result-badge.draw { background: #fff8e1; color: #f57f17; }
+  .result-badge.lose { background: #fce4ec; color: #c62828; }
+  .result-badge.none { background: #f5f5f5; color: #bbb; }
 
-  /* Scorer chips */
+  /* Scorer */
   .scorer-grid {
     display: flex;
     flex-wrap: wrap;
@@ -154,6 +205,7 @@
     background: #fafafa;
     transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
+    position: relative;
   }
   .scorer-chip.selected {
     background: #e74c3c;
@@ -165,8 +217,14 @@
     font-size: 11px;
     opacity: 0.9;
   }
+  .hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
 
-  /* Substitution section */
+  /* Substitution */
   .sub-section {
     margin-top: 10px;
     padding-top: 10px;
@@ -180,11 +238,8 @@
     -webkit-tap-highlight-color: transparent;
   }
   .sub-content { margin-top: 8px; }
-
-  /* Sub mode tabs */
   .sub-mode-tabs {
     display: flex;
-    gap: 0;
     margin-bottom: 10px;
     border-radius: 8px;
     overflow: hidden;
@@ -206,21 +261,20 @@
     background: #4a90d9;
     color: #fff;
   }
-
-  /* Individual sub row */
   .sub-row {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
     background: #f8f9fa;
-    padding: 8px;
+    padding: 10px 8px;
     border-radius: 8px;
   }
   .sub-row select {
     flex: 1;
     padding: 8px;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 700;
   }
   .sub-arrow {
     font-size: 18px;
@@ -291,11 +345,6 @@
     font-size: 12px;
     padding: 6px 12px;
   }
-  .btn-sm {
-    font-size: 12px;
-    padding: 6px 12px;
-    width: auto;
-  }
   .btn-add-sub {
     background: #e8f4fd;
     color: #4a90d9;
@@ -304,7 +353,6 @@
     width: 100%;
   }
 
-  /* Match header */
   .match-header {
     display: flex;
     justify-content: space-between;
@@ -314,6 +362,66 @@
     font-size: 16px;
     font-weight: 700;
     color: #4a90d9;
+  }
+
+  /* Venue row */
+  .venue-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .venue-row input { flex: 1; }
+  .map-btn {
+    flex-shrink: 0;
+    width: 44px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .map-btn:active { background: #e8ecf1; }
+
+  /* Format presets */
+  .format-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .format-chip {
+    padding: 7px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .format-chip.active {
+    background: #4a90d9;
+    color: #fff;
+    border-color: #4a90d9;
+  }
+  .format-custom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .format-custom input {
+    width: 55px !important;
+    text-align: center;
+  }
+  .format-custom span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
   }
 
   /* Output */
@@ -349,7 +457,6 @@
     100% { opacity: 0; }
   }
 
-  /* Roster */
   .roster-input-row {
     display: flex;
     gap: 6px;
@@ -379,52 +486,6 @@
     font-size: 16px;
     line-height: 1;
   }
-
-  /* Match type */
-  .match-type-options {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 6px;
-  }
-  .match-type-chip {
-    padding: 8px 14px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    background: #fafafa;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .match-type-chip.selected {
-    background: #4a90d9;
-    color: #fff;
-    border-color: #4a90d9;
-  }
-
-  .format-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-  }
-  .format-row input {
-    width: 60px !important;
-    text-align: center;
-  }
-  .format-row span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #555;
-  }
-
-  .hint {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 2px;
-  }
 </style>
 </head>
 <body>
@@ -438,24 +499,37 @@
   <input type="date" id="match-date">
 
   <label>試合種別</label>
-  <div class="match-type-options" id="match-type-options">
-    <div class="match-type-chip selected" data-val="TM">TM</div>
-    <div class="match-type-chip" data-val="公式戦">公式戦</div>
-    <div class="match-type-chip" data-val="カップ戦">カップ戦</div>
-    <div class="match-type-chip" data-val="リーグ戦">リーグ戦</div>
+  <div class="chip-grid" id="match-type-options">
+    <div class="chip active" data-val="TM">TM</div>
+    <div class="chip" data-val="公式戦">公式戦</div>
+    <div class="chip" data-val="カップ戦">カップ戦</div>
+    <div class="chip" data-val="リーグ戦">リーグ戦</div>
   </div>
+
+  <label>大会名（任意）</label>
+  <input type="text" id="tournament-name" placeholder="例: ANTLERS CUP 2025">
 
   <label>対戦相手</label>
   <input type="text" id="opponent" placeholder="例: エクセレントフィート">
 
   <label>会場</label>
-  <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
+  <div class="venue-row">
+    <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
+    <button class="map-btn" onclick="openMap()" title="Google Mapで開く">📍</button>
+  </div>
 
   <label>試合形式</label>
-  <div class="format-row">
+  <div class="format-presets" id="format-presets">
+    <div class="format-chip active" data-min="15" data-per="1" data-label="15分×1本">15分×1本</div>
+    <div class="format-chip" data-min="15" data-per="2" data-label="15分ハーフ">15分ハーフ</div>
+    <div class="format-chip" data-min="20" data-per="2" data-label="20分ハーフ">20分ハーフ</div>
+    <div class="format-chip" data-min="" data-per="" data-label="カスタム">カスタム</div>
+  </div>
+  <div class="format-custom" id="format-custom" style="display:none;">
     <input type="number" id="match-minutes" value="15" min="1" max="90">
     <span>分 ×</span>
     <input type="number" id="match-halves" value="1" min="1" max="4">
+    <span>本</span>
   </div>
 </div>
 
@@ -482,7 +556,6 @@
 </button>
 
 <pre id="output-area"></pre>
-
 <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">
   📋 コピー
 </button>
@@ -494,6 +567,9 @@
 let roster = [2,3,4,8,9,10,11,14,16,18,19,20,22,24,28,65];
 let matches = [];
 let matchCounter = 0;
+let formatMinutes = 15;
+let formatPeriods = 1;
+let formatLabel = '15分×1本';
 
 // ========== Init ==========
 function init() {
@@ -503,11 +579,40 @@ function init() {
   if (saved) roster = JSON.parse(saved);
   renderRoster();
 
-  document.querySelectorAll('#match-type-options .match-type-chip').forEach(chip => {
+  // Match type chips
+  document.querySelectorAll('#match-type-options .chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('#match-type-options .match-type-chip').forEach(c => c.classList.remove('selected'));
-      chip.classList.add('selected');
+      document.querySelectorAll('#match-type-options .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
     });
+  });
+
+  // Format presets
+  document.querySelectorAll('#format-presets .format-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#format-presets .format-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const min = chip.dataset.min;
+      const per = chip.dataset.per;
+      if (min && per) {
+        formatMinutes = parseInt(min);
+        formatPeriods = parseInt(per);
+        formatLabel = chip.dataset.label;
+        document.getElementById('format-custom').style.display = 'none';
+      } else {
+        document.getElementById('format-custom').style.display = 'flex';
+        formatMinutes = parseInt(document.getElementById('match-minutes').value) || 15;
+        formatPeriods = parseInt(document.getElementById('match-halves').value) || 1;
+        formatLabel = '';
+      }
+    });
+  });
+
+  document.getElementById('match-minutes').addEventListener('input', function() {
+    formatMinutes = parseInt(this.value) || 15;
+  });
+  document.getElementById('match-halves').addEventListener('input', function() {
+    formatPeriods = parseInt(this.value) || 1;
   });
 
   document.getElementById('roster-new').addEventListener('keydown', e => {
@@ -515,6 +620,13 @@ function init() {
   });
 
   addMatch();
+}
+
+// ========== Google Maps ==========
+function openMap() {
+  const venue = document.getElementById('venue').value.trim();
+  if (!venue) { alert('会場名を入力してください'); return; }
+  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`, '_blank');
 }
 
 // ========== Roster ==========
@@ -546,16 +658,15 @@ function addMatch() {
   matchCounter++;
   const match = {
     id: matchCounter,
-    players: [],       // field players (not GK)
+    players: [],
     gk: null,
     scoreUs: 0,
     scoreOpponent: 0,
-    scorers: {},       // { playerNum: count }
+    scorers: {},
     showSub: false,
-    subMode: 'individual', // 'individual' or 'fullswap'
-    subs: [],          // [{ out: num|null, in: num|null }]
-    subGkChange: null, // new GK number after sub, or null
-    // full swap mode
+    subMode: 'individual',
+    subs: [],
+    subGkChange: null,
     swapPlayers: [],
     swapGk: null,
     memo: ''
@@ -576,6 +687,8 @@ function renumberMatches() {
   });
 }
 
+function getMatch(id) { return matches.find(m => m.id === id); }
+
 function renderMatch(match) {
   const div = document.createElement('div');
   div.className = 'card match-card';
@@ -589,7 +702,10 @@ function renderMatch(match) {
       <button class="btn btn-danger" onclick="removeMatch(${mid})">削除</button>
     </div>
 
-    <label>出場選手（タップで選択 / 長押しでGK）</label>
+    <label>
+      出場選手（タップで選択 / 長押しでGK）
+      <span class="player-count" id="pcount-${mid}">0人</span>
+    </label>
     <div class="player-grid" id="players-${mid}"></div>
     <div class="gk-row">
       <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
@@ -605,8 +721,6 @@ function renderMatch(match) {
           <div class="sub-mode-tab active" data-mode="individual" onclick="setSubMode(${mid},'individual')">個別交代</div>
           <div class="sub-mode-tab" data-mode="fullswap" onclick="setSubMode(${mid},'fullswap')">総入替え</div>
         </div>
-
-        <!-- Individual subs -->
         <div id="sub-individual-${mid}">
           <div id="sub-rows-${mid}"></div>
           <button class="btn btn-add-sub" onclick="addSubRow(${mid})">＋ 交代を追加</button>
@@ -617,10 +731,10 @@ function renderMatch(match) {
             </select>
           </div>
         </div>
-
-        <!-- Full swap -->
         <div id="sub-fullswap-${mid}" style="display:none;">
-          <label>交代後の全メンバー</label>
+          <label>交代後の全メンバー
+            <span class="player-count" id="swapcount-${mid}">0人</span>
+          </label>
           <div class="player-grid" id="swap-players-${mid}"></div>
           <div class="gk-row">
             <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
@@ -635,13 +749,15 @@ function renderMatch(match) {
     <label>スコア（自チーム - 相手）</label>
     <div class="score-row">
       <input type="number" class="score-input" id="score-us-${mid}" value="0" min="0" max="99"
-        onchange="updateScore(${mid})">
+        oninput="updateScore(${mid})">
       <span class="score-divider">-</span>
       <input type="number" class="score-input" id="score-opp-${mid}" value="0" min="0" max="99"
-        onchange="updateScore(${mid})">
+        oninput="updateScore(${mid})">
+      <div class="result-badge none" id="result-${mid}">-</div>
     </div>
 
     <label>得点者（タップで選択、複数回タップで複数得点）</label>
+    <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
     <div class="scorer-grid" id="scorers-${mid}">
       <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
     </div>
@@ -657,29 +773,32 @@ function renderMatch(match) {
   renderMatchPlayers(mid);
 }
 
-function getMatch(id) { return matches.find(m => m.id === id); }
-
 // ========== Player selection ==========
 function renderMatchPlayers(matchId) {
-  const match = getMatch(matchId);
-  if (!match) return;
+  const m = getMatch(matchId);
+  if (!m) return;
   const grid = document.getElementById(`players-${matchId}`);
   if (!grid) return;
 
   const sorted = [...roster].sort((a,b) => a - b);
   grid.innerHTML = sorted.map(num => {
-    const isGk = match.gk === num;
-    const isSel = match.players.includes(num);
+    const isGk = m.gk === num;
+    const isSel = m.players.includes(num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
-    return `<div class="${cls}" data-num="${num}"
+    return `<div class="${cls}"
       onclick="togglePlayer(${matchId},${num},false)"
       oncontextmenu="event.preventDefault();togglePlayer(${matchId},${num},true)"
       ontouchstart="lpStart(event,${matchId},${num},'fp')"
       ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
     >${isGk ? 'GK'+num : num}</div>`;
   }).join('');
+
+  // Player count
+  const total = m.players.length + (m.gk ? 1 : 0);
+  const countEl = document.getElementById(`pcount-${matchId}`);
+  if (countEl) countEl.textContent = `${total}人`;
 
   updateGkSelect(matchId);
   renderScorers(matchId);
@@ -695,6 +814,7 @@ function lpStart(e, mid, num, type) {
     lpFired = true;
     if (type === 'fp') togglePlayer(mid, num, true);
     else if (type === 'sw') toggleSwapPlayer(mid, num, true);
+    else if (type === 'sc') resetScorer(mid, num);
   }, 500);
 }
 function lpEnd() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }
@@ -731,6 +851,32 @@ function setGk(matchId, val) {
   renderMatchPlayers(matchId);
 }
 
+// ========== Score & Result ==========
+function updateScore(matchId) {
+  const m = getMatch(matchId);
+  m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
+  m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
+  updateResultBadge(matchId);
+}
+
+function updateResultBadge(matchId) {
+  const m = getMatch(matchId);
+  const el = document.getElementById(`result-${matchId}`);
+  if (!el) return;
+  const us = m.scoreUs, opp = m.scoreOpponent;
+  el.className = 'result-badge';
+  if (us === 0 && opp === 0 && !document.getElementById(`score-us-${matchId}`).value &&
+      !document.getElementById(`score-opp-${matchId}`).value) {
+    el.classList.add('none'); el.textContent = '-';
+  } else if (us > opp) {
+    el.classList.add('win'); el.textContent = '○';
+  } else if (us === opp) {
+    el.classList.add('draw'); el.textContent = '△';
+  } else {
+    el.classList.add('lose'); el.textContent = '×';
+  }
+}
+
 // ========== Substitution ==========
 function toggleSub(matchId) {
   const m = getMatch(matchId);
@@ -744,25 +890,21 @@ function setSubMode(matchId, mode) {
   const m = getMatch(matchId);
   m.subMode = mode;
   const card = document.getElementById(`match-${matchId}`);
-  card.querySelectorAll('.sub-mode-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.mode === mode);
-  });
+  card.querySelectorAll('.sub-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
   document.getElementById(`sub-individual-${matchId}`).style.display = mode === 'individual' ? 'block' : 'none';
   document.getElementById(`sub-fullswap-${matchId}`).style.display = mode === 'fullswap' ? 'block' : 'none';
   if (mode === 'fullswap') renderSwapPlayers(matchId);
   renderScorers(matchId);
 }
 
-// --- Individual subs ---
+// --- Individual subs (fixed) ---
 function addSubRow(matchId) {
-  const m = getMatch(matchId);
-  m.subs.push({ out: null, in: null });
+  getMatch(matchId).subs.push({ out: null, in: null });
   renderSubRows(matchId);
 }
 
 function removeSubRow(matchId, idx) {
-  const m = getMatch(matchId);
-  m.subs.splice(idx, 1);
+  getMatch(matchId).subs.splice(idx, 1);
   renderSubRows(matchId);
   renderScorers(matchId);
 }
@@ -771,51 +913,55 @@ function renderSubRows(matchId) {
   const m = getMatch(matchId);
   const container = document.getElementById(`sub-rows-${matchId}`);
 
-  // Players currently on the field (starters + GK)
-  const onField = [...m.players];
-  if (m.gk) onField.push(m.gk);
-  onField.sort((a,b) => a - b);
-
-  // Players on the bench (roster minus on-field, considering earlier subs)
-  const alreadyIn = m.subs.map(s => s.in).filter(Boolean);
-  const alreadyOut = m.subs.map(s => s.out).filter(Boolean);
+  // On-field: starters + GK
+  const onField = [...m.players, ...(m.gk ? [m.gk] : [])].sort((a,b) => a - b);
 
   container.innerHTML = m.subs.map((sub, idx) => {
-    // OUT options: starters who haven't already been subbed out (except this row)
-    const outUsed = m.subs.filter((s,i) => i !== idx).map(s => s.out).filter(Boolean);
-    const outOptions = onField.filter(n => !outUsed.includes(n));
+    // OUT: on-field players not used as OUT in OTHER rows
+    const outUsedByOthers = m.subs
+      .filter((s, i) => i !== idx && s.out !== null)
+      .map(s => s.out);
+    const outOptions = onField.filter(n => !outUsedByOthers.includes(n));
 
-    // IN options: bench players who haven't already been subbed in (except this row)
-    const inUsed = m.subs.filter((s,i) => i !== idx).map(s => s.in).filter(Boolean);
-    const currentOnField = [...onField, ...alreadyIn];
-    const bench = roster.filter(n => !currentOnField.includes(n) || inUsed.includes(n))
-                        .filter(n => !inUsed.includes(n));
-    // Also include the currently selected IN player
-    const benchSorted = [...new Set([...bench, ...(sub.in ? [sub.in] : [])])].sort((a,b) => a - b);
+    // IN: bench players (roster minus on-field) not used as IN in OTHER rows
+    const inUsedByOthers = m.subs
+      .filter((s, i) => i !== idx && s.in !== null)
+      .map(s => s.in);
+    const bench = roster
+      .filter(n => !onField.includes(n))
+      .filter(n => !inUsedByOthers.includes(n));
+
+    // Make sure current selection is always in the options
+    const outOpts = sub.out !== null && !outOptions.includes(sub.out)
+      ? [...outOptions, sub.out].sort((a,b) => a-b) : outOptions;
+    const inOpts = sub.in !== null && !bench.includes(sub.in)
+      ? [...bench, sub.in].sort((a,b) => a-b) : bench;
 
     return `<div class="sub-row">
       <select onchange="setSubOut(${matchId},${idx},this.value)">
         <option value="">OUT</option>
-        ${outOptions.map(n => `<option value="${n}" ${sub.out===n?'selected':''}>${n}</option>`).join('')}
+        ${outOpts.map(n => `<option value="${n}" ${sub.out===n?'selected':''}>${n}</option>`).join('')}
       </select>
       <span class="sub-arrow">→</span>
       <select onchange="setSubIn(${matchId},${idx},this.value)">
         <option value="">IN</option>
-        ${benchSorted.map(n => `<option value="${n}" ${sub.in===n?'selected':''}>${n}</option>`).join('')}
+        ${inOpts.map(n => `<option value="${n}" ${sub.in===n?'selected':''}>${n}</option>`).join('')}
       </select>
       <button class="sub-remove" onclick="removeSubRow(${matchId},${idx})">×</button>
     </div>`;
   }).join('');
 
-  // Show GK change option if there are subs
+  // GK change area
   const gkArea = document.getElementById(`sub-gk-area-${matchId}`);
-  if (m.subs.length > 0) {
+  const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
+  if (validSubs.length > 0) {
     gkArea.style.display = 'flex';
-    // GK change options: all incoming players + current field players
-    const allAfterSub = [...onField.filter(n => !alreadyOut.includes(n)), ...alreadyIn].sort((a,b) => a - b);
+    const outsSet = new Set(validSubs.map(s => s.out));
+    const insSet = new Set(validSubs.map(s => s.in));
+    const afterField = [...onField.filter(n => !outsSet.has(n)), ...insSet].sort((a,b) => a - b);
     const gkSel = document.getElementById(`sub-gk-change-${matchId}`);
     gkSel.innerHTML = '<option value="">変更なし</option>' +
-      allAfterSub.map(n => `<option value="${n}" ${m.subGkChange===n?'selected':''}>${n}</option>`).join('');
+      afterField.map(n => `<option value="${n}" ${m.subGkChange===n?'selected':''}>${n}</option>`).join('');
   } else {
     gkArea.style.display = 'none';
   }
@@ -855,13 +1001,17 @@ function renderSwapPlayers(matchId) {
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
-    return `<div class="${cls}" data-num="${num}"
+    return `<div class="${cls}"
       onclick="toggleSwapPlayer(${matchId},${num},false)"
       oncontextmenu="event.preventDefault();toggleSwapPlayer(${matchId},${num},true)"
       ontouchstart="lpStart(event,${matchId},${num},'sw')"
       ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
     >${isGk ? 'GK'+num : num}</div>`;
   }).join('');
+
+  const total = m.swapPlayers.length + (m.swapGk ? 1 : 0);
+  const countEl = document.getElementById(`swapcount-${matchId}`);
+  if (countEl) countEl.textContent = `${total}人`;
 
   const sel = document.getElementById(`swap-gk-${matchId}`);
   if (sel) {
@@ -895,20 +1045,12 @@ function setSwapGk(matchId, val) {
   renderScorers(matchId);
 }
 
-// ========== Score ==========
-function updateScore(matchId) {
-  const m = getMatch(matchId);
-  m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
-  m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
-}
-
 // ========== Scorers ==========
 function renderScorers(matchId) {
   const m = getMatch(matchId);
   const grid = document.getElementById(`scorers-${matchId}`);
   if (!grid) return;
 
-  // Collect all players who appeared in this match
   let allPlayers = [...m.players];
   if (m.gk) allPlayers.push(m.gk);
 
@@ -927,7 +1069,6 @@ function renderScorers(matchId) {
     return;
   }
 
-  // Clean scorers
   Object.keys(m.scorers).forEach(k => {
     if (!allPlayers.includes(parseInt(k))) delete m.scorers[k];
   });
@@ -935,43 +1076,64 @@ function renderScorers(matchId) {
   grid.innerHTML = allPlayers.map(num => {
     const count = m.scorers[num] || 0;
     const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
-    return `<div class="${cls}" onclick="toggleScorer(${matchId},${num})">
-      ${num}${count > 1 ? `<span class="count">×${count}</span>` : ''}
-    </div>`;
+    return `<div class="${cls}"
+      onclick="toggleScorer(${matchId},${num})"
+      ontouchstart="lpStart(event,${matchId},${num},'sc')"
+      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
+    >${num}${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 }
 
 function toggleScorer(matchId, num) {
+  if (lpFired) return;
   const m = getMatch(matchId);
   const c = m.scorers[num] || 0;
-  if (c >= 3) delete m.scorers[num];
-  else m.scorers[num] = c + 1;
+  m.scorers[num] = c + 1;
+  renderScorers(matchId);
+}
+
+function resetScorer(matchId, num) {
+  const m = getMatch(matchId);
+  delete m.scorers[num];
   renderScorers(matchId);
 }
 
 // ========== Generate ==========
 function generateOutput() {
   const date = document.getElementById('match-date').value;
-  const type = document.querySelector('#match-type-options .match-type-chip.selected')?.dataset.val || 'TM';
+  const type = document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM';
+  const tournament = document.getElementById('tournament-name').value.trim();
   const opponent = document.getElementById('opponent').value.trim();
   const venue = document.getElementById('venue').value.trim();
-  const minutes = document.getElementById('match-minutes').value;
-  const halves = document.getElementById('match-halves').value;
 
   const d = new Date(date + 'T00:00:00');
   const days = ['日','月','火','水','木','金','土'];
   const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}(${days[d.getDay()]})`;
 
+  // Format string
+  let fmtStr;
+  const activePreset = document.querySelector('#format-presets .format-chip.active');
+  if (activePreset && activePreset.dataset.min) {
+    const min = activePreset.dataset.min;
+    const per = activePreset.dataset.per;
+    fmtStr = per === '2' ? `${min}分ハーフ` : `${min}分×${per}`;
+  } else {
+    fmtStr = `${formatMinutes}分×${formatPeriods}`;
+  }
+
   let lines = [];
-  lines.push(`${dateStr} ${type} vs${opponent}`);
+  let header = `${dateStr} ${type}`;
+  if (tournament) header += ` ${tournament}`;
+  header += ` vs${opponent}`;
+  lines.push(header);
   lines.push(`@${venue}`);
-  lines.push(`試合形式${minutes}分×${halves}`);
+  lines.push(`試合形式${fmtStr}`);
   lines.push('');
 
   matches.forEach((m, i) => {
     const num = i + 1;
 
-    // Build starting lineup string
+    // Starting lineup
     const starters = [...m.players].sort((a,b) => a - b);
     let playerStr = starters.join('.');
     if (m.gk !== null) {
@@ -979,22 +1141,17 @@ function generateOutput() {
       playerStr += `GK${m.gk}`;
     }
 
-    // Substitution string
+    // Substitution
     if (m.showSub) {
       if (m.subMode === 'individual') {
-        const validSubs = m.subs.filter(s => s.out && s.in);
+        const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
         if (validSubs.length > 0) {
-          // Build the "after" part: only the incoming players
           const inPlayers = validSubs.map(s => s.in).sort((a,b) => a - b);
           let subStr = inPlayers.join('.');
-          // GK change
-          if (m.subGkChange) {
-            subStr += `.GK${m.subGkChange}`;
-          }
+          if (m.subGkChange) subStr += `.GK${m.subGkChange}`;
           playerStr += `→${subStr}`;
         }
       } else {
-        // Full swap
         if (m.swapPlayers.length > 0 || m.swapGk !== null) {
           const swapField = [...m.swapPlayers].sort((a,b) => a - b);
           let swapStr = swapField.join('.');
@@ -1007,9 +1164,14 @@ function generateOutput() {
       }
     }
 
-    // Score
     const scoreUs = parseInt(document.getElementById(`score-us-${m.id}`).value) || 0;
     const scoreOpp = parseInt(document.getElementById(`score-opp-${m.id}`).value) || 0;
+
+    // Result
+    let result = '';
+    if (scoreUs > scoreOpp) result = '○';
+    else if (scoreUs === scoreOpp) result = '△';
+    else result = '×';
 
     // Scorers
     let scorerParts = [];
@@ -1020,7 +1182,7 @@ function generateOutput() {
 
     lines.push(`(${num}試合目)`);
     lines.push(`出場選手：${playerStr}`);
-    lines.push(`スコア：${scoreUs}-${scoreOpp}`);
+    lines.push(`スコア：${scoreUs}-${scoreOpp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
     if (m.memo) lines.push(`メモ：${m.memo}`);
     lines.push('');
