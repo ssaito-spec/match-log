@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>試合ログ入力</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    padding: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 18px;
+    text-align: center;
+    padding: 12px 0;
+    color: #333;
+  }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Form elements */
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #777;
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  label:first-child { margin-top: 0; }
+
+  input[type="text"], input[type="date"], input[type="number"], select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #fafafa;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #4a90d9;
+    background: #fff;
+  }
+
+  /* Player chips */
+  .player-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .player-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 38px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    background: #fafafa;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .player-chip.selected {
+    background: #4a90d9;
+    color: #fff;
+    border-color: #4a90d9;
+  }
+  .player-chip.gk {
+    background: #f59e0b;
+    color: #fff;
+    border-color: #f59e0b;
+  }
+
+  /* GK row */
+  .gk-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gk-row label { margin: 0; white-space: nowrap; }
+  .gk-row select { flex: 1; }
+
+  /* Score */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  .score-input {
+    width: 60px !important;
+    text-align: center;
+    font-size: 24px !important;
+    font-weight: 700;
+    padding: 8px !important;
+  }
+  .score-divider {
+    font-size: 24px;
+    font-weight: 700;
+    color: #999;
+  }
+
+  /* Scorer chips */
+  .scorer-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .scorer-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 34px;
+    padding: 0 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    background: #fafafa;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .scorer-chip.selected {
+    background: #e74c3c;
+    color: #fff;
+    border-color: #e74c3c;
+  }
+  .scorer-chip .count {
+    margin-left: 3px;
+    font-size: 11px;
+    opacity: 0.9;
+  }
+
+  /* Substitution section */
+  .sub-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e0e0e0;
+  }
+  .sub-toggle {
+    font-size: 13px;
+    color: #4a90d9;
+    cursor: pointer;
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sub-content { margin-top: 8px; }
+
+  /* Sub mode tabs */
+  .sub-mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #4a90d9;
+  }
+  .sub-mode-tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fff;
+    color: #4a90d9;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sub-mode-tab.active {
+    background: #4a90d9;
+    color: #fff;
+  }
+
+  /* Individual sub row */
+  .sub-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .sub-row select {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+  }
+  .sub-arrow {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4a90d9;
+    flex-shrink: 0;
+  }
+  .sub-remove {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #fee;
+    color: #e74c3c;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sub-gk-change {
+    margin-top: 8px;
+    padding: 8px;
+    background: #fff8e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-gk-change label { margin: 0; font-size: 12px; color: #f59e0b; font-weight: 700; white-space: nowrap; }
+  .sub-gk-change select { flex: 1; font-size: 14px; padding: 8px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary {
+    background: #4a90d9;
+    color: #fff;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+  .btn-primary:active { background: #3a7bc8; }
+  .btn-secondary {
+    background: #e8ecf1;
+    color: #555;
+    width: 100%;
+    padding: 12px;
+  }
+  .btn-secondary:active { background: #d8dce1; }
+  .btn-danger {
+    background: #fee;
+    color: #e74c3c;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  .btn-sm {
+    font-size: 12px;
+    padding: 6px 12px;
+    width: auto;
+  }
+  .btn-add-sub {
+    background: #e8f4fd;
+    color: #4a90d9;
+    font-size: 13px;
+    padding: 8px 14px;
+    width: 100%;
+  }
+
+  /* Match header */
+  .match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .match-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4a90d9;
+  }
+
+  /* Output */
+  #output-area {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+    margin-top: 12px;
+    display: none;
+  }
+  .copy-success {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 100;
+    animation: fadeOut 1.5s ease forwards;
+  }
+  @keyframes fadeOut {
+    0%, 60% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Roster */
+  .roster-input-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .roster-input-row input { flex: 1; }
+  .roster-input-row .btn { flex-shrink: 0; width: auto; }
+  .roster-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .roster-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e8ecf1;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .roster-tag .remove {
+    cursor: pointer;
+    color: #999;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* Match type */
+  .match-type-options {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .match-type-chip {
+    padding: 8px 14px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .match-type-chip.selected {
+    background: #4a90d9;
+    color: #fff;
+    border-color: #4a90d9;
+  }
+
+  .format-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .format-row input {
+    width: 60px !important;
+    text-align: center;
+  }
+  .format-row span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚽ 試合ログ入力</h1>
+
+<!-- Basic Info -->
+<div class="card">
+  <div class="card-title"><span>📋</span> 基本情報</div>
+  <label>日付</label>
+  <input type="date" id="match-date">
+
+  <label>試合種別</label>
+  <div class="match-type-options" id="match-type-options">
+    <div class="match-type-chip selected" data-val="TM">TM</div>
+    <div class="match-type-chip" data-val="公式戦">公式戦</div>
+    <div class="match-type-chip" data-val="カップ戦">カップ戦</div>
+    <div class="match-type-chip" data-val="リーグ戦">リーグ戦</div>
+  </div>
+
+  <label>対戦相手</label>
+  <input type="text" id="opponent" placeholder="例: エクセレントフィート">
+
+  <label>会場</label>
+  <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
+
+  <label>試合形式</label>
+  <div class="format-row">
+    <input type="number" id="match-minutes" value="15" min="1" max="90">
+    <span>分 ×</span>
+    <input type="number" id="match-halves" value="1" min="1" max="4">
+  </div>
+</div>
+
+<!-- Roster -->
+<div class="card">
+  <div class="card-title"><span>👕</span> 登録メンバー（背番号）</div>
+  <p style="font-size:12px;color:#999;margin-bottom:6px;">ここに登録した番号が各試合の選手選択に表示されます</p>
+  <div class="roster-tags" id="roster-tags"></div>
+  <div class="roster-input-row">
+    <input type="number" id="roster-new" placeholder="背番号" min="1" max="99">
+    <button class="btn btn-secondary" onclick="addRosterNumber()" style="padding:8px 16px;">追加</button>
+  </div>
+</div>
+
+<!-- Matches -->
+<div id="matches-container"></div>
+
+<button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">
+  ＋ 試合を追加
+</button>
+
+<button class="btn btn-primary" onclick="generateOutput()">
+  📝 ログを生成
+</button>
+
+<pre id="output-area"></pre>
+
+<button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">
+  📋 コピー
+</button>
+
+<div style="height:40px;"></div>
+
+<script>
+// ========== State ==========
+let roster = [2,3,4,8,9,10,11,14,16,18,19,20,22,24,28,65];
+let matches = [];
+let matchCounter = 0;
+
+// ========== Init ==========
+function init() {
+  document.getElementById('match-date').value = new Date().toISOString().slice(0,10);
+
+  const saved = localStorage.getItem('soccer-roster');
+  if (saved) roster = JSON.parse(saved);
+  renderRoster();
+
+  document.querySelectorAll('#match-type-options .match-type-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#match-type-options .match-type-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+
+  document.getElementById('roster-new').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addRosterNumber(); }
+  });
+
+  addMatch();
+}
+
+// ========== Roster ==========
+function renderRoster() {
+  roster.sort((a,b) => a - b);
+  document.getElementById('roster-tags').innerHTML = roster.map(n =>
+    `<span class="roster-tag">${n}<span class="remove" onclick="removeRosterNumber(${n})">×</span></span>`
+  ).join('');
+  localStorage.setItem('soccer-roster', JSON.stringify(roster));
+  matches.forEach(m => renderMatchPlayers(m.id));
+}
+
+function addRosterNumber() {
+  const input = document.getElementById('roster-new');
+  const num = parseInt(input.value);
+  if (!num || num < 1 || num > 99) return;
+  if (!roster.includes(num)) { roster.push(num); renderRoster(); }
+  input.value = '';
+  input.focus();
+}
+
+function removeRosterNumber(num) {
+  roster = roster.filter(n => n !== num);
+  renderRoster();
+}
+
+// ========== Matches ==========
+function addMatch() {
+  matchCounter++;
+  const match = {
+    id: matchCounter,
+    players: [],       // field players (not GK)
+    gk: null,
+    scoreUs: 0,
+    scoreOpponent: 0,
+    scorers: {},       // { playerNum: count }
+    showSub: false,
+    subMode: 'individual', // 'individual' or 'fullswap'
+    subs: [],          // [{ out: num|null, in: num|null }]
+    subGkChange: null, // new GK number after sub, or null
+    // full swap mode
+    swapPlayers: [],
+    swapGk: null,
+    memo: ''
+  };
+  matches.push(match);
+  renderMatch(match);
+}
+
+function removeMatch(id) {
+  matches = matches.filter(m => m.id !== id);
+  document.getElementById(`match-${id}`).remove();
+  renumberMatches();
+}
+
+function renumberMatches() {
+  document.querySelectorAll('.match-card').forEach((card, i) => {
+    card.querySelector('.match-number').textContent = `第${i+1}試合`;
+  });
+}
+
+function renderMatch(match) {
+  const div = document.createElement('div');
+  div.className = 'card match-card';
+  div.id = `match-${match.id}`;
+  const idx = matches.indexOf(match) + 1;
+  const mid = match.id;
+
+  div.innerHTML = `
+    <div class="match-header">
+      <span class="match-number">第${idx}試合</span>
+      <button class="btn btn-danger" onclick="removeMatch(${mid})">削除</button>
+    </div>
+
+    <label>出場選手（タップで選択 / 長押しでGK）</label>
+    <div class="player-grid" id="players-${mid}"></div>
+    <div class="gk-row">
+      <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
+      <select id="gk-${mid}" onchange="setGk(${mid}, this.value)">
+        <option value="">選択</option>
+      </select>
+    </div>
+
+    <div class="sub-section">
+      <span class="sub-toggle" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
+      <div class="sub-content" id="sub-${mid}" style="display:none;">
+        <div class="sub-mode-tabs">
+          <div class="sub-mode-tab active" data-mode="individual" onclick="setSubMode(${mid},'individual')">個別交代</div>
+          <div class="sub-mode-tab" data-mode="fullswap" onclick="setSubMode(${mid},'fullswap')">総入替え</div>
+        </div>
+
+        <!-- Individual subs -->
+        <div id="sub-individual-${mid}">
+          <div id="sub-rows-${mid}"></div>
+          <button class="btn btn-add-sub" onclick="addSubRow(${mid})">＋ 交代を追加</button>
+          <div class="sub-gk-change" id="sub-gk-area-${mid}" style="display:none;">
+            <label>GK変更→</label>
+            <select id="sub-gk-change-${mid}" onchange="setSubGkChange(${mid}, this.value)">
+              <option value="">変更なし</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Full swap -->
+        <div id="sub-fullswap-${mid}" style="display:none;">
+          <label>交代後の全メンバー</label>
+          <div class="player-grid" id="swap-players-${mid}"></div>
+          <div class="gk-row">
+            <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
+            <select id="swap-gk-${mid}" onchange="setSwapGk(${mid}, this.value)">
+              <option value="">選択</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <label>スコア（自チーム - 相手）</label>
+    <div class="score-row">
+      <input type="number" class="score-input" id="score-us-${mid}" value="0" min="0" max="99"
+        onchange="updateScore(${mid})">
+      <span class="score-divider">-</span>
+      <input type="number" class="score-input" id="score-opp-${mid}" value="0" min="0" max="99"
+        onchange="updateScore(${mid})">
+    </div>
+
+    <label>得点者（タップで選択、複数回タップで複数得点）</label>
+    <div class="scorer-grid" id="scorers-${mid}">
+      <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
+    </div>
+
+    <div style="margin-top:8px;">
+      <label>メモ（任意）</label>
+      <input type="text" id="memo-${mid}" placeholder="特記事項があれば"
+        oninput="getMatch(${mid}).memo=this.value">
+    </div>
+  `;
+
+  document.getElementById('matches-container').appendChild(div);
+  renderMatchPlayers(mid);
+}
+
+function getMatch(id) { return matches.find(m => m.id === id); }
+
+// ========== Player selection ==========
+function renderMatchPlayers(matchId) {
+  const match = getMatch(matchId);
+  if (!match) return;
+  const grid = document.getElementById(`players-${matchId}`);
+  if (!grid) return;
+
+  const sorted = [...roster].sort((a,b) => a - b);
+  grid.innerHTML = sorted.map(num => {
+    const isGk = match.gk === num;
+    const isSel = match.players.includes(num);
+    let cls = 'player-chip';
+    if (isGk) cls += ' gk';
+    else if (isSel) cls += ' selected';
+    return `<div class="${cls}" data-num="${num}"
+      onclick="togglePlayer(${matchId},${num},false)"
+      oncontextmenu="event.preventDefault();togglePlayer(${matchId},${num},true)"
+      ontouchstart="lpStart(event,${matchId},${num},'fp')"
+      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
+    >${isGk ? 'GK'+num : num}</div>`;
+  }).join('');
+
+  updateGkSelect(matchId);
+  renderScorers(matchId);
+  updateSubDropdowns(matchId);
+  renderSwapPlayers(matchId);
+}
+
+// Long press
+let lpTimer = null, lpFired = false;
+function lpStart(e, mid, num, type) {
+  lpFired = false;
+  lpTimer = setTimeout(() => {
+    lpFired = true;
+    if (type === 'fp') togglePlayer(mid, num, true);
+    else if (type === 'sw') toggleSwapPlayer(mid, num, true);
+  }, 500);
+}
+function lpEnd() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }
+
+function togglePlayer(matchId, num, asGk) {
+  if (lpFired && !asGk) return;
+  const m = getMatch(matchId);
+  if (asGk) {
+    if (m.gk === num) { m.gk = null; if (!m.players.includes(num)) m.players.push(num); }
+    else { m.players = m.players.filter(n => n !== num); m.gk = num; }
+  } else {
+    if (m.gk === num) { m.gk = null; }
+    else if (m.players.includes(num)) { m.players = m.players.filter(n => n !== num); delete m.scorers[num]; }
+    else { m.players.push(num); }
+  }
+  renderMatchPlayers(matchId);
+}
+
+function updateGkSelect(matchId) {
+  const m = getMatch(matchId);
+  const sel = document.getElementById(`gk-${matchId}`);
+  if (!sel) return;
+  const sorted = [...roster].sort((a,b) => a - b);
+  sel.innerHTML = '<option value="">選択</option>' +
+    sorted.map(n => `<option value="${n}" ${n===m.gk?'selected':''}>${n}</option>`).join('');
+}
+
+function setGk(matchId, val) {
+  const m = getMatch(matchId);
+  if (m.gk && !m.players.includes(m.gk)) m.players.push(m.gk);
+  const num = parseInt(val);
+  if (num) { m.gk = num; m.players = m.players.filter(n => n !== num); }
+  else { m.gk = null; }
+  renderMatchPlayers(matchId);
+}
+
+// ========== Substitution ==========
+function toggleSub(matchId) {
+  const m = getMatch(matchId);
+  m.showSub = !m.showSub;
+  document.getElementById(`sub-${matchId}`).style.display = m.showSub ? 'block' : 'none';
+  document.getElementById(`sub-toggle-${matchId}`).textContent = m.showSub ? '－ 交代を閉じる' : '＋ 交代を入力';
+  if (m.showSub) updateSubDropdowns(matchId);
+}
+
+function setSubMode(matchId, mode) {
+  const m = getMatch(matchId);
+  m.subMode = mode;
+  const card = document.getElementById(`match-${matchId}`);
+  card.querySelectorAll('.sub-mode-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+  document.getElementById(`sub-individual-${matchId}`).style.display = mode === 'individual' ? 'block' : 'none';
+  document.getElementById(`sub-fullswap-${matchId}`).style.display = mode === 'fullswap' ? 'block' : 'none';
+  if (mode === 'fullswap') renderSwapPlayers(matchId);
+  renderScorers(matchId);
+}
+
+// --- Individual subs ---
+function addSubRow(matchId) {
+  const m = getMatch(matchId);
+  m.subs.push({ out: null, in: null });
+  renderSubRows(matchId);
+}
+
+function removeSubRow(matchId, idx) {
+  const m = getMatch(matchId);
+  m.subs.splice(idx, 1);
+  renderSubRows(matchId);
+  renderScorers(matchId);
+}
+
+function renderSubRows(matchId) {
+  const m = getMatch(matchId);
+  const container = document.getElementById(`sub-rows-${matchId}`);
+
+  // Players currently on the field (starters + GK)
+  const onField = [...m.players];
+  if (m.gk) onField.push(m.gk);
+  onField.sort((a,b) => a - b);
+
+  // Players on the bench (roster minus on-field, considering earlier subs)
+  const alreadyIn = m.subs.map(s => s.in).filter(Boolean);
+  const alreadyOut = m.subs.map(s => s.out).filter(Boolean);
+
+  container.innerHTML = m.subs.map((sub, idx) => {
+    // OUT options: starters who haven't already been subbed out (except this row)
+    const outUsed = m.subs.filter((s,i) => i !== idx).map(s => s.out).filter(Boolean);
+    const outOptions = onField.filter(n => !outUsed.includes(n));
+
+    // IN options: bench players who haven't already been subbed in (except this row)
+    const inUsed = m.subs.filter((s,i) => i !== idx).map(s => s.in).filter(Boolean);
+    const currentOnField = [...onField, ...alreadyIn];
+    const bench = roster.filter(n => !currentOnField.includes(n) || inUsed.includes(n))
+                        .filter(n => !inUsed.includes(n));
+    // Also include the currently selected IN player
+    const benchSorted = [...new Set([...bench, ...(sub.in ? [sub.in] : [])])].sort((a,b) => a - b);
+
+    return `<div class="sub-row">
+      <select onchange="setSubOut(${matchId},${idx},this.value)">
+        <option value="">OUT</option>
+        ${outOptions.map(n => `<option value="${n}" ${sub.out===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+      <span class="sub-arrow">→</span>
+      <select onchange="setSubIn(${matchId},${idx},this.value)">
+        <option value="">IN</option>
+        ${benchSorted.map(n => `<option value="${n}" ${sub.in===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+      <button class="sub-remove" onclick="removeSubRow(${matchId},${idx})">×</button>
+    </div>`;
+  }).join('');
+
+  // Show GK change option if there are subs
+  const gkArea = document.getElementById(`sub-gk-area-${matchId}`);
+  if (m.subs.length > 0) {
+    gkArea.style.display = 'flex';
+    // GK change options: all incoming players + current field players
+    const allAfterSub = [...onField.filter(n => !alreadyOut.includes(n)), ...alreadyIn].sort((a,b) => a - b);
+    const gkSel = document.getElementById(`sub-gk-change-${matchId}`);
+    gkSel.innerHTML = '<option value="">変更なし</option>' +
+      allAfterSub.map(n => `<option value="${n}" ${m.subGkChange===n?'selected':''}>${n}</option>`).join('');
+  } else {
+    gkArea.style.display = 'none';
+  }
+}
+
+function setSubOut(matchId, idx, val) {
+  getMatch(matchId).subs[idx].out = val ? parseInt(val) : null;
+  renderSubRows(matchId);
+  renderScorers(matchId);
+}
+
+function setSubIn(matchId, idx, val) {
+  getMatch(matchId).subs[idx].in = val ? parseInt(val) : null;
+  renderSubRows(matchId);
+  renderScorers(matchId);
+}
+
+function setSubGkChange(matchId, val) {
+  getMatch(matchId).subGkChange = val ? parseInt(val) : null;
+}
+
+function updateSubDropdowns(matchId) {
+  const m = getMatch(matchId);
+  if (m.showSub && m.subMode === 'individual') renderSubRows(matchId);
+}
+
+// --- Full swap ---
+function renderSwapPlayers(matchId) {
+  const m = getMatch(matchId);
+  const grid = document.getElementById(`swap-players-${matchId}`);
+  if (!grid) return;
+
+  const sorted = [...roster].sort((a,b) => a - b);
+  grid.innerHTML = sorted.map(num => {
+    const isGk = m.swapGk === num;
+    const isSel = m.swapPlayers.includes(num);
+    let cls = 'player-chip';
+    if (isGk) cls += ' gk';
+    else if (isSel) cls += ' selected';
+    return `<div class="${cls}" data-num="${num}"
+      onclick="toggleSwapPlayer(${matchId},${num},false)"
+      oncontextmenu="event.preventDefault();toggleSwapPlayer(${matchId},${num},true)"
+      ontouchstart="lpStart(event,${matchId},${num},'sw')"
+      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
+    >${isGk ? 'GK'+num : num}</div>`;
+  }).join('');
+
+  const sel = document.getElementById(`swap-gk-${matchId}`);
+  if (sel) {
+    sel.innerHTML = '<option value="">選択</option>' +
+      sorted.map(n => `<option value="${n}" ${n===m.swapGk?'selected':''}>${n}</option>`).join('');
+  }
+}
+
+function toggleSwapPlayer(matchId, num, asGk) {
+  if (lpFired && !asGk) return;
+  const m = getMatch(matchId);
+  if (asGk) {
+    if (m.swapGk === num) { m.swapGk = null; if (!m.swapPlayers.includes(num)) m.swapPlayers.push(num); }
+    else { m.swapPlayers = m.swapPlayers.filter(n => n !== num); m.swapGk = num; }
+  } else {
+    if (m.swapGk === num) { m.swapGk = null; }
+    else if (m.swapPlayers.includes(num)) { m.swapPlayers = m.swapPlayers.filter(n => n !== num); }
+    else { m.swapPlayers.push(num); }
+  }
+  renderSwapPlayers(matchId);
+  renderScorers(matchId);
+}
+
+function setSwapGk(matchId, val) {
+  const m = getMatch(matchId);
+  if (m.swapGk && !m.swapPlayers.includes(m.swapGk)) m.swapPlayers.push(m.swapGk);
+  const num = parseInt(val);
+  if (num) { m.swapGk = num; m.swapPlayers = m.swapPlayers.filter(n => n !== num); }
+  else { m.swapGk = null; }
+  renderSwapPlayers(matchId);
+  renderScorers(matchId);
+}
+
+// ========== Score ==========
+function updateScore(matchId) {
+  const m = getMatch(matchId);
+  m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
+  m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
+}
+
+// ========== Scorers ==========
+function renderScorers(matchId) {
+  const m = getMatch(matchId);
+  const grid = document.getElementById(`scorers-${matchId}`);
+  if (!grid) return;
+
+  // Collect all players who appeared in this match
+  let allPlayers = [...m.players];
+  if (m.gk) allPlayers.push(m.gk);
+
+  if (m.showSub) {
+    if (m.subMode === 'individual') {
+      m.subs.forEach(s => { if (s.in && !allPlayers.includes(s.in)) allPlayers.push(s.in); });
+    } else {
+      m.swapPlayers.forEach(n => { if (!allPlayers.includes(n)) allPlayers.push(n); });
+      if (m.swapGk && !allPlayers.includes(m.swapGk)) allPlayers.push(m.swapGk);
+    }
+  }
+  allPlayers = [...new Set(allPlayers)].sort((a,b) => a - b);
+
+  if (allPlayers.length === 0) {
+    grid.innerHTML = '<span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>';
+    return;
+  }
+
+  // Clean scorers
+  Object.keys(m.scorers).forEach(k => {
+    if (!allPlayers.includes(parseInt(k))) delete m.scorers[k];
+  });
+
+  grid.innerHTML = allPlayers.map(num => {
+    const count = m.scorers[num] || 0;
+    const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
+    return `<div class="${cls}" onclick="toggleScorer(${matchId},${num})">
+      ${num}${count > 1 ? `<span class="count">×${count}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleScorer(matchId, num) {
+  const m = getMatch(matchId);
+  const c = m.scorers[num] || 0;
+  if (c >= 3) delete m.scorers[num];
+  else m.scorers[num] = c + 1;
+  renderScorers(matchId);
+}
+
+// ========== Generate ==========
+function generateOutput() {
+  const date = document.getElementById('match-date').value;
+  const type = document.querySelector('#match-type-options .match-type-chip.selected')?.dataset.val || 'TM';
+  const opponent = document.getElementById('opponent').value.trim();
+  const venue = document.getElementById('venue').value.trim();
+  const minutes = document.getElementById('match-minutes').value;
+  const halves = document.getElementById('match-halves').value;
+
+  const d = new Date(date + 'T00:00:00');
+  const days = ['日','月','火','水','木','金','土'];
+  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}(${days[d.getDay()]})`;
+
+  let lines = [];
+  lines.push(`${dateStr} ${type} vs${opponent}`);
+  lines.push(`@${venue}`);
+  lines.push(`試合形式${minutes}分×${halves}`);
+  lines.push('');
+
+  matches.forEach((m, i) => {
+    const num = i + 1;
+
+    // Build starting lineup string
+    const starters = [...m.players].sort((a,b) => a - b);
+    let playerStr = starters.join('.');
+    if (m.gk !== null) {
+      if (playerStr) playerStr += '.';
+      playerStr += `GK${m.gk}`;
+    }
+
+    // Substitution string
+    if (m.showSub) {
+      if (m.subMode === 'individual') {
+        const validSubs = m.subs.filter(s => s.out && s.in);
+        if (validSubs.length > 0) {
+          // Build the "after" part: only the incoming players
+          const inPlayers = validSubs.map(s => s.in).sort((a,b) => a - b);
+          let subStr = inPlayers.join('.');
+          // GK change
+          if (m.subGkChange) {
+            subStr += `.GK${m.subGkChange}`;
+          }
+          playerStr += `→${subStr}`;
+        }
+      } else {
+        // Full swap
+        if (m.swapPlayers.length > 0 || m.swapGk !== null) {
+          const swapField = [...m.swapPlayers].sort((a,b) => a - b);
+          let swapStr = swapField.join('.');
+          if (m.swapGk !== null) {
+            if (swapStr) swapStr += '.';
+            swapStr += `GK${m.swapGk}`;
+          }
+          playerStr += `\n　　　　→${swapStr}`;
+        }
+      }
+    }
+
+    // Score
+    const scoreUs = parseInt(document.getElementById(`score-us-${m.id}`).value) || 0;
+    const scoreOpp = parseInt(document.getElementById(`score-opp-${m.id}`).value) || 0;
+
+    // Scorers
+    let scorerParts = [];
+    Object.entries(m.scorers).forEach(([pNum, count]) => {
+      for (let c = 0; c < count; c++) scorerParts.push(pNum);
+    });
+    const scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
+
+    lines.push(`(${num}試合目)`);
+    lines.push(`出場選手：${playerStr}`);
+    lines.push(`スコア：${scoreUs}-${scoreOpp}`);
+    lines.push(`得点者：${scorerStr}`);
+    if (m.memo) lines.push(`メモ：${m.memo}`);
+    lines.push('');
+  });
+
+  const output = lines.join('\n').trimEnd();
+  const outputArea = document.getElementById('output-area');
+  outputArea.textContent = output;
+  outputArea.style.display = 'block';
+  document.getElementById('copy-btn').style.display = 'block';
+  outputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyOutput() {
+  const text = document.getElementById('output-area').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast()).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showToast();
+  });
+}
+
+function showToast() {
+  const t = document.createElement('div');
+  t.className = 'copy-success';
+  t.textContent = 'コピーしました！';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1600);
+}
+
+init();
+</script>
+</body>
+</html>
