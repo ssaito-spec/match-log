@@ -14,168 +14,78 @@
     max-width: 480px;
     margin: 0 auto;
   }
-  h1 {
-    font-size: 18px;
-    text-align: center;
-    padding: 12px 0;
-    color: #333;
-  }
+  h1 { font-size: 18px; text-align: center; padding: 12px 0; color: #333; }
 
   .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    background: #fff; border-radius: 12px; padding: 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
   .card-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #555;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 14px; font-weight: 700; color: #555;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
   }
 
   label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #777;
-    margin-bottom: 4px;
-    margin-top: 10px;
+    display: block; font-size: 12px; font-weight: 600;
+    color: #777; margin-bottom: 4px; margin-top: 10px;
   }
   label:first-child { margin-top: 0; }
 
   input[type="text"], input[type="date"], input[type="number"], select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1.5px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    background: #fafafa;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
+    width: 100%; padding: 10px 12px; border: 1.5px solid #ddd;
+    border-radius: 8px; font-size: 16px; background: #fafafa;
+    transition: border-color 0.2s; -webkit-appearance: none;
   }
-  input:focus, select:focus {
-    outline: none;
-    border-color: #4a90d9;
-    background: #fff;
-  }
+  input:focus, select:focus { outline: none; border-color: #4a90d9; background: #fff; }
 
-  /* Chips (shared) */
-  .chip-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .chip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 14px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    background: #fafafa;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    padding: 8px 14px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer; user-select: none;
+    background: #fafafa; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .chip.active {
-    background: #4a90d9;
-    color: #fff;
-    border-color: #4a90d9;
-  }
+  .chip.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
 
-  /* Player chips */
-  .player-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
+  /* Player chips - name display */
+  .player-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
   .player-chip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 38px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    user-select: none;
-    background: #fafafa;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 48px; height: 44px; padding: 2px 6px;
+    border: 2px solid #ddd; border-radius: 8px;
+    cursor: pointer; user-select: none; background: #fafafa;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .player-chip.selected {
-    background: #4a90d9;
-    color: #fff;
-    border-color: #4a90d9;
-  }
-  .player-chip.gk {
-    background: #f59e0b;
-    color: #fff;
-    border-color: #f59e0b;
-  }
+  .player-chip .pname { font-size: 12px; font-weight: 700; line-height: 1.2; }
+  .player-chip .pnum { font-size: 9px; color: #999; line-height: 1; }
+  .player-chip.selected { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+  .player-chip.selected .pnum { color: rgba(255,255,255,0.7); }
+  .player-chip.gk { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+  .player-chip.gk .pnum { color: rgba(255,255,255,0.7); }
 
   .player-count {
-    display: inline-block;
-    background: #4a90d9;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 6px;
+    display: inline-block; background: #4a90d9; color: #fff;
+    font-size: 12px; font-weight: 700; padding: 2px 8px;
+    border-radius: 10px; margin-left: 6px;
   }
 
-  .gk-row {
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .gk-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
   .gk-row label { margin: 0; white-space: nowrap; }
   .gk-row select { flex: 1; }
 
-  /* Score */
+  /* Score dropdown */
   .score-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 6px;
+    display: flex; align-items: center; gap: 8px;
+    justify-content: center; margin-top: 6px;
   }
-  .score-input {
-    width: 60px !important;
-    text-align: center;
-    font-size: 24px !important;
-    font-weight: 700;
-    padding: 8px !important;
+  .score-select {
+    width: 70px !important; text-align: center; text-align-last: center;
+    font-size: 22px !important; font-weight: 700; padding: 8px 4px !important;
   }
-  .score-divider {
-    font-size: 24px;
-    font-weight: 700;
-    color: #999;
-  }
+  .score-divider { font-size: 24px; font-weight: 700; color: #999; }
   .result-badge {
-    font-size: 20px;
-    font-weight: 900;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    font-size: 20px; font-weight: 900; width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
   }
   .result-badge.win { background: #e8f5e9; color: #2e7d32; }
   .result-badge.draw { background: #fff8e1; color: #f57f17; }
@@ -183,309 +93,117 @@
   .result-badge.none { background: #f5f5f5; color: #bbb; }
 
   /* Scorer */
-  .scorer-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
+  .scorer-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
   .scorer-chip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    height: 34px;
-    padding: 0 10px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    background: #fafafa;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 48px; height: 38px; padding: 2px 8px;
+    border: 2px solid #ddd; border-radius: 8px;
+    font-size: 12px; font-weight: 600; cursor: pointer; user-select: none;
+    background: #fafafa; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .scorer-chip.selected {
-    background: #e74c3c;
-    color: #fff;
-    border-color: #e74c3c;
-  }
-  .scorer-chip .count {
-    margin-left: 3px;
-    font-size: 11px;
-    opacity: 0.9;
-  }
-  .hint {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 4px;
-    line-height: 1.4;
-  }
+  .scorer-chip.selected { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+  .scorer-chip .count { font-size: 10px; opacity: 0.9; }
+  .hint { font-size: 11px; color: #aaa; margin-top: 4px; line-height: 1.4; }
 
   /* Substitution */
-  .sub-section {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed #e0e0e0;
-  }
+  .sub-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
   .sub-toggle {
-    font-size: 13px;
-    color: #4a90d9;
-    cursor: pointer;
-    font-weight: 600;
-    -webkit-tap-highlight-color: transparent;
+    font-size: 13px; color: #4a90d9; cursor: pointer;
+    font-weight: 600; -webkit-tap-highlight-color: transparent;
   }
   .sub-content { margin-top: 8px; }
   .sub-mode-tabs {
-    display: flex;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid #4a90d9;
+    display: flex; margin-bottom: 10px; border-radius: 8px;
+    overflow: hidden; border: 2px solid #4a90d9;
   }
   .sub-mode-tab {
-    flex: 1;
-    padding: 8px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    background: #fff;
-    color: #4a90d9;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 700;
+    cursor: pointer; background: #fff; color: #4a90d9;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .sub-mode-tab.active {
-    background: #4a90d9;
-    color: #fff;
-  }
+  .sub-mode-tab.active { background: #4a90d9; color: #fff; }
   .sub-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
-    background: #f8f9fa;
-    padding: 10px 8px;
-    border-radius: 8px;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px; background: #f8f9fa; padding: 10px 8px; border-radius: 8px;
   }
-  .sub-row select {
-    flex: 1;
-    padding: 8px;
-    font-size: 15px;
-    font-weight: 700;
-  }
-  .sub-arrow {
-    font-size: 18px;
-    font-weight: 700;
-    color: #4a90d9;
-    flex-shrink: 0;
-  }
+  .sub-row select { flex: 1; padding: 8px; font-size: 14px; font-weight: 700; }
+  .sub-arrow { font-size: 18px; font-weight: 700; color: #4a90d9; flex-shrink: 0; }
   .sub-remove {
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: #fee;
-    color: #e74c3c;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 28px; height: 28px; border: none; background: #fee; color: #e74c3c;
+    border-radius: 6px; font-size: 16px; font-weight: 700; cursor: pointer;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   }
   .sub-gk-change {
-    margin-top: 8px;
-    padding: 8px;
-    background: #fff8e1;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    margin-top: 8px; padding: 8px; background: #fff8e1; border-radius: 8px;
+    display: flex; align-items: center; gap: 8px;
   }
   .sub-gk-change label { margin: 0; font-size: 12px; color: #f59e0b; font-weight: 700; white-space: nowrap; }
   .sub-gk-change select { flex: 1; font-size: 14px; padding: 8px; }
 
-  /* Buttons */
+  /* Opponent per match */
+  .opp-section { margin-top: 8px; }
+  .opp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .opp-chip {
+    padding: 6px 12px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; background: #fafafa;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .opp-chip.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+  .opp-input-row { margin-top: 6px; }
+
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 10px 16px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .btn-primary {
-    background: #4a90d9;
-    color: #fff;
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-  }
+  .btn-primary { background: #4a90d9; color: #fff; width: 100%; padding: 14px; font-size: 16px; }
   .btn-primary:active { background: #3a7bc8; }
-  .btn-secondary {
-    background: #e8ecf1;
-    color: #555;
-    width: 100%;
-    padding: 12px;
-  }
+  .btn-secondary { background: #e8ecf1; color: #555; width: 100%; padding: 12px; }
   .btn-secondary:active { background: #d8dce1; }
-  .btn-danger {
-    background: #fee;
-    color: #e74c3c;
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-  .btn-add-sub {
-    background: #e8f4fd;
-    color: #4a90d9;
-    font-size: 13px;
-    padding: 8px 14px;
-    width: 100%;
-  }
+  .btn-danger { background: #fee; color: #e74c3c; font-size: 12px; padding: 6px 12px; }
+  .btn-add-sub { background: #e8f4fd; color: #4a90d9; font-size: 13px; padding: 8px 14px; width: 100%; }
 
-  .match-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .match-number {
-    font-size: 16px;
-    font-weight: 700;
-    color: #4a90d9;
-  }
+  .match-header { display: flex; justify-content: space-between; align-items: center; }
+  .match-number { font-size: 16px; font-weight: 700; color: #4a90d9; }
 
-  /* Venue row */
-  .venue-row {
-    display: flex;
-    gap: 6px;
-    align-items: stretch;
-  }
-  .venue-row input { flex: 1; }
-  .map-btn {
-    flex-shrink: 0;
-    width: 44px;
-    border: 1.5px solid #ddd;
-    border-radius: 8px;
-    background: #fafafa;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .map-btn:active { background: #e8ecf1; }
-
-  /* Format presets */
-  .format-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
+  .format-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .format-chip {
-    padding: 7px 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    background: #fafafa;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    padding: 7px 12px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; background: #fafafa;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .format-chip.active {
-    background: #4a90d9;
-    color: #fff;
-    border-color: #4a90d9;
-  }
+  .format-chip.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
   .format-custom {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 8px;
+    display: flex; align-items: center; gap: 4px; margin-top: 8px;
   }
-  .format-custom input {
-    width: 55px !important;
-    text-align: center;
-  }
-  .format-custom span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #555;
-  }
+  .format-custom input { width: 55px !important; text-align: center; }
+  .format-custom span { font-size: 14px; font-weight: 600; color: #555; }
 
-  /* Output */
   #output-area {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    border-radius: 12px;
-    padding: 16px;
-    font-family: monospace;
-    font-size: 13px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    line-height: 1.6;
-    margin-top: 12px;
-    display: none;
+    background: #1a1a2e; color: #e0e0e0; border-radius: 12px; padding: 16px;
+    font-family: monospace; font-size: 13px; white-space: pre-wrap;
+    word-break: break-all; line-height: 1.6; margin-top: 12px; display: none;
   }
   .copy-success {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    padding: 16px 32px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    z-index: 100;
-    animation: fadeOut 1.5s ease forwards;
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8); color: #fff; padding: 16px 32px;
+    border-radius: 12px; font-size: 16px; font-weight: 600;
+    z-index: 100; animation: fadeOut 1.5s ease forwards;
   }
-  @keyframes fadeOut {
-    0%, 60% { opacity: 1; }
-    100% { opacity: 0; }
-  }
+  @keyframes fadeOut { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
 
-  .roster-input-row {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-  }
+  .roster-input-row { display: flex; gap: 6px; margin-top: 8px; }
   .roster-input-row input { flex: 1; }
   .roster-input-row .btn { flex-shrink: 0; width: auto; }
-  .roster-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 8px;
-  }
+  .roster-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
   .roster-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #e8ecf1;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 13px;
-    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #e8ecf1; border-radius: 6px; padding: 4px 8px;
+    font-size: 13px; font-weight: 600;
   }
-  .roster-tag .remove {
-    cursor: pointer;
-    color: #999;
-    font-size: 16px;
-    line-height: 1;
-  }
+  .roster-tag .remove { cursor: pointer; color: #999; font-size: 16px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -509,21 +227,15 @@
   <label>大会名（任意）</label>
   <input type="text" id="tournament-name" placeholder="例: ANTLERS CUP 2025">
 
-  <label>対戦相手</label>
-  <input type="text" id="opponent" placeholder="例: エクセレントフィート">
-
   <label>会場</label>
-  <div class="venue-row">
-    <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
-    <button class="map-btn" onclick="openMap()" title="Google Mapで開く">📍</button>
-  </div>
+  <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
 
   <label>試合形式</label>
   <div class="format-presets" id="format-presets">
-    <div class="format-chip active" data-min="15" data-per="1" data-label="15分×1本">15分×1本</div>
-    <div class="format-chip" data-min="15" data-per="2" data-label="15分ハーフ">15分ハーフ</div>
-    <div class="format-chip" data-min="20" data-per="2" data-label="20分ハーフ">20分ハーフ</div>
-    <div class="format-chip" data-min="" data-per="" data-label="カスタム">カスタム</div>
+    <div class="format-chip active" data-min="15" data-per="1">15分×1本</div>
+    <div class="format-chip" data-min="15" data-per="2">15分ハーフ</div>
+    <div class="format-chip" data-min="20" data-per="2">20分ハーフ</div>
+    <div class="format-chip" data-min="" data-per="">カスタム</div>
   </div>
   <div class="format-custom" id="format-custom" style="display:none;">
     <input type="number" id="match-minutes" value="15" min="1" max="90">
@@ -535,48 +247,77 @@
 
 <!-- Roster -->
 <div class="card">
-  <div class="card-title"><span>👕</span> 登録メンバー（背番号）</div>
-  <p style="font-size:12px;color:#999;margin-bottom:6px;">ここに登録した番号が各試合の選手選択に表示されます</p>
+  <div class="card-title"><span>👕</span> 登録メンバー</div>
+  <p style="font-size:12px;color:#999;margin-bottom:6px;">各試合の選手選択に表示されます</p>
   <div class="roster-tags" id="roster-tags"></div>
   <div class="roster-input-row">
-    <input type="number" id="roster-new" placeholder="背番号" min="1" max="99">
-    <button class="btn btn-secondary" onclick="addRosterNumber()" style="padding:8px 16px;">追加</button>
+    <input type="number" id="roster-num" placeholder="背番号" min="1" max="99" style="width:70px;">
+    <input type="text" id="roster-name" placeholder="名前（下の名前）">
+    <button class="btn btn-secondary" onclick="addRosterPlayer()" style="padding:8px 12px;">追加</button>
   </div>
 </div>
 
 <!-- Matches -->
 <div id="matches-container"></div>
 
-<button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">
-  ＋ 試合を追加
-</button>
-
-<button class="btn btn-primary" onclick="generateOutput()">
-  📝 ログを生成
-</button>
+<button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">＋ 試合を追加</button>
+<button class="btn btn-primary" onclick="generateOutput()">📝 ログを生成</button>
 
 <pre id="output-area"></pre>
-<button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">
-  📋 コピー
-</button>
+<button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
 
 <div style="height:40px;"></div>
 
 <script>
 // ========== State ==========
-let roster = [2,3,4,8,9,10,11,14,16,18,19,20,22,24,28,65];
+const DEFAULT_ROSTER = [
+  {num:1,name:'賢人'},{num:2,name:'優聖'},{num:3,name:'旺佑'},{num:4,name:'一翔'},
+  {num:6,name:'蒼汰朗'},{num:7,name:'隼輔'},{num:8,name:'葵'},{num:9,name:'琉真'},
+  {num:10,name:'雅空'},{num:13,name:'天'},{num:14,name:'倭'},{num:15,name:'冬悟'},
+  {num:16,name:'秋実'},{num:17,name:'慧'},{num:18,name:'風雅'},{num:19,name:'陽太'},
+  {num:20,name:'慎士郎'},{num:22,name:'葵汰'},{num:24,name:'蒼之'},{num:28,name:'然'}
+];
+
+let roster = []; // {num, name}[]
 let matches = [];
 let matchCounter = 0;
 let formatMinutes = 15;
 let formatPeriods = 1;
-let formatLabel = '15分×1本';
+
+function getName(num) {
+  const p = roster.find(r => r.num === num);
+  return p ? p.name : String(num);
+}
+
+function getLabel(num) {
+  const p = roster.find(r => r.num === num);
+  return p ? `${p.name}(${num})` : String(num);
+}
 
 // ========== Init ==========
 function init() {
   document.getElementById('match-date').value = new Date().toISOString().slice(0,10);
 
-  const saved = localStorage.getItem('soccer-roster');
-  if (saved) roster = JSON.parse(saved);
+  // Load roster (migrate from old format if needed)
+  const saved = localStorage.getItem('soccer-roster-v2');
+  if (saved) {
+    roster = JSON.parse(saved);
+  } else {
+    const old = localStorage.getItem('soccer-roster');
+    if (old) {
+      const nums = JSON.parse(old);
+      if (nums.length > 0 && typeof nums[0] === 'number') {
+        roster = nums.map(n => {
+          const def = DEFAULT_ROSTER.find(d => d.num === n);
+          return def || {num: n, name: String(n)};
+        });
+      } else {
+        roster = DEFAULT_ROSTER.slice();
+      }
+    } else {
+      roster = DEFAULT_ROSTER.slice();
+    }
+  }
   renderRoster();
 
   // Match type chips
@@ -592,72 +333,71 @@ function init() {
     chip.addEventListener('click', () => {
       document.querySelectorAll('#format-presets .format-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
-      const min = chip.dataset.min;
-      const per = chip.dataset.per;
-      if (min && per) {
-        formatMinutes = parseInt(min);
-        formatPeriods = parseInt(per);
-        formatLabel = chip.dataset.label;
+      if (chip.dataset.min && chip.dataset.per) {
+        formatMinutes = parseInt(chip.dataset.min);
+        formatPeriods = parseInt(chip.dataset.per);
         document.getElementById('format-custom').style.display = 'none';
       } else {
         document.getElementById('format-custom').style.display = 'flex';
-        formatMinutes = parseInt(document.getElementById('match-minutes').value) || 15;
-        formatPeriods = parseInt(document.getElementById('match-halves').value) || 1;
-        formatLabel = '';
       }
     });
   });
+  document.getElementById('match-minutes').addEventListener('input', function() { formatMinutes = parseInt(this.value)||15; });
+  document.getElementById('match-halves').addEventListener('input', function() { formatPeriods = parseInt(this.value)||1; });
 
-  document.getElementById('match-minutes').addEventListener('input', function() {
-    formatMinutes = parseInt(this.value) || 15;
-  });
-  document.getElementById('match-halves').addEventListener('input', function() {
-    formatPeriods = parseInt(this.value) || 1;
-  });
-
-  document.getElementById('roster-new').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); addRosterNumber(); }
+  document.getElementById('roster-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addRosterPlayer(); }
   });
 
   addMatch();
 }
 
-// ========== Google Maps ==========
-function openMap() {
-  const venue = document.getElementById('venue').value.trim();
-  if (!venue) { alert('会場名を入力してください'); return; }
-  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`, '_blank');
-}
-
 // ========== Roster ==========
 function renderRoster() {
-  roster.sort((a,b) => a - b);
-  document.getElementById('roster-tags').innerHTML = roster.map(n =>
-    `<span class="roster-tag">${n}<span class="remove" onclick="removeRosterNumber(${n})">×</span></span>`
+  roster.sort((a,b) => a.num - b.num);
+  document.getElementById('roster-tags').innerHTML = roster.map(r =>
+    `<span class="roster-tag">${r.name}(${r.num})<span class="remove" onclick="removeRosterPlayer(${r.num})">×</span></span>`
   ).join('');
-  localStorage.setItem('soccer-roster', JSON.stringify(roster));
+  localStorage.setItem('soccer-roster-v2', JSON.stringify(roster));
   matches.forEach(m => renderMatchPlayers(m.id));
 }
 
-function addRosterNumber() {
-  const input = document.getElementById('roster-new');
-  const num = parseInt(input.value);
-  if (!num || num < 1 || num > 99) return;
-  if (!roster.includes(num)) { roster.push(num); renderRoster(); }
-  input.value = '';
-  input.focus();
+function addRosterPlayer() {
+  const numInput = document.getElementById('roster-num');
+  const nameInput = document.getElementById('roster-name');
+  const num = parseInt(numInput.value);
+  const name = nameInput.value.trim();
+  if (!num || num < 1 || !name) return;
+  if (!roster.find(r => r.num === num)) {
+    roster.push({num, name});
+    renderRoster();
+  }
+  numInput.value = '';
+  nameInput.value = '';
+  numInput.focus();
 }
 
-function removeRosterNumber(num) {
-  roster = roster.filter(n => n !== num);
+function removeRosterPlayer(num) {
+  roster = roster.filter(r => r.num !== num);
   renderRoster();
 }
 
 // ========== Matches ==========
+function getMatch(id) { return matches.find(m => m.id === id); }
+
+function getUsedOpponents() {
+  const opps = [];
+  matches.forEach(m => { if (m.opponent && !opps.includes(m.opponent)) opps.push(m.opponent); });
+  return opps;
+}
+
 function addMatch() {
   matchCounter++;
+  const prevOpp = matches.length > 0 ? matches[matches.length - 1].opponent : '';
   const match = {
     id: matchCounter,
+    opponent: prevOpp,
+    oppMode: prevOpp ? 'prev' : 'new', // 'prev' or 'new'
     players: [],
     gk: null,
     scoreUs: 0,
@@ -687,8 +427,6 @@ function renumberMatches() {
   });
 }
 
-function getMatch(id) { return matches.find(m => m.id === id); }
-
 function renderMatch(match) {
   const div = document.createElement('div');
   div.className = 'card match-card';
@@ -696,10 +434,19 @@ function renderMatch(match) {
   const idx = matches.indexOf(match) + 1;
   const mid = match.id;
 
+  // Score options
+  const scoreOpts = Array.from({length:11}, (_,i) => i)
+    .map(i => `<option value="${i}">${i}</option>`).join('');
+
   div.innerHTML = `
     <div class="match-header">
       <span class="match-number">第${idx}試合</span>
       <button class="btn btn-danger" onclick="removeMatch(${mid})">削除</button>
+    </div>
+
+    <div class="opp-section">
+      <label>対戦相手</label>
+      <div id="opp-area-${mid}"></div>
     </div>
 
     <label>
@@ -709,9 +456,7 @@ function renderMatch(match) {
     <div class="player-grid" id="players-${mid}"></div>
     <div class="gk-row">
       <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
-      <select id="gk-${mid}" onchange="setGk(${mid}, this.value)">
-        <option value="">選択</option>
-      </select>
+      <select id="gk-${mid}" onchange="setGk(${mid},this.value)"><option value="">選択</option></select>
     </div>
 
     <div class="sub-section">
@@ -726,7 +471,7 @@ function renderMatch(match) {
           <button class="btn btn-add-sub" onclick="addSubRow(${mid})">＋ 交代を追加</button>
           <div class="sub-gk-change" id="sub-gk-area-${mid}" style="display:none;">
             <label>GK変更→</label>
-            <select id="sub-gk-change-${mid}" onchange="setSubGkChange(${mid}, this.value)">
+            <select id="sub-gk-change-${mid}" onchange="setSubGkChange(${mid},this.value)">
               <option value="">変更なし</option>
             </select>
           </div>
@@ -738,9 +483,7 @@ function renderMatch(match) {
           <div class="player-grid" id="swap-players-${mid}"></div>
           <div class="gk-row">
             <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
-            <select id="swap-gk-${mid}" onchange="setSwapGk(${mid}, this.value)">
-              <option value="">選択</option>
-            </select>
+            <select id="swap-gk-${mid}" onchange="setSwapGk(${mid},this.value)"><option value="">選択</option></select>
           </div>
         </div>
       </div>
@@ -748,15 +491,13 @@ function renderMatch(match) {
 
     <label>スコア（自チーム - 相手）</label>
     <div class="score-row">
-      <input type="number" class="score-input" id="score-us-${mid}" value="0" min="0" max="99"
-        oninput="updateScore(${mid})">
+      <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
       <span class="score-divider">-</span>
-      <input type="number" class="score-input" id="score-opp-${mid}" value="0" min="0" max="99"
-        oninput="updateScore(${mid})">
+      <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
       <div class="result-badge none" id="result-${mid}">-</div>
     </div>
 
-    <label>得点者（タップで選択、複数回タップで複数得点）</label>
+    <label>得点者</label>
     <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
     <div class="scorer-grid" id="scorers-${mid}">
       <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
@@ -764,13 +505,67 @@ function renderMatch(match) {
 
     <div style="margin-top:8px;">
       <label>メモ（任意）</label>
-      <input type="text" id="memo-${mid}" placeholder="特記事項があれば"
-        oninput="getMatch(${mid}).memo=this.value">
+      <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value">
     </div>
   `;
 
   document.getElementById('matches-container').appendChild(div);
+  renderOppArea(mid);
   renderMatchPlayers(mid);
+}
+
+// ========== Opponent per match ==========
+function renderOppArea(matchId) {
+  const m = getMatch(matchId);
+  const area = document.getElementById(`opp-area-${matchId}`);
+  const idx = matches.indexOf(m);
+
+  // Collect unique opponents from previous matches
+  const prevOpps = [];
+  for (let i = 0; i < idx; i++) {
+    if (matches[i].opponent && !prevOpps.includes(matches[i].opponent)) {
+      prevOpps.push(matches[i].opponent);
+    }
+  }
+
+  if (prevOpps.length === 0) {
+    // First match or no previous opponents - just text input
+    area.innerHTML = `<input type="text" id="opp-input-${matchId}" placeholder="例: エクセレントフィート"
+      value="${m.opponent || ''}" oninput="setOpp(${matchId},this.value)">`;
+  } else {
+    // Show previous opponents as chips + new input option
+    const isNew = !prevOpps.includes(m.opponent);
+    area.innerHTML = `
+      <div class="opp-chips">
+        ${prevOpps.map(o => `<div class="opp-chip ${m.opponent===o && !isNew?'active':''}"
+          onclick="selectOpp(${matchId},'${o.replace(/'/g,"\\'")}')">${o}</div>`).join('')}
+        <div class="opp-chip ${isNew?'active':''}" onclick="selectOppNew(${matchId})">別の相手</div>
+      </div>
+      <div class="opp-input-row" id="opp-new-row-${matchId}" style="display:${isNew?'block':'none'};">
+        <input type="text" id="opp-input-${matchId}" placeholder="相手チーム名"
+          value="${isNew ? (m.opponent||'') : ''}" oninput="setOpp(${matchId},this.value)">
+      </div>`;
+  }
+}
+
+function selectOpp(matchId, opp) {
+  const m = getMatch(matchId);
+  m.opponent = opp;
+  m.oppMode = 'prev';
+  renderOppArea(matchId);
+}
+
+function selectOppNew(matchId) {
+  const m = getMatch(matchId);
+  m.oppMode = 'new';
+  m.opponent = '';
+  renderOppArea(matchId);
+  const input = document.getElementById(`opp-input-${matchId}`);
+  if (input) input.focus();
+}
+
+function setOpp(matchId, val) {
+  getMatch(matchId).opponent = val;
 }
 
 // ========== Player selection ==========
@@ -780,25 +575,26 @@ function renderMatchPlayers(matchId) {
   const grid = document.getElementById(`players-${matchId}`);
   if (!grid) return;
 
-  const sorted = [...roster].sort((a,b) => a - b);
-  grid.innerHTML = sorted.map(num => {
-    const isGk = m.gk === num;
-    const isSel = m.players.includes(num);
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  grid.innerHTML = sorted.map(r => {
+    const isGk = m.gk === r.num;
+    const isSel = m.players.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
+    const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
+                       : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
-      onclick="togglePlayer(${matchId},${num},false)"
-      oncontextmenu="event.preventDefault();togglePlayer(${matchId},${num},true)"
-      ontouchstart="lpStart(event,${matchId},${num},'fp')"
+      onclick="togglePlayer(${matchId},${r.num},false)"
+      oncontextmenu="event.preventDefault();togglePlayer(${matchId},${r.num},true)"
+      ontouchstart="lpStart(event,${matchId},${r.num},'fp')"
       ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
-    >${isGk ? 'GK'+num : num}</div>`;
+    >${label}</div>`;
   }).join('');
 
-  // Player count
   const total = m.players.length + (m.gk ? 1 : 0);
-  const countEl = document.getElementById(`pcount-${matchId}`);
-  if (countEl) countEl.textContent = `${total}人`;
+  const c = document.getElementById(`pcount-${matchId}`);
+  if (c) c.textContent = `${total}人`;
 
   updateGkSelect(matchId);
   renderScorers(matchId);
@@ -837,9 +633,9 @@ function updateGkSelect(matchId) {
   const m = getMatch(matchId);
   const sel = document.getElementById(`gk-${matchId}`);
   if (!sel) return;
-  const sorted = [...roster].sort((a,b) => a - b);
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
   sel.innerHTML = '<option value="">選択</option>' +
-    sorted.map(n => `<option value="${n}" ${n===m.gk?'selected':''}>${n}</option>`).join('');
+    sorted.map(r => `<option value="${r.num}" ${r.num===m.gk?'selected':''}>${r.name}(${r.num})</option>`).join('');
 }
 
 function setGk(matchId, val) {
@@ -851,30 +647,17 @@ function setGk(matchId, val) {
   renderMatchPlayers(matchId);
 }
 
-// ========== Score & Result ==========
+// ========== Score ==========
 function updateScore(matchId) {
   const m = getMatch(matchId);
   m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
   m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
-  updateResultBadge(matchId);
-}
-
-function updateResultBadge(matchId) {
-  const m = getMatch(matchId);
   const el = document.getElementById(`result-${matchId}`);
   if (!el) return;
-  const us = m.scoreUs, opp = m.scoreOpponent;
   el.className = 'result-badge';
-  if (us === 0 && opp === 0 && !document.getElementById(`score-us-${matchId}`).value &&
-      !document.getElementById(`score-opp-${matchId}`).value) {
-    el.classList.add('none'); el.textContent = '-';
-  } else if (us > opp) {
-    el.classList.add('win'); el.textContent = '○';
-  } else if (us === opp) {
-    el.classList.add('draw'); el.textContent = '△';
-  } else {
-    el.classList.add('lose'); el.textContent = '×';
-  }
+  if (m.scoreUs > m.scoreOpponent) { el.classList.add('win'); el.textContent = '○'; }
+  else if (m.scoreUs === m.scoreOpponent) { el.classList.add('draw'); el.textContent = '△'; }
+  else { el.classList.add('lose'); el.textContent = '×'; }
 }
 
 // ========== Substitution ==========
@@ -889,17 +672,16 @@ function toggleSub(matchId) {
 function setSubMode(matchId, mode) {
   const m = getMatch(matchId);
   m.subMode = mode;
-  const card = document.getElementById(`match-${matchId}`);
-  card.querySelectorAll('.sub-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById(`match-${matchId}`).querySelectorAll('.sub-mode-tab')
+    .forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
   document.getElementById(`sub-individual-${matchId}`).style.display = mode === 'individual' ? 'block' : 'none';
   document.getElementById(`sub-fullswap-${matchId}`).style.display = mode === 'fullswap' ? 'block' : 'none';
   if (mode === 'fullswap') renderSwapPlayers(matchId);
   renderScorers(matchId);
 }
 
-// --- Individual subs (fixed) ---
 function addSubRow(matchId) {
-  getMatch(matchId).subs.push({ out: null, in: null });
+  getMatch(matchId).subs.push({out: null, in: null});
   renderSubRows(matchId);
 }
 
@@ -912,111 +694,78 @@ function removeSubRow(matchId, idx) {
 function renderSubRows(matchId) {
   const m = getMatch(matchId);
   const container = document.getElementById(`sub-rows-${matchId}`);
-
-  // On-field: starters + GK
   const onField = [...m.players, ...(m.gk ? [m.gk] : [])].sort((a,b) => a - b);
 
   container.innerHTML = m.subs.map((sub, idx) => {
-    // OUT: on-field players not used as OUT in OTHER rows
-    const outUsedByOthers = m.subs
-      .filter((s, i) => i !== idx && s.out !== null)
-      .map(s => s.out);
-    const outOptions = onField.filter(n => !outUsedByOthers.includes(n));
+    const outUsed = m.subs.filter((s,i) => i!==idx && s.out!==null).map(s => s.out);
+    let outOpts = onField.filter(n => !outUsed.includes(n));
+    if (sub.out !== null && !outOpts.includes(sub.out)) outOpts = [...outOpts, sub.out].sort((a,b)=>a-b);
 
-    // IN: bench players (roster minus on-field) not used as IN in OTHER rows
-    const inUsedByOthers = m.subs
-      .filter((s, i) => i !== idx && s.in !== null)
-      .map(s => s.in);
-    const bench = roster
-      .filter(n => !onField.includes(n))
-      .filter(n => !inUsedByOthers.includes(n));
-
-    // Make sure current selection is always in the options
-    const outOpts = sub.out !== null && !outOptions.includes(sub.out)
-      ? [...outOptions, sub.out].sort((a,b) => a-b) : outOptions;
-    const inOpts = sub.in !== null && !bench.includes(sub.in)
-      ? [...bench, sub.in].sort((a,b) => a-b) : bench;
+    const inUsed = m.subs.filter((s,i) => i!==idx && s.in!==null).map(s => s.in);
+    let inOpts = roster.filter(r => !onField.includes(r.num)).map(r => r.num).filter(n => !inUsed.includes(n));
+    if (sub.in !== null && !inOpts.includes(sub.in)) inOpts = [...inOpts, sub.in].sort((a,b)=>a-b);
+    inOpts.sort((a,b) => a - b);
 
     return `<div class="sub-row">
       <select onchange="setSubOut(${matchId},${idx},this.value)">
         <option value="">OUT</option>
-        ${outOpts.map(n => `<option value="${n}" ${sub.out===n?'selected':''}>${n}</option>`).join('')}
+        ${outOpts.map(n => `<option value="${n}" ${sub.out===n?'selected':''}>${getLabel(n)}</option>`).join('')}
       </select>
       <span class="sub-arrow">→</span>
       <select onchange="setSubIn(${matchId},${idx},this.value)">
         <option value="">IN</option>
-        ${inOpts.map(n => `<option value="${n}" ${sub.in===n?'selected':''}>${n}</option>`).join('')}
+        ${inOpts.map(n => `<option value="${n}" ${sub.in===n?'selected':''}>${getLabel(n)}</option>`).join('')}
       </select>
       <button class="sub-remove" onclick="removeSubRow(${matchId},${idx})">×</button>
     </div>`;
   }).join('');
 
-  // GK change area
   const gkArea = document.getElementById(`sub-gk-area-${matchId}`);
-  const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
-  if (validSubs.length > 0) {
+  const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+  if (valid.length > 0) {
     gkArea.style.display = 'flex';
-    const outsSet = new Set(validSubs.map(s => s.out));
-    const insSet = new Set(validSubs.map(s => s.in));
-    const afterField = [...onField.filter(n => !outsSet.has(n)), ...insSet].sort((a,b) => a - b);
-    const gkSel = document.getElementById(`sub-gk-change-${matchId}`);
-    gkSel.innerHTML = '<option value="">変更なし</option>' +
-      afterField.map(n => `<option value="${n}" ${m.subGkChange===n?'selected':''}>${n}</option>`).join('');
-  } else {
-    gkArea.style.display = 'none';
-  }
+    const outs = new Set(valid.map(s => s.out));
+    const ins = new Set(valid.map(s => s.in));
+    const after = [...onField.filter(n => !outs.has(n)), ...ins].sort((a,b) => a-b);
+    document.getElementById(`sub-gk-change-${matchId}`).innerHTML =
+      '<option value="">変更なし</option>' +
+      after.map(n => `<option value="${n}" ${m.subGkChange===n?'selected':''}>${getLabel(n)}</option>`).join('');
+  } else { gkArea.style.display = 'none'; }
 }
 
-function setSubOut(matchId, idx, val) {
-  getMatch(matchId).subs[idx].out = val ? parseInt(val) : null;
-  renderSubRows(matchId);
-  renderScorers(matchId);
-}
+function setSubOut(mid, idx, v) { getMatch(mid).subs[idx].out = v ? parseInt(v) : null; renderSubRows(mid); renderScorers(mid); }
+function setSubIn(mid, idx, v) { getMatch(mid).subs[idx].in = v ? parseInt(v) : null; renderSubRows(mid); renderScorers(mid); }
+function setSubGkChange(mid, v) { getMatch(mid).subGkChange = v ? parseInt(v) : null; }
+function updateSubDropdowns(mid) { const m=getMatch(mid); if(m.showSub && m.subMode==='individual') renderSubRows(mid); }
 
-function setSubIn(matchId, idx, val) {
-  getMatch(matchId).subs[idx].in = val ? parseInt(val) : null;
-  renderSubRows(matchId);
-  renderScorers(matchId);
-}
-
-function setSubGkChange(matchId, val) {
-  getMatch(matchId).subGkChange = val ? parseInt(val) : null;
-}
-
-function updateSubDropdowns(matchId) {
-  const m = getMatch(matchId);
-  if (m.showSub && m.subMode === 'individual') renderSubRows(matchId);
-}
-
-// --- Full swap ---
+// Full swap
 function renderSwapPlayers(matchId) {
   const m = getMatch(matchId);
   const grid = document.getElementById(`swap-players-${matchId}`);
   if (!grid) return;
-
-  const sorted = [...roster].sort((a,b) => a - b);
-  grid.innerHTML = sorted.map(num => {
-    const isGk = m.swapGk === num;
-    const isSel = m.swapPlayers.includes(num);
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  grid.innerHTML = sorted.map(r => {
+    const isGk = m.swapGk === r.num;
+    const isSel = m.swapPlayers.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
+    const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
+                       : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
-      onclick="toggleSwapPlayer(${matchId},${num},false)"
-      oncontextmenu="event.preventDefault();toggleSwapPlayer(${matchId},${num},true)"
-      ontouchstart="lpStart(event,${matchId},${num},'sw')"
+      onclick="toggleSwapPlayer(${matchId},${r.num},false)"
+      oncontextmenu="event.preventDefault();toggleSwapPlayer(${matchId},${r.num},true)"
+      ontouchstart="lpStart(event,${matchId},${r.num},'sw')"
       ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
-    >${isGk ? 'GK'+num : num}</div>`;
+    >${label}</div>`;
   }).join('');
-
   const total = m.swapPlayers.length + (m.swapGk ? 1 : 0);
-  const countEl = document.getElementById(`swapcount-${matchId}`);
-  if (countEl) countEl.textContent = `${total}人`;
-
+  const c = document.getElementById(`swapcount-${matchId}`);
+  if (c) c.textContent = `${total}人`;
   const sel = document.getElementById(`swap-gk-${matchId}`);
   if (sel) {
     sel.innerHTML = '<option value="">選択</option>' +
-      sorted.map(n => `<option value="${n}" ${n===m.swapGk?'selected':''}>${n}</option>`).join('');
+      sorted.map(r => `<option value="${r.num}" ${r.num===m.swapGk?'selected':''}>${r.name}(${r.num})</option>`).join('');
   }
 }
 
@@ -1024,12 +773,12 @@ function toggleSwapPlayer(matchId, num, asGk) {
   if (lpFired && !asGk) return;
   const m = getMatch(matchId);
   if (asGk) {
-    if (m.swapGk === num) { m.swapGk = null; if (!m.swapPlayers.includes(num)) m.swapPlayers.push(num); }
-    else { m.swapPlayers = m.swapPlayers.filter(n => n !== num); m.swapGk = num; }
+    if (m.swapGk===num) { m.swapGk=null; if(!m.swapPlayers.includes(num)) m.swapPlayers.push(num); }
+    else { m.swapPlayers=m.swapPlayers.filter(n=>n!==num); m.swapGk=num; }
   } else {
-    if (m.swapGk === num) { m.swapGk = null; }
-    else if (m.swapPlayers.includes(num)) { m.swapPlayers = m.swapPlayers.filter(n => n !== num); }
-    else { m.swapPlayers.push(num); }
+    if (m.swapGk===num) m.swapGk=null;
+    else if (m.swapPlayers.includes(num)) m.swapPlayers=m.swapPlayers.filter(n=>n!==num);
+    else m.swapPlayers.push(num);
   }
   renderSwapPlayers(matchId);
   renderScorers(matchId);
@@ -1039,8 +788,8 @@ function setSwapGk(matchId, val) {
   const m = getMatch(matchId);
   if (m.swapGk && !m.swapPlayers.includes(m.swapGk)) m.swapPlayers.push(m.swapGk);
   const num = parseInt(val);
-  if (num) { m.swapGk = num; m.swapPlayers = m.swapPlayers.filter(n => n !== num); }
-  else { m.swapGk = null; }
+  if (num) { m.swapGk=num; m.swapPlayers=m.swapPlayers.filter(n=>n!==num); }
+  else m.swapGk=null;
   renderSwapPlayers(matchId);
   renderScorers(matchId);
 }
@@ -1051,170 +800,133 @@ function renderScorers(matchId) {
   const grid = document.getElementById(`scorers-${matchId}`);
   if (!grid) return;
 
-  let allPlayers = [...m.players];
-  if (m.gk) allPlayers.push(m.gk);
-
+  let all = [...m.players];
+  if (m.gk) all.push(m.gk);
   if (m.showSub) {
     if (m.subMode === 'individual') {
-      m.subs.forEach(s => { if (s.in && !allPlayers.includes(s.in)) allPlayers.push(s.in); });
+      m.subs.forEach(s => { if (s.in && !all.includes(s.in)) all.push(s.in); });
     } else {
-      m.swapPlayers.forEach(n => { if (!allPlayers.includes(n)) allPlayers.push(n); });
-      if (m.swapGk && !allPlayers.includes(m.swapGk)) allPlayers.push(m.swapGk);
+      m.swapPlayers.forEach(n => { if (!all.includes(n)) all.push(n); });
+      if (m.swapGk && !all.includes(m.swapGk)) all.push(m.swapGk);
     }
   }
-  allPlayers = [...new Set(allPlayers)].sort((a,b) => a - b);
+  all = [...new Set(all)].sort((a,b) => a - b);
 
-  if (allPlayers.length === 0) {
+  if (all.length === 0) {
     grid.innerHTML = '<span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>';
     return;
   }
+  Object.keys(m.scorers).forEach(k => { if (!all.includes(parseInt(k))) delete m.scorers[k]; });
 
-  Object.keys(m.scorers).forEach(k => {
-    if (!allPlayers.includes(parseInt(k))) delete m.scorers[k];
-  });
-
-  grid.innerHTML = allPlayers.map(num => {
+  grid.innerHTML = all.map(num => {
     const count = m.scorers[num] || 0;
     const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
     return `<div class="${cls}"
       onclick="toggleScorer(${matchId},${num})"
       ontouchstart="lpStart(event,${matchId},${num},'sc')"
       ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
-    >${num}${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
+    ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 }
 
-function toggleScorer(matchId, num) {
+function toggleScorer(mid, num) {
   if (lpFired) return;
-  const m = getMatch(matchId);
-  const c = m.scorers[num] || 0;
-  m.scorers[num] = c + 1;
-  renderScorers(matchId);
+  const m = getMatch(mid);
+  m.scorers[num] = (m.scorers[num]||0) + 1;
+  renderScorers(mid);
 }
-
-function resetScorer(matchId, num) {
-  const m = getMatch(matchId);
-  delete m.scorers[num];
-  renderScorers(matchId);
-}
+function resetScorer(mid, num) { delete getMatch(mid).scorers[num]; renderScorers(mid); }
 
 // ========== Generate ==========
 function generateOutput() {
   const date = document.getElementById('match-date').value;
   const type = document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM';
   const tournament = document.getElementById('tournament-name').value.trim();
-  const opponent = document.getElementById('opponent').value.trim();
   const venue = document.getElementById('venue').value.trim();
 
   const d = new Date(date + 'T00:00:00');
   const days = ['日','月','火','水','木','金','土'];
   const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}(${days[d.getDay()]})`;
 
-  // Format string
+  const preset = document.querySelector('#format-presets .format-chip.active');
   let fmtStr;
-  const activePreset = document.querySelector('#format-presets .format-chip.active');
-  if (activePreset && activePreset.dataset.min) {
-    const min = activePreset.dataset.min;
-    const per = activePreset.dataset.per;
-    fmtStr = per === '2' ? `${min}分ハーフ` : `${min}分×${per}`;
-  } else {
-    fmtStr = `${formatMinutes}分×${formatPeriods}`;
-  }
+  if (preset && preset.dataset.min) {
+    fmtStr = preset.dataset.per==='2' ? `${preset.dataset.min}分ハーフ` : `${preset.dataset.min}分×${preset.dataset.per}`;
+  } else { fmtStr = `${formatMinutes}分×${formatPeriods}`; }
+
+  // Check if all opponents are the same
+  const allOpps = matches.map(m => m.opponent).filter(Boolean);
+  const uniqueOpps = [...new Set(allOpps)];
+  const sameOpponent = uniqueOpps.length === 1;
 
   let lines = [];
   let header = `${dateStr} ${type}`;
   if (tournament) header += ` ${tournament}`;
-  header += ` vs${opponent}`;
+  if (sameOpponent) header += ` vs${uniqueOpps[0]}`;
   lines.push(header);
   lines.push(`@${venue}`);
   lines.push(`試合形式${fmtStr}`);
   lines.push('');
 
   matches.forEach((m, i) => {
-    const num = i + 1;
+    const starters = [...m.players].sort((a,b) => a-b);
+    let pStr = starters.join('.');
+    if (m.gk !== null) { if (pStr) pStr += '.'; pStr += `GK${m.gk}`; }
 
-    // Starting lineup
-    const starters = [...m.players].sort((a,b) => a - b);
-    let playerStr = starters.join('.');
-    if (m.gk !== null) {
-      if (playerStr) playerStr += '.';
-      playerStr += `GK${m.gk}`;
-    }
-
-    // Substitution
     if (m.showSub) {
       if (m.subMode === 'individual') {
-        const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
-        if (validSubs.length > 0) {
-          const inPlayers = validSubs.map(s => s.in).sort((a,b) => a - b);
-          let subStr = inPlayers.join('.');
+        const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+        if (valid.length > 0) {
+          let subStr = valid.map(s => s.in).sort((a,b)=>a-b).join('.');
           if (m.subGkChange) subStr += `.GK${m.subGkChange}`;
-          playerStr += `→${subStr}`;
+          pStr += `→${subStr}`;
         }
       } else {
         if (m.swapPlayers.length > 0 || m.swapGk !== null) {
-          const swapField = [...m.swapPlayers].sort((a,b) => a - b);
-          let swapStr = swapField.join('.');
-          if (m.swapGk !== null) {
-            if (swapStr) swapStr += '.';
-            swapStr += `GK${m.swapGk}`;
-          }
-          playerStr += `\n　　　　→${swapStr}`;
+          const sf = [...m.swapPlayers].sort((a,b)=>a-b);
+          let ss = sf.join('.');
+          if (m.swapGk !== null) { if(ss) ss+='.'; ss+=`GK${m.swapGk}`; }
+          pStr += `\n　　　　→${ss}`;
         }
       }
     }
 
-    const scoreUs = parseInt(document.getElementById(`score-us-${m.id}`).value) || 0;
-    const scoreOpp = parseInt(document.getElementById(`score-opp-${m.id}`).value) || 0;
+    const us = m.scoreUs, opp = m.scoreOpponent;
+    let result = us > opp ? '○' : us === opp ? '△' : '×';
 
-    // Result
-    let result = '';
-    if (scoreUs > scoreOpp) result = '○';
-    else if (scoreUs === scoreOpp) result = '△';
-    else result = '×';
-
-    // Scorers
     let scorerParts = [];
-    Object.entries(m.scorers).forEach(([pNum, count]) => {
-      for (let c = 0; c < count; c++) scorerParts.push(pNum);
-    });
+    Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(p); });
     const scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
 
-    lines.push(`(${num}試合目)`);
-    lines.push(`出場選手：${playerStr}`);
-    lines.push(`スコア：${scoreUs}-${scoreOpp} ${result}`);
+    let matchLine = `(${i+1}試合目)`;
+    if (!sameOpponent && m.opponent) matchLine += ` vs${m.opponent}`;
+    lines.push(matchLine);
+    lines.push(`出場選手：${pStr}`);
+    lines.push(`スコア：${us}-${opp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
     if (m.memo) lines.push(`メモ：${m.memo}`);
     lines.push('');
   });
 
   const output = lines.join('\n').trimEnd();
-  const outputArea = document.getElementById('output-area');
-  outputArea.textContent = output;
-  outputArea.style.display = 'block';
+  document.getElementById('output-area').textContent = output;
+  document.getElementById('output-area').style.display = 'block';
   document.getElementById('copy-btn').style.display = 'block';
-  outputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('output-area').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function copyOutput() {
   const text = document.getElementById('output-area').textContent;
-  navigator.clipboard.writeText(text).then(() => showToast()).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
+  navigator.clipboard.writeText(text).then(()=>showToast()).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
     showToast();
   });
 }
-
 function showToast() {
-  const t = document.createElement('div');
-  t.className = 'copy-success';
-  t.textContent = 'コピーしました！';
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 1600);
+  const t=document.createElement('div'); t.className='copy-success';
+  t.textContent='コピーしました！'; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1600);
 }
 
 init();
