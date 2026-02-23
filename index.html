@@ -211,7 +211,7 @@
 <body>
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.2.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.2.1</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -231,7 +231,6 @@
       <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
     </div>
     <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
-    <p id="debug-log" style="font-size:10px;color:#aaa;margin-top:4px;word-break:break-all;"></p>
   </div>
 </div>
 
@@ -1108,12 +1107,8 @@ function loadFromUrl() {
 let isFirstLoad = true;
 
 function debugLog(msg) {
-  const el = document.getElementById('debug-log');
-  if (el) {
-    const time = new Date().toLocaleTimeString();
-    el.textContent = `[${time}] ${msg}`;
-  }
-  console.log(msg);
+  // デバッグ用（本番では無効化）
+  // console.log(msg);
 }
 
 function joinRoom(role) {
