@@ -1131,8 +1131,11 @@ function joinRoom() {
 
   // Listen for changes
   roomRef.on('value', (snapshot) => {
-    debugLog(`受信 syncing:${isSyncing} first:${isFirstLoad}`);
-    if (isSyncing) return;
+    debugLog(`受信 syncing:${isSyncing}`);
+    if (isSyncing) {
+      debugLog('送信中のためスキップ');
+      return;
+    }
     const data = snapshot.val();
     if (data) {
       debugLog(`データ読込: ${data.matches?.length || 0}試合`);
@@ -1251,7 +1254,10 @@ let syncTimer = null;
 function scheduleSync() {
   if (!roomRef) return;
   if (syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncToFirebase, 1000);
+  syncTimer = setTimeout(() => {
+    debugLog('変更検知、送信予定');
+    syncToFirebase();
+  }, 1000);
 }
 
 init();
