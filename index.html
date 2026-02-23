@@ -1098,34 +1098,37 @@ function loadFromUrl() {
 }
 
 // ========== Firebase Sync ==========
+let isFirstLoad = true;
+
 function joinRoom() {
   const roomId = document.getElementById('room-id').value.trim();
   if (!roomId) return;
   currentRoom = roomId;
   roomRef = db.ref('rooms/' + roomId);
+  isFirstLoad = true;
 
   // Show status
   document.getElementById('room-join').style.display = 'none';
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
 
-  // First check if room has existing data
-  roomRef.once('value').then((snapshot) => {
+  // Listen for changes
+  roomRef.on('value', (snapshot) => {
+    console.log('Firebase data received, isSyncing:', isSyncing, 'isFirstLoad:', isFirstLoad);
+    if (isSyncing) return;
     const data = snapshot.val();
+    console.log('Data:', data);
     if (data) {
-      // Room exists - load existing data
       loadFromFirebase(data);
+    } else if (isFirstLoad) {
+      // No data in room - save current state as initial data
+      console.log('No data, saving initial state');
+      syncToFirebase();
     }
-    // If no data, don't save - let the first person who edits save their data
-
-    // Start listening for changes
-    roomRef.on('value', (snapshot) => {
-      if (isSyncing) return;
-      const data = snapshot.val();
-      if (data) {
-        loadFromFirebase(data);
-      }
-    });
+    isFirstLoad = false;
+  }, (error) => {
+    console.error('Firebase error:', error);
+    alert('Firebase接続エラー: ' + error.message);
   });
 }
 
