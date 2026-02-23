@@ -211,14 +211,17 @@
 <body>
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.1.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.2.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
   <div class="card-title"><span>🔗</span> リアルタイム共有</div>
-  <div id="room-join" style="display:flex;gap:6px;">
-    <input type="text" id="room-id" placeholder="ルームID（例: 20250223）" style="flex:1;">
-    <button class="btn btn-secondary" onclick="joinRoom()" style="width:auto;padding:10px 16px;">参加</button>
+  <div id="room-join">
+    <input type="text" id="room-id" placeholder="ルームID（例: 20250223）" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="joinRoom('viewer')" style="flex:1;padding:10px;">👀 閲覧で参加</button>
+      <button class="btn btn-primary" onclick="joinRoom('editor')" style="flex:1;padding:10px;">✏️ 編集で参加</button>
+    </div>
   </div>
   <div id="room-status" style="display:none;margin-top:8px;">
     <div style="display:flex;align-items:center;gap:8px;">
@@ -1113,38 +1116,33 @@ function debugLog(msg) {
   console.log(msg);
 }
 
-function joinRoom() {
+function joinRoom(role) {
   const roomId = document.getElementById('room-id').value.trim();
   if (!roomId) return;
   currentRoom = roomId;
   roomRef = db.ref('rooms/' + roomId);
-  isFirstLoad = true;
 
   // Show status
   document.getElementById('room-join').style.display = 'none';
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
 
-  debugLog('ルーム接続中...');
+  isEditor = (role === 'editor');
+  setRoleDisplay(role);
+  debugLog(isEditor ? '編集者として参加' : '閲覧者として参加');
 
-  // Check if room exists to determine role
+  // Load existing data first
   roomRef.once('value').then((snapshot) => {
     const data = snapshot.val();
     if (data) {
-      // Room exists - join as viewer
-      isEditor = false;
-      setRoleDisplay('viewer');
-      debugLog('閲覧者として参加');
       loadFromFirebase(data);
-    } else {
-      // New room - join as editor
-      isEditor = true;
-      setRoleDisplay('editor');
-      debugLog('編集者として参加');
+      debugLog('既存データ読込完了');
+    } else if (isEditor) {
+      // New room, save initial data
       syncToFirebase();
     }
 
-    // Start listening for changes (viewers only need this)
+    // Start listening for changes
     roomRef.on('value', (snapshot) => {
       if (isSyncing) return;
       const data = snapshot.val();
