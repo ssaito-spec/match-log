@@ -262,7 +262,10 @@
 <div id="matches-container"></div>
 
 <button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">＋ 試合を追加</button>
-<button class="btn btn-primary" onclick="generateOutput()">📝 ログを生成</button>
+<div style="display:flex;gap:8px;">
+  <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;">📝 背番号版</button>
+  <button class="btn btn-primary" onclick="generateOutput('name')" style="flex:1;">📝 名前版</button>
+</div>
 
 <pre id="output-area"></pre>
 <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
@@ -852,7 +855,10 @@ function toggleScorer(mid, num) {
 function resetScorer(mid, num) { delete getMatch(mid).scorers[num]; renderScorers(mid); }
 
 // ========== Generate ==========
-function generateOutput() {
+function generateOutput(mode) {
+  const useNames = (mode === 'name');
+  const fmt = n => useNames ? getName(n) : String(n);
+
   const date = document.getElementById('match-date').value;
   const type = document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM';
   const tournament = document.getElementById('tournament-name').value.trim();
@@ -878,22 +884,22 @@ function generateOutput() {
 
   matches.forEach((m, i) => {
     const starters = [...m.players].sort((a,b) => a-b);
-    let pStr = starters.join('.');
-    if (m.gk !== null) { if (pStr) pStr += '.'; pStr += `GK${m.gk}`; }
+    let pStr = starters.map(fmt).join('.');
+    if (m.gk !== null) { if (pStr) pStr += '.'; pStr += `GK${fmt(m.gk)}`; }
 
     if (m.showSub) {
       if (m.subMode === 'individual') {
         const valid = m.subs.filter(s => s.out!==null && s.in!==null);
         if (valid.length > 0) {
-          let subStr = valid.map(s => s.in).sort((a,b)=>a-b).join('.');
-          if (m.subGkChange) subStr += `.GK${m.subGkChange}`;
+          let subStr = valid.map(s => s.in).sort((a,b)=>a-b).map(fmt).join('.');
+          if (m.subGkChange) subStr += `.GK${fmt(m.subGkChange)}`;
           pStr += `→${subStr}`;
         }
       } else {
         if (m.swapPlayers.length > 0 || m.swapGk !== null) {
           const sf = [...m.swapPlayers].sort((a,b)=>a-b);
-          let ss = sf.join('.');
-          if (m.swapGk !== null) { if(ss) ss+='.'; ss+=`GK${m.swapGk}`; }
+          let ss = sf.map(fmt).join('.');
+          if (m.swapGk !== null) { if(ss) ss+='.'; ss+=`GK${fmt(m.swapGk)}`; }
           pStr += `\n　　　　→${ss}`;
         }
       }
@@ -903,7 +909,7 @@ function generateOutput() {
     let result = us > opp ? '○' : us === opp ? '△' : '×';
 
     let scorerParts = [];
-    Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(p); });
+    Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(fmt(parseInt(p))); });
     const scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
 
     lines.push(`(${i+1}試合目)`);
