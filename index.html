@@ -1109,17 +1109,24 @@ function joinRoom() {
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
 
-  // Listen for changes
-  roomRef.on('value', (snapshot) => {
-    if (isSyncing) return;
+  // First check if room has existing data
+  roomRef.once('value').then((snapshot) => {
     const data = snapshot.val();
     if (data) {
+      // Room exists - load existing data
       loadFromFirebase(data);
     }
-  });
+    // If no data, don't save - let the first person who edits save their data
 
-  // Save current state
-  syncToFirebase();
+    // Start listening for changes
+    roomRef.on('value', (snapshot) => {
+      if (isSyncing) return;
+      const data = snapshot.val();
+      if (data) {
+        loadFromFirebase(data);
+      }
+    });
+  });
 }
 
 function leaveRoom() {
