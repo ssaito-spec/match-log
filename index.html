@@ -266,6 +266,7 @@
   <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;">📝 背番号版</button>
   <button class="btn btn-primary" onclick="generateOutput('name')" style="flex:1;">📝 名前版</button>
 </div>
+<button class="btn btn-secondary" onclick="generateShareUrl()" style="margin-top:8px;">📤 共有URLをコピー</button>
 
 <pre id="output-area"></pre>
 <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
@@ -354,7 +355,10 @@ function init() {
     if (e.key === 'Enter') { e.preventDefault(); addRosterPlayer(); }
   });
 
-  addMatch();
+  // Load from URL or add empty match
+  if (!loadFromUrl()) {
+    addMatch();
+  }
 }
 
 // ========== Roster ==========
@@ -936,10 +940,112 @@ function copyOutput() {
     showToast();
   });
 }
-function showToast() {
+function showToast(msg) {
   const t=document.createElement('div'); t.className='copy-success';
-  t.textContent='コピーしました！'; document.body.appendChild(t);
+  t.textContent=msg||'コピーしました！'; document.body.appendChild(t);
   setTimeout(()=>t.remove(),1600);
+}
+
+// ========== Share URL ==========
+function getShareData() {
+  return {
+    date: document.getElementById('match-date').value,
+    type: document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM',
+    tournament: document.getElementById('tournament-name').value,
+    venue: document.getElementById('venue').value,
+    formatMinutes,
+    formatPeriods,
+    matches: matches.map(m => ({
+      opponent: m.opponent,
+      players: m.players,
+      gk: m.gk,
+      scoreUs: m.scoreUs,
+      scoreOpponent: m.scoreOpponent,
+      scorers: m.scorers,
+      showSub: m.showSub,
+      subMode: m.subMode,
+      subs: m.subs,
+      subGkChange: m.subGkChange,
+      swapPlayers: m.swapPlayers,
+      swapGk: m.swapGk,
+      memo: m.memo
+    }))
+  };
+}
+
+function generateShareUrl() {
+  const data = getShareData();
+  const json = JSON.stringify(data);
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  const url = location.origin + location.pathname + '#' + encoded;
+  navigator.clipboard.writeText(url).then(()=>showToast('共有URLをコピーしました！')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=url;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    showToast('共有URLをコピーしました！');
+  });
+}
+
+function loadFromUrl() {
+  if (!location.hash || location.hash.length < 2) return false;
+  try {
+    const encoded = location.hash.slice(1);
+    const json = decodeURIComponent(escape(atob(encoded)));
+    const data = JSON.parse(json);
+
+    // Restore basic info
+    if (data.date) document.getElementById('match-date').value = data.date;
+    if (data.tournament) document.getElementById('tournament-name').value = data.tournament;
+    if (data.venue) document.getElementById('venue').value = data.venue;
+    if (data.type) {
+      document.querySelectorAll('#match-type-options .chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.val === data.type);
+      });
+    }
+    if (data.formatMinutes) formatMinutes = data.formatMinutes;
+    if (data.formatPeriods) formatPeriods = data.formatPeriods;
+
+    // Restore matches
+    if (data.matches && data.matches.length > 0) {
+      matches = [];
+      matchCounter = 0;
+      document.getElementById('matches-container').innerHTML = '';
+      data.matches.forEach(md => {
+        matchCounter++;
+        const m = {
+          id: matchCounter,
+          opponent: md.opponent || '',
+          oppMode: md.opponent ? 'prev' : 'new',
+          players: md.players || [],
+          gk: md.gk,
+          scoreUs: md.scoreUs || 0,
+          scoreOpponent: md.scoreOpponent || 0,
+          scorers: md.scorers || {},
+          showSub: md.showSub || false,
+          subMode: md.subMode || 'individual',
+          subs: md.subs || [],
+          subGkChange: md.subGkChange,
+          swapPlayers: md.swapPlayers || [],
+          swapGk: md.swapGk,
+          memo: md.memo || ''
+        };
+        matches.push(m);
+        renderMatch(m);
+        // Restore UI state
+        document.getElementById(`score-us-${m.id}`).value = m.scoreUs;
+        document.getElementById(`score-opp-${m.id}`).value = m.scoreOpponent;
+        updateScore(m.id);
+        if (m.memo) document.getElementById(`memo-${m.id}`).value = m.memo;
+        if (m.showSub) {
+          document.getElementById(`sub-${m.id}`).style.display = 'block';
+          document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
+          if (m.subMode === 'fullswap') setSubMode(m.id, 'fullswap');
+          else renderSubRows(m.id);
+        }
+      });
+      return true;
+    }
+  } catch(e) { console.log('URL parse error', e); }
+  return false;
 }
 
 init();
