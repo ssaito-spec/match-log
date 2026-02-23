@@ -1183,6 +1183,8 @@ function syncToFirebase() {
 }
 
 function loadFromFirebase(data) {
+  debugLog('loadFromFirebase開始');
+
   // Restore basic info
   if (data.date) document.getElementById('match-date').value = data.date;
   if (data.tournament) document.getElementById('tournament-name').value = data.tournament;
@@ -1195,12 +1197,20 @@ function loadFromFirebase(data) {
   if (data.formatMinutes) formatMinutes = data.formatMinutes;
   if (data.formatPeriods) formatPeriods = data.formatPeriods;
 
+  // Firebaseは配列をオブジェクトに変換するので、配列に戻す
+  let matchesData = data.matches;
+  if (matchesData && !Array.isArray(matchesData)) {
+    matchesData = Object.values(matchesData);
+  }
+
+  debugLog('matches数: ' + (matchesData ? matchesData.length : 0));
+
   // Restore matches
-  if (data.matches && data.matches.length > 0) {
+  if (matchesData && matchesData.length > 0) {
     matches = [];
     matchCounter = 0;
     document.getElementById('matches-container').innerHTML = '';
-    data.matches.forEach(md => {
+    matchesData.forEach(md => {
       matchCounter++;
       const m = {
         id: matchCounter,
