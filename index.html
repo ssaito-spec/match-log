@@ -226,6 +226,7 @@
       <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
     </div>
     <p style="font-size:11px;color:#888;margin-top:4px;">同じルームIDの人とリアルタイム同期中</p>
+    <p id="debug-log" style="font-size:10px;color:#aaa;margin-top:4px;word-break:break-all;"></p>
   </div>
 </div>
 
@@ -1100,6 +1101,15 @@ function loadFromUrl() {
 // ========== Firebase Sync ==========
 let isFirstLoad = true;
 
+function debugLog(msg) {
+  const el = document.getElementById('debug-log');
+  if (el) {
+    const time = new Date().toLocaleTimeString();
+    el.textContent = `[${time}] ${msg}`;
+  }
+  console.log(msg);
+}
+
 function joinRoom() {
   const roomId = document.getElementById('room-id').value.trim();
   if (!roomId) return;
@@ -1112,22 +1122,23 @@ function joinRoom() {
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
 
+  debugLog('ルーム接続中...');
+
   // Listen for changes
   roomRef.on('value', (snapshot) => {
-    console.log('Firebase data received, isSyncing:', isSyncing, 'isFirstLoad:', isFirstLoad);
+    debugLog(`受信 syncing:${isSyncing} first:${isFirstLoad}`);
     if (isSyncing) return;
     const data = snapshot.val();
-    console.log('Data:', data);
     if (data) {
+      debugLog(`データ読込: ${data.matches?.length || 0}試合`);
       loadFromFirebase(data);
     } else if (isFirstLoad) {
-      // No data in room - save current state as initial data
-      console.log('No data, saving initial state');
+      debugLog('新規ルーム、初期データ保存');
       syncToFirebase();
     }
     isFirstLoad = false;
   }, (error) => {
-    console.error('Firebase error:', error);
+    debugLog('エラー: ' + error.message);
     alert('Firebase接続エラー: ' + error.message);
   });
 }
@@ -1146,9 +1157,14 @@ function leaveRoom() {
 function syncToFirebase() {
   if (!roomRef) return;
   isSyncing = true;
+  debugLog('送信中...');
   const data = getShareData();
   roomRef.set(data).then(() => {
+    debugLog('送信完了');
     setTimeout(() => { isSyncing = false; }, 500);
+  }).catch(err => {
+    debugLog('送信エラー: ' + err.message);
+    isSyncing = false;
   });
 }
 
