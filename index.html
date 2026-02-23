@@ -211,6 +211,7 @@
 <body>
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.1.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -223,9 +224,10 @@
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="width:10px;height:10px;background:#27ae60;border-radius:50%;"></span>
       <span id="room-name" style="font-weight:600;color:#27ae60;"></span>
+      <span id="room-role" style="font-size:12px;padding:2px 8px;border-radius:4px;"></span>
       <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
     </div>
-    <p style="font-size:11px;color:#888;margin-top:4px;">同じルームIDの人とリアルタイム同期中</p>
+    <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
     <p id="debug-log" style="font-size:10px;color:#aaa;margin-top:4px;word-break:break-all;"></p>
   </div>
 </div>
@@ -309,6 +311,7 @@ const db = firebase.database();
 let currentRoom = null;
 let roomRef = null;
 let isSyncing = false;
+let isEditor = false;
 
 // ========== State ==========
 const DEFAULT_ROSTER = [
@@ -1124,31 +1127,49 @@ function joinRoom() {
 
   debugLog('ルーム接続中...');
 
-  // Test connection first
-  db.ref('.info/connected').on('value', (snap) => {
-    debugLog('接続状態: ' + (snap.val() ? 'OK' : 'NG'));
-  });
-
-  // Listen for changes
-  roomRef.on('value', (snapshot) => {
-    debugLog(`受信 syncing:${isSyncing}`);
-    if (isSyncing) {
-      debugLog('送信中のためスキップ');
-      return;
-    }
+  // Check if room exists to determine role
+  roomRef.once('value').then((snapshot) => {
     const data = snapshot.val();
     if (data) {
-      debugLog(`データ読込: ${data.matches?.length || 0}試合`);
+      // Room exists - join as viewer
+      isEditor = false;
+      setRoleDisplay('viewer');
+      debugLog('閲覧者として参加');
       loadFromFirebase(data);
-    } else if (isFirstLoad) {
-      debugLog('新規ルーム、初期データ保存');
+    } else {
+      // New room - join as editor
+      isEditor = true;
+      setRoleDisplay('editor');
+      debugLog('編集者として参加');
       syncToFirebase();
     }
-    isFirstLoad = false;
-  }, (error) => {
-    debugLog('エラー: ' + error.message);
-    alert('Firebase接続エラー: ' + error.message);
+
+    // Start listening for changes (viewers only need this)
+    roomRef.on('value', (snapshot) => {
+      if (isSyncing) return;
+      const data = snapshot.val();
+      if (data && !isEditor) {
+        loadFromFirebase(data);
+        debugLog('データ更新受信');
+      }
+    });
   });
+}
+
+function setRoleDisplay(role) {
+  const roleEl = document.getElementById('room-role');
+  const descEl = document.getElementById('room-desc');
+  if (role === 'editor') {
+    roleEl.textContent = '編集者';
+    roleEl.style.background = '#e8f5e9';
+    roleEl.style.color = '#2e7d32';
+    descEl.textContent = 'あなたの編集が他の人に共有されます';
+  } else {
+    roleEl.textContent = '閲覧者';
+    roleEl.style.background = '#e3f2fd';
+    roleEl.style.color = '#1565c0';
+    descEl.textContent = '編集者の入力がリアルタイムで表示されます';
+  }
 }
 
 function leaveRoom() {
@@ -1253,6 +1274,7 @@ function loadFromFirebase(data) {
 let syncTimer = null;
 function scheduleSync() {
   if (!roomRef) return;
+  if (!isEditor) return; // 閲覧者は送信しない
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
     debugLog('変更検知、送信予定');
