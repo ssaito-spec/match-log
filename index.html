@@ -1164,6 +1164,15 @@ function syncToFirebase() {
   isSyncing = true;
   debugLog('送信中...');
   const data = getShareData();
+
+  // 3秒後に強制的にisSyncingをリセット（安全策）
+  setTimeout(() => {
+    if (isSyncing) {
+      debugLog('送信タイムアウト、リセット');
+      isSyncing = false;
+    }
+  }, 3000);
+
   roomRef.set(data).then(() => {
     debugLog('送信完了');
     setTimeout(() => { isSyncing = false; }, 500);
@@ -1223,6 +1232,7 @@ function loadFromFirebase(data) {
         else renderSubRows(m.id);
       }
     });
+    debugLog('読込完了: ' + matches.length + '試合');
   }
 }
 
