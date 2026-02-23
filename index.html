@@ -1124,6 +1124,11 @@ function joinRoom() {
 
   debugLog('ルーム接続中...');
 
+  // Test connection first
+  db.ref('.info/connected').on('value', (snap) => {
+    debugLog('接続状態: ' + (snap.val() ? 'OK' : 'NG'));
+  });
+
   // Listen for changes
   roomRef.on('value', (snapshot) => {
     debugLog(`受信 syncing:${isSyncing} first:${isFirstLoad}`);
