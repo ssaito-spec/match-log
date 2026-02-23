@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>試合ログ入力</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -210,6 +212,23 @@
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
 
+<!-- Room Sync -->
+<div class="card" id="room-card">
+  <div class="card-title"><span>🔗</span> リアルタイム共有</div>
+  <div id="room-join" style="display:flex;gap:6px;">
+    <input type="text" id="room-id" placeholder="ルームID（例: 20250223）" style="flex:1;">
+    <button class="btn btn-secondary" onclick="joinRoom()" style="width:auto;padding:10px 16px;">参加</button>
+  </div>
+  <div id="room-status" style="display:none;margin-top:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:10px;height:10px;background:#27ae60;border-radius:50%;"></span>
+      <span id="room-name" style="font-weight:600;color:#27ae60;"></span>
+      <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
+    </div>
+    <p style="font-size:11px;color:#888;margin-top:4px;">同じルームIDの人とリアルタイム同期中</p>
+  </div>
+</div>
+
 <!-- Basic Info -->
 <div class="card">
   <div class="card-title"><span>📋</span> 基本情報</div>
@@ -274,6 +293,22 @@
 <div style="height:40px;"></div>
 
 <script>
+// ========== Firebase ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyDksO5PztbdMK5Vo4BOx0G5wPFj7C_-IX8",
+  authDomain: "match-log-ade47.firebaseapp.com",
+  databaseURL: "https://match-log-ade47-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "match-log-ade47",
+  storageBucket: "match-log-ade47.firebasestorage.app",
+  messagingSenderId: "32294236369",
+  appId: "1:32294236369:web:4388de38dedc36db4715f0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+let currentRoom = null;
+let roomRef = null;
+let isSyncing = false;
+
 // ========== State ==========
 const DEFAULT_ROSTER = [
   {num:2,name:'優聖'},{num:3,name:'旺佑'},{num:4,name:'一翔'},
@@ -331,6 +366,7 @@ function init() {
     chip.addEventListener('click', () => {
       document.querySelectorAll('#match-type-options .chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
+      scheduleSync();
     });
   });
 
@@ -346,10 +382,16 @@ function init() {
       } else {
         document.getElementById('format-custom').style.display = 'flex';
       }
+      scheduleSync();
     });
   });
-  document.getElementById('match-minutes').addEventListener('input', function() { formatMinutes = parseInt(this.value)||15; });
-  document.getElementById('match-halves').addEventListener('input', function() { formatPeriods = parseInt(this.value)||1; });
+  document.getElementById('match-minutes').addEventListener('input', function() { formatMinutes = parseInt(this.value)||15; scheduleSync(); });
+  document.getElementById('match-halves').addEventListener('input', function() { formatPeriods = parseInt(this.value)||1; scheduleSync(); });
+
+  // Basic info inputs
+  ['match-date', 'tournament-name', 'venue'].forEach(id => {
+    document.getElementById(id).addEventListener('input', scheduleSync);
+  });
 
   document.getElementById('roster-name').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addRosterPlayer(); }
@@ -434,12 +476,14 @@ function addMatch() {
   };
   matches.push(match);
   renderMatch(match);
+  scheduleSync();
 }
 
 function removeMatch(id) {
   matches = matches.filter(m => m.id !== id);
   document.getElementById(`match-${id}`).remove();
   renumberMatches();
+  scheduleSync();
 }
 
 function renumberMatches() {
@@ -526,7 +570,7 @@ function renderMatch(match) {
 
     <div style="margin-top:8px;">
       <label>メモ（任意）</label>
-      <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value">
+      <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value;scheduleSync()">
     </div>
   `;
 
@@ -574,6 +618,7 @@ function selectOpp(matchId, opp) {
   m.opponent = opp;
   m.oppMode = 'prev';
   renderOppArea(matchId);
+  scheduleSync();
 }
 
 function selectOppNew(matchId) {
@@ -587,6 +632,7 @@ function selectOppNew(matchId) {
 
 function setOpp(matchId, val) {
   getMatch(matchId).opponent = val;
+  scheduleSync();
 }
 
 // ========== Player selection ==========
@@ -648,6 +694,7 @@ function togglePlayer(matchId, num, asGk) {
     else { m.players.push(num); }
   }
   renderMatchPlayers(matchId);
+  scheduleSync();
 }
 
 function updateGkSelect(matchId) {
@@ -679,6 +726,7 @@ function updateScore(matchId) {
   if (m.scoreUs > m.scoreOpponent) { el.classList.add('win'); el.textContent = '○'; }
   else if (m.scoreUs === m.scoreOpponent) { el.classList.add('draw'); el.textContent = '△'; }
   else { el.classList.add('lose'); el.textContent = '×'; }
+  scheduleSync();
 }
 
 // ========== Substitution ==========
@@ -855,8 +903,9 @@ function toggleScorer(mid, num) {
   const m = getMatch(mid);
   m.scorers[num] = (m.scorers[num]||0) + 1;
   renderScorers(mid);
+  scheduleSync();
 }
-function resetScorer(mid, num) { delete getMatch(mid).scorers[num]; renderScorers(mid); }
+function resetScorer(mid, num) { delete getMatch(mid).scorers[num]; renderScorers(mid); scheduleSync(); }
 
 // ========== Generate ==========
 function generateOutput(mode) {
@@ -1046,6 +1095,112 @@ function loadFromUrl() {
     }
   } catch(e) { console.log('URL parse error', e); }
   return false;
+}
+
+// ========== Firebase Sync ==========
+function joinRoom() {
+  const roomId = document.getElementById('room-id').value.trim();
+  if (!roomId) return;
+  currentRoom = roomId;
+  roomRef = db.ref('rooms/' + roomId);
+
+  // Show status
+  document.getElementById('room-join').style.display = 'none';
+  document.getElementById('room-status').style.display = 'block';
+  document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
+
+  // Listen for changes
+  roomRef.on('value', (snapshot) => {
+    if (isSyncing) return;
+    const data = snapshot.val();
+    if (data) {
+      loadFromFirebase(data);
+    }
+  });
+
+  // Save current state
+  syncToFirebase();
+}
+
+function leaveRoom() {
+  if (roomRef) {
+    roomRef.off();
+    roomRef = null;
+  }
+  currentRoom = null;
+  document.getElementById('room-join').style.display = 'flex';
+  document.getElementById('room-status').style.display = 'none';
+  document.getElementById('room-id').value = '';
+}
+
+function syncToFirebase() {
+  if (!roomRef) return;
+  isSyncing = true;
+  const data = getShareData();
+  roomRef.set(data).then(() => {
+    setTimeout(() => { isSyncing = false; }, 500);
+  });
+}
+
+function loadFromFirebase(data) {
+  // Restore basic info
+  if (data.date) document.getElementById('match-date').value = data.date;
+  if (data.tournament) document.getElementById('tournament-name').value = data.tournament;
+  if (data.venue) document.getElementById('venue').value = data.venue;
+  if (data.type) {
+    document.querySelectorAll('#match-type-options .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === data.type);
+    });
+  }
+  if (data.formatMinutes) formatMinutes = data.formatMinutes;
+  if (data.formatPeriods) formatPeriods = data.formatPeriods;
+
+  // Restore matches
+  if (data.matches && data.matches.length > 0) {
+    matches = [];
+    matchCounter = 0;
+    document.getElementById('matches-container').innerHTML = '';
+    data.matches.forEach(md => {
+      matchCounter++;
+      const m = {
+        id: matchCounter,
+        opponent: md.opponent || '',
+        oppMode: md.opponent ? 'prev' : 'new',
+        players: md.players || [],
+        gk: md.gk,
+        scoreUs: md.scoreUs || 0,
+        scoreOpponent: md.scoreOpponent || 0,
+        scorers: md.scorers || {},
+        showSub: md.showSub || false,
+        subMode: md.subMode || 'individual',
+        subs: md.subs || [],
+        subGkChange: md.subGkChange,
+        swapPlayers: md.swapPlayers || [],
+        swapGk: md.swapGk,
+        memo: md.memo || ''
+      };
+      matches.push(m);
+      renderMatch(m);
+      document.getElementById(`score-us-${m.id}`).value = m.scoreUs;
+      document.getElementById(`score-opp-${m.id}`).value = m.scoreOpponent;
+      updateScore(m.id);
+      if (m.memo) document.getElementById(`memo-${m.id}`).value = m.memo;
+      if (m.showSub) {
+        document.getElementById(`sub-${m.id}`).style.display = 'block';
+        document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
+        if (m.subMode === 'fullswap') setSubMode(m.id, 'fullswap');
+        else renderSubRows(m.id);
+      }
+    });
+  }
+}
+
+// Auto-sync on changes (debounced)
+let syncTimer = null;
+function scheduleSync() {
+  if (!roomRef) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToFirebase, 1000);
 }
 
 init();
