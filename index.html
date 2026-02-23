@@ -250,7 +250,8 @@
   <div class="card-title"><span>👕</span> 登録メンバー</div>
   <p style="font-size:12px;color:#999;margin-bottom:6px;">各試合の選手選択に表示されます</p>
   <div class="roster-tags" id="roster-tags"></div>
-  <div class="roster-input-row">
+  <span class="sub-toggle" id="roster-toggle" onclick="toggleRosterInput()" style="margin-top:8px;display:inline-block;">＋ メンバー追加</span>
+  <div class="roster-input-row" id="roster-input-row" style="display:none;">
     <input type="number" id="roster-num" placeholder="背番号" min="1" max="99" style="width:70px;">
     <input type="text" id="roster-name" placeholder="名前（下の名前）">
     <button class="btn btn-secondary" onclick="addRosterPlayer()" style="padding:8px 12px;">追加</button>
@@ -381,6 +382,18 @@ function addRosterPlayer() {
 function removeRosterPlayer(num) {
   roster = roster.filter(r => r.num !== num);
   renderRoster();
+}
+
+function toggleRosterInput() {
+  const row = document.getElementById('roster-input-row');
+  const toggle = document.getElementById('roster-toggle');
+  if (row.style.display === 'none') {
+    row.style.display = 'flex';
+    toggle.textContent = '× 閉じる';
+  } else {
+    row.style.display = 'none';
+    toggle.textContent = '＋ メンバー追加';
+  }
 }
 
 // ========== Matches ==========
