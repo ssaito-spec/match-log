@@ -238,8 +238,9 @@
 <!-- Room Sync -->
 <div class="card" id="room-card">
   <div class="card-title"><span>🔗</span> リアルタイム共有</div>
+  <p style="font-size:11px;color:#888;margin-bottom:8px;">ルームID = 試合日（8桁）で統一。過去の試合も同じIDで確認可能</p>
   <div id="room-join">
-    <input type="text" id="room-id" placeholder="ルームID（例: 20250223）" style="margin-bottom:8px;">
+    <input type="text" id="room-id" placeholder="試合日8桁（例: 20250301）" style="margin-bottom:8px;">
     <div style="display:flex;gap:8px;">
       <button class="btn btn-secondary" onclick="joinRoom('viewer')" style="flex:1;padding:10px;">👀 閲覧で参加</button>
       <button class="btn btn-primary" onclick="joinRoom('editor')" style="flex:1;padding:10px;">✏️ 編集で参加</button>
