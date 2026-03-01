@@ -94,6 +94,28 @@
   .result-badge.lose { background: #fce4ec; color: #c62828; }
   .result-badge.none { background: #f5f5f5; color: #bbb; }
 
+  /* PK Shootout */
+  .pk-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
+  .pk-toggle { font-size: 13px; color: #e74c3c; cursor: pointer; font-weight: 600; }
+  .pk-content { margin-top: 10px; }
+  .pk-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .pk-label { font-size: 13px; font-weight: 700; color: #555; min-width: 50px; }
+  .pk-kicks { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .pk-kick {
+    width: 36px; height: 36px; border: 2px solid #ddd; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; cursor: pointer; background: #fafafa;
+  }
+  .pk-kick.success { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+  .pk-kick.fail { background: #fce4ec; border-color: #e91e63; color: #c62828; }
+  .pk-add {
+    width: 36px; height: 36px; border: 2px dashed #ccc; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #999; cursor: pointer; background: #fff;
+  }
+  .pk-result { text-align: center; font-size: 16px; font-weight: 700; margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 8px; }
+  .pk-result .pk-score { font-size: 20px; color: #1a1a1a; }
+
   /* Scorer */
   .scorer-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
   .scorer-chip {
@@ -211,7 +233,7 @@
 <body>
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.2.1</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.3.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -478,7 +500,13 @@ function addMatch() {
     subGkChange: null,
     swapPlayers: [],
     swapGk: null,
-    memo: ''
+    memo: '',
+    showPK: false,
+    pkOurs: [],
+    pkTheirs: [],
+    customFormat: false,
+    customMinutes: 15,
+    customPeriods: 1
   };
   matches.push(match);
   renderMatch(match);
@@ -574,9 +602,41 @@ function renderMatch(match) {
       <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
     </div>
 
+    <div class="pk-section">
+      <span class="pk-toggle" id="pk-toggle-${mid}" onclick="togglePK(${mid})">＋ PK戦を入力</span>
+      <div class="pk-content" id="pk-content-${mid}" style="display:none;">
+        <div class="pk-row">
+          <span class="pk-label">JACPA</span>
+          <div class="pk-kicks" id="pk-ours-${mid}"></div>
+          <div class="pk-add" onclick="addPKKick(${mid},'ours')">+</div>
+        </div>
+        <div class="pk-row">
+          <span class="pk-label">相手</span>
+          <div class="pk-kicks" id="pk-theirs-${mid}"></div>
+          <div class="pk-add" onclick="addPKKick(${mid},'theirs')">+</div>
+        </div>
+        <div class="pk-result" id="pk-result-${mid}"></div>
+      </div>
+    </div>
+
     <div style="margin-top:8px;">
       <label>メモ（任意）</label>
       <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value;scheduleSync()">
+    </div>
+
+    <div style="margin-top:8px;">
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="custom-format-${mid}" onchange="toggleCustomFormat(${mid})">
+        <span style="font-size:13px;color:#666;">この試合だけ形式を変更</span>
+      </label>
+      <div id="custom-format-area-${mid}" style="display:none;margin-top:6px;">
+        <div class="format-custom" style="display:flex;">
+          <input type="number" id="custom-min-${mid}" value="15" min="1" max="90" onchange="setCustomFormat(${mid})">
+          <span>分 ×</span>
+          <input type="number" id="custom-per-${mid}" value="1" min="1" max="4" onchange="setCustomFormat(${mid})">
+          <span>本</span>
+        </div>
+      </div>
     </div>
   `;
 
@@ -729,8 +789,26 @@ function updateScore(matchId) {
   const el = document.getElementById(`result-${matchId}`);
   if (!el) return;
   el.className = 'result-badge';
-  if (m.scoreUs > m.scoreOpponent) { el.classList.add('win'); el.textContent = '○'; }
-  else if (m.scoreUs === m.scoreOpponent) { el.classList.add('draw'); el.textContent = '△'; }
+
+  let finalResult;
+  if (m.scoreUs > m.scoreOpponent) {
+    finalResult = 'win';
+  } else if (m.scoreUs < m.scoreOpponent) {
+    finalResult = 'lose';
+  } else {
+    if (m.showPK && m.pkOurs.length > 0) {
+      const pkOurs = m.pkOurs.filter(k => k === '○').length;
+      const pkTheirs = m.pkTheirs.filter(k => k === '○').length;
+      if (pkOurs > pkTheirs) finalResult = 'win';
+      else if (pkOurs < pkTheirs) finalResult = 'lose';
+      else finalResult = 'draw';
+    } else {
+      finalResult = 'draw';
+    }
+  }
+
+  if (finalResult === 'win') { el.classList.add('win'); el.textContent = '○'; }
+  else if (finalResult === 'draw') { el.classList.add('draw'); el.textContent = '△'; }
   else { el.classList.add('lose'); el.textContent = '×'; }
   scheduleSync();
 }
@@ -913,6 +991,84 @@ function toggleScorer(mid, num) {
 }
 function resetScorer(mid, num) { delete getMatch(mid).scorers[num]; renderScorers(mid); scheduleSync(); }
 
+// ========== PK Shootout ==========
+function togglePK(matchId) {
+  const m = getMatch(matchId);
+  m.showPK = !m.showPK;
+  document.getElementById(`pk-content-${matchId}`).style.display = m.showPK ? 'block' : 'none';
+  document.getElementById(`pk-toggle-${matchId}`).textContent = m.showPK ? '－ PK戦を閉じる' : '＋ PK戦を入力';
+  if (m.showPK && m.pkOurs.length === 0 && m.pkTheirs.length === 0) {
+    m.pkOurs = ['○','○','○'];
+    m.pkTheirs = ['○','○','○'];
+  }
+  if (m.showPK) renderPK(matchId);
+  updateScore(matchId);
+  scheduleSync();
+}
+
+function renderPK(matchId) {
+  const m = getMatch(matchId);
+  document.getElementById(`pk-ours-${matchId}`).innerHTML = m.pkOurs.map((k, i) =>
+    `<div class="pk-kick ${k==='○'?'success':'fail'}" onclick="togglePKKick(${matchId},'ours',${i})"
+      oncontextmenu="event.preventDefault();removePKKick(${matchId},'ours',${i})">${k}</div>`
+  ).join('');
+  document.getElementById(`pk-theirs-${matchId}`).innerHTML = m.pkTheirs.map((k, i) =>
+    `<div class="pk-kick ${k==='○'?'success':'fail'}" onclick="togglePKKick(${matchId},'theirs',${i})"
+      oncontextmenu="event.preventDefault();removePKKick(${matchId},'theirs',${i})">${k}</div>`
+  ).join('');
+  const oursScore = m.pkOurs.filter(k => k === '○').length;
+  const theirsScore = m.pkTheirs.filter(k => k === '○').length;
+  document.getElementById(`pk-result-${matchId}`).innerHTML = `
+    <div>${m.pkOurs.join('')} - ${m.pkTheirs.join('')}</div>
+    <div class="pk-score">PK戦 ${oursScore}-${theirsScore}</div>`;
+}
+
+function togglePKKick(matchId, side, index) {
+  const m = getMatch(matchId);
+  const arr = side === 'ours' ? m.pkOurs : m.pkTheirs;
+  arr[index] = arr[index] === '○' ? '×' : '○';
+  renderPK(matchId);
+  updateScore(matchId);
+  scheduleSync();
+}
+
+function addPKKick(matchId, side) {
+  const m = getMatch(matchId);
+  if (side === 'ours') m.pkOurs.push('○');
+  else m.pkTheirs.push('○');
+  renderPK(matchId);
+  updateScore(matchId);
+  scheduleSync();
+}
+
+function removePKKick(matchId, side, index) {
+  const m = getMatch(matchId);
+  if (side === 'ours' && m.pkOurs.length > 0) m.pkOurs.splice(index, 1);
+  else if (side === 'theirs' && m.pkTheirs.length > 0) m.pkTheirs.splice(index, 1);
+  renderPK(matchId);
+  updateScore(matchId);
+  scheduleSync();
+}
+
+// ========== Custom Format per Match ==========
+function toggleCustomFormat(matchId) {
+  const m = getMatch(matchId);
+  m.customFormat = document.getElementById(`custom-format-${matchId}`).checked;
+  document.getElementById(`custom-format-area-${matchId}`).style.display = m.customFormat ? 'block' : 'none';
+  if (m.customFormat) {
+    m.customMinutes = parseInt(document.getElementById(`custom-min-${matchId}`).value) || 15;
+    m.customPeriods = parseInt(document.getElementById(`custom-per-${matchId}`).value) || 1;
+  }
+  scheduleSync();
+}
+
+function setCustomFormat(matchId) {
+  const m = getMatch(matchId);
+  m.customMinutes = parseInt(document.getElementById(`custom-min-${matchId}`).value) || 15;
+  m.customPeriods = parseInt(document.getElementById(`custom-per-${matchId}`).value) || 1;
+  scheduleSync();
+}
+
 // ========== Generate ==========
 function generateOutput(mode) {
   const useNames = (mode === 'name');
@@ -931,14 +1087,16 @@ function generateOutput(mode) {
   let fmtStr;
   if (preset && preset.dataset.min) {
     fmtStr = preset.dataset.per==='2' ? `${preset.dataset.min}分ハーフ` : `${preset.dataset.min}分×${preset.dataset.per}`;
-  } else { fmtStr = `${formatMinutes}分×${formatPeriods}`; }
+  } else {
+    fmtStr = formatPeriods === 2 ? `${formatMinutes}分ハーフ` : `${formatMinutes}分×${formatPeriods}`;
+  }
 
   let lines = [];
   let header = `${dateStr} ${type}`;
   if (tournament) header += ` ${tournament}`;
   lines.push(header);
   lines.push(`会場：${venue}`);
-  lines.push(`試合形式${fmtStr}`);
+  lines.push(`試合形式：${fmtStr}`);
   lines.push('');
 
   matches.forEach((m, i) => {
@@ -967,15 +1125,32 @@ function generateOutput(mode) {
     const us = m.scoreUs, opp = m.scoreOpponent;
     let result = us > opp ? '○' : us === opp ? '△' : '×';
 
+    // PK戦の結果
+    let pkLines = [];
+    if (m.showPK && (m.pkOurs.length > 0 || m.pkTheirs.length > 0)) {
+      const pkOursScore = m.pkOurs.filter(k => k === '○').length;
+      const pkTheirsScore = m.pkTheirs.filter(k => k === '○').length;
+      if (pkOursScore > pkTheirsScore) result = '○';
+      else if (pkOursScore < pkTheirsScore) result = '×';
+      pkLines.push(`PK戦：${pkOursScore}-${pkTheirsScore}`);
+      pkLines.push(`JACPA：${m.pkOurs.join('')}`);
+      pkLines.push(`${m.opponent || '相手'}：${m.pkTheirs.join('')}`);
+    }
+
     let scorerParts = [];
     Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(fmt(parseInt(p))); });
     const scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
 
     lines.push(`(${i+1}試合目)`);
     if (m.opponent) lines.push(`対戦相手：${m.opponent}`);
+    if (m.customFormat) {
+      const mFmt = m.customPeriods === 2 ? `${m.customMinutes}分ハーフ` : `${m.customMinutes}分×${m.customPeriods}`;
+      lines.push(`試合形式：${mFmt}`);
+    }
     lines.push(`出場選手：${pStr}`);
     lines.push(`スコア：${us}-${opp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
+    pkLines.forEach(l => lines.push(l));
     if (m.memo) lines.push(`メモ：${m.memo}`);
     lines.push('');
   });
@@ -1023,7 +1198,13 @@ function getShareData() {
       subGkChange: m.subGkChange,
       swapPlayers: m.swapPlayers,
       swapGk: m.swapGk,
-      memo: m.memo
+      memo: m.memo,
+      showPK: m.showPK,
+      pkOurs: m.pkOurs,
+      pkTheirs: m.pkTheirs,
+      customFormat: m.customFormat,
+      customMinutes: m.customMinutes,
+      customPeriods: m.customPeriods
     }))
   };
 }
@@ -1081,7 +1262,13 @@ function loadFromUrl() {
           subGkChange: md.subGkChange,
           swapPlayers: md.swapPlayers || [],
           swapGk: md.swapGk,
-          memo: md.memo || ''
+          memo: md.memo || '',
+          showPK: md.showPK || false,
+          pkOurs: md.pkOurs || [],
+          pkTheirs: md.pkTheirs || [],
+          customFormat: md.customFormat || false,
+          customMinutes: md.customMinutes || 15,
+          customPeriods: md.customPeriods || 1
         };
         matches.push(m);
         renderMatch(m);
@@ -1095,6 +1282,17 @@ function loadFromUrl() {
           document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
           if (m.subMode === 'fullswap') setSubMode(m.id, 'fullswap');
           else renderSubRows(m.id);
+        }
+        if (m.showPK) {
+          document.getElementById(`pk-content-${m.id}`).style.display = 'block';
+          document.getElementById(`pk-toggle-${m.id}`).textContent = '－ PK戦を閉じる';
+          renderPK(m.id);
+        }
+        if (m.customFormat) {
+          document.getElementById(`custom-format-${m.id}`).checked = true;
+          document.getElementById(`custom-format-area-${m.id}`).style.display = 'block';
+          document.getElementById(`custom-min-${m.id}`).value = m.customMinutes;
+          document.getElementById(`custom-per-${m.id}`).value = m.customPeriods;
         }
       });
       return true;
@@ -1244,7 +1442,13 @@ function loadFromFirebase(data) {
         subGkChange: md.subGkChange,
         swapPlayers: md.swapPlayers || [],
         swapGk: md.swapGk,
-        memo: md.memo || ''
+        memo: md.memo || '',
+        showPK: md.showPK || false,
+        pkOurs: md.pkOurs || [],
+        pkTheirs: md.pkTheirs || [],
+        customFormat: md.customFormat || false,
+        customMinutes: md.customMinutes || 15,
+        customPeriods: md.customPeriods || 1
       };
       matches.push(m);
       renderMatch(m);
@@ -1257,6 +1461,17 @@ function loadFromFirebase(data) {
         document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
         if (m.subMode === 'fullswap') setSubMode(m.id, 'fullswap');
         else renderSubRows(m.id);
+      }
+      if (m.showPK) {
+        document.getElementById(`pk-content-${m.id}`).style.display = 'block';
+        document.getElementById(`pk-toggle-${m.id}`).textContent = '－ PK戦を閉じる';
+        renderPK(m.id);
+      }
+      if (m.customFormat) {
+        document.getElementById(`custom-format-${m.id}`).checked = true;
+        document.getElementById(`custom-format-area-${m.id}`).style.display = 'block';
+        document.getElementById(`custom-min-${m.id}`).value = m.customMinutes;
+        document.getElementById(`custom-per-${m.id}`).value = m.customPeriods;
       }
     });
     debugLog('読込完了: ' + matches.length + '試合');
