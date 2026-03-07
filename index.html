@@ -218,6 +218,66 @@
   }
   @keyframes fadeOut { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
 
+  /* Formation */
+  .formation-modal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .formation-content {
+    background: #fff; border-radius: 16px; padding: 20px;
+    max-width: 360px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  .formation-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+  .formation-select { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+  .formation-opt {
+    padding: 10px 16px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer; background: #fafafa;
+  }
+  .formation-opt.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+  .formation-field {
+    background: linear-gradient(to bottom, #2d8a3e, #3da34d);
+    border-radius: 12px; padding: 12px; position: relative;
+    aspect-ratio: 3/4; max-height: 320px; margin: 0 auto;
+  }
+  .formation-row {
+    display: flex; justify-content: space-around; align-items: center;
+    height: 25%; padding: 4px 0;
+  }
+  .formation-slot {
+    width: 52px; height: 52px; background: rgba(255,255,255,0.2);
+    border: 2px dashed rgba(255,255,255,0.5); border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .formation-slot.filled {
+    background: #fff; border: 2px solid #fff;
+  }
+  .formation-slot.gk { background: #f59e0b; border-color: #f59e0b; }
+  .formation-slot .slot-name { font-size: 10px; font-weight: 700; color: #333; line-height: 1.1; text-align: center; }
+  .formation-slot .slot-num { font-size: 9px; color: #666; }
+  .formation-slot.gk .slot-name, .formation-slot.gk .slot-num { color: #fff; }
+  .formation-slot:not(.filled) .slot-name { color: rgba(255,255,255,0.7); font-size: 11px; }
+  .formation-slot.selecting { background: rgba(74,144,217,0.8); border: 2px solid #fff; animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .formation-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .formation-actions .btn { flex: 1; }
+  .player-picker { margin-top: 12px; }
+  .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .picker-chip {
+    padding: 8px 12px; background: #e8ecf1; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .picker-chip:hover { background: #4a90d9; color: #fff; }
+  .picker-chip.used { opacity: 0.3; pointer-events: none; }
+  .formation-output {
+    font-family: monospace; font-size: 11px; line-height: 1.4;
+    white-space: pre; background: #1a1a2e; color: #e0e0e0;
+    padding: 12px; border-radius: 8px; margin-top: 12px; text-align: center;
+  }
+  .player-chip.lp-active { transform: scale(1.1); background: #f59e0b !important; border-color: #f59e0b !important; }
+
   .roster-input-row { display: flex; gap: 6px; margin-top: 8px; }
   .roster-input-row input { flex: 1; }
   .roster-input-row .btn { flex-shrink: 0; width: auto; }
@@ -233,7 +293,7 @@
 <body>
 
 <h1>⚽ 試合ログ入力 ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.3.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.4.1</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -294,14 +354,20 @@
 
 <!-- Roster -->
 <div class="card">
-  <div class="card-title"><span>👕</span> 登録メンバー</div>
-  <p style="font-size:12px;color:#999;margin-bottom:6px;">各試合の選手選択に表示されます</p>
-  <div class="roster-tags" id="roster-tags"></div>
-  <span class="sub-toggle" id="roster-toggle" onclick="toggleRosterInput()" style="margin-top:8px;display:inline-block;">＋ メンバー追加</span>
-  <div class="roster-input-row" id="roster-input-row" style="display:none;">
-    <input type="number" id="roster-num" placeholder="背番号" min="1" max="99" style="width:70px;">
-    <input type="text" id="roster-name" placeholder="名前（下の名前）">
-    <button class="btn btn-secondary" onclick="addRosterPlayer()" style="padding:8px 12px;">追加</button>
+  <div class="card-title" onclick="toggleRosterCard()" style="cursor:pointer;">
+    <span>👕</span> 登録メンバー
+    <span id="roster-count" style="font-size:12px;color:#4a90d9;margin-left:4px;"></span>
+    <span id="roster-arrow" style="margin-left:auto;color:#999;font-size:12px;">▼</span>
+  </div>
+  <div id="roster-content" style="display:none;">
+    <p style="font-size:12px;color:#999;margin-bottom:6px;">各試合の選手選択に表示されます</p>
+    <div class="roster-tags" id="roster-tags"></div>
+    <span class="sub-toggle" id="roster-toggle" onclick="toggleRosterInput()" style="margin-top:8px;display:inline-block;">＋ メンバー追加</span>
+    <div class="roster-input-row" id="roster-input-row" style="display:none;">
+      <input type="number" id="roster-num" placeholder="背番号" min="1" max="99" style="width:70px;">
+      <input type="text" id="roster-name" placeholder="名前（下の名前）">
+      <button class="btn btn-secondary" onclick="addRosterPlayer()" style="padding:8px 12px;">追加</button>
+    </div>
   </div>
 </div>
 
@@ -433,11 +499,20 @@ function init() {
 }
 
 // ========== Roster ==========
+let rosterExpanded = false;
+
+function toggleRosterCard() {
+  rosterExpanded = !rosterExpanded;
+  document.getElementById('roster-content').style.display = rosterExpanded ? 'block' : 'none';
+  document.getElementById('roster-arrow').textContent = rosterExpanded ? '▲' : '▼';
+}
+
 function renderRoster() {
   roster.sort((a,b) => a.num - b.num);
   document.getElementById('roster-tags').innerHTML = roster.map(r =>
     `<span class="roster-tag">${r.name}(${r.num})<span class="remove" onclick="removeRosterPlayer(${r.num})">×</span></span>`
   ).join('');
+  document.getElementById('roster-count').textContent = `(${roster.length}人)`;
   localStorage.setItem('soccer-roster-v2', JSON.stringify(roster));
   matches.forEach(m => renderMatchPlayers(m.id));
 }
@@ -507,7 +582,9 @@ function addMatch() {
     pkTheirs: [],
     customFormat: false,
     customMinutes: 15,
-    customPeriods: 1
+    customPeriods: 1,
+    formation: null, // [{pos, num}]
+    formationType: '3-2-2'
   };
   matches.push(match);
   renderMatch(match);
@@ -549,9 +626,10 @@ function renderMatch(match) {
       <div id="opp-area-${mid}"></div>
     </div>
 
-    <label>
-      出場選手（タップで選択 / 長押しでGK）
+    <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span>出場選手（タップで選択 / ダブルタップでGK）</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
+      <button class="btn" style="padding:4px 10px;font-size:11px;background:#e8f5e9;color:#2e7d32;margin-left:auto;" onclick="openFormation(${mid})">配置図</button>
     </label>
     <div class="player-grid" id="players-${mid}"></div>
     <div class="gk-row">
@@ -719,10 +797,8 @@ function renderMatchPlayers(matchId) {
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
-      onclick="togglePlayer(${matchId},${r.num},false)"
+      onclick="handlePlayerTap(${matchId},${r.num})"
       oncontextmenu="event.preventDefault();togglePlayer(${matchId},${r.num},true)"
-      ontouchstart="lpStart(event,${matchId},${r.num},'fp')"
-      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
     >${label}</div>`;
   }).join('');
 
@@ -736,18 +812,66 @@ function renderMatchPlayers(matchId) {
   renderSwapPlayers(matchId);
 }
 
-// Long press
-let lpTimer = null, lpFired = false;
+// Double tap for GK selection (instant single tap)
+let lastTapTime = 0;
+let lastTapNum = null;
+let lastTapMid = null;
+let lastTapType = null;
+
+function handlePlayerTap(mid, num) {
+  const now = Date.now();
+  const isDoubleTap = (lastTapNum === num && lastTapMid === mid && lastTapType === 'player' && now - lastTapTime < 400);
+
+  if (isDoubleTap) {
+    // Double tap - make GK
+    togglePlayer(mid, num, true);
+    lastTapTime = 0;
+    lastTapNum = null;
+  } else {
+    // Single tap - toggle selection immediately
+    togglePlayer(mid, num, false);
+    lastTapTime = now;
+    lastTapNum = num;
+    lastTapMid = mid;
+    lastTapType = 'player';
+  }
+}
+
+function handleSwapPlayerTap(mid, num) {
+  const now = Date.now();
+  const isDoubleTap = (lastTapNum === num && lastTapMid === mid && lastTapType === 'swap' && now - lastTapTime < 400);
+
+  if (isDoubleTap) {
+    // Double tap - make GK
+    toggleSwapPlayer(mid, num, true);
+    lastTapTime = 0;
+    lastTapNum = null;
+  } else {
+    // Single tap - toggle selection immediately
+    toggleSwapPlayer(mid, num, false);
+    lastTapTime = now;
+    lastTapNum = num;
+    lastTapMid = mid;
+    lastTapType = 'swap';
+  }
+}
+
+// Long press for scorer reset only
+let lpTimer = null;
+let lpFired = false;
 function lpStart(e, mid, num, type) {
+  if (type !== 'sc') return;
   lpFired = false;
   lpTimer = setTimeout(() => {
     lpFired = true;
-    if (type === 'fp') togglePlayer(mid, num, true);
-    else if (type === 'sw') toggleSwapPlayer(mid, num, true);
-    else if (type === 'sc') resetScorer(mid, num);
-  }, 500);
+    if (navigator.vibrate) navigator.vibrate(50);
+    resetScorer(mid, num);
+  }, 600);
 }
-function lpEnd() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }
+function lpMove() {}
+function lpEnd() {
+  if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+}
 
 function togglePlayer(matchId, num, asGk) {
   if (lpFired && !asGk) return;
@@ -907,10 +1031,8 @@ function renderSwapPlayers(matchId) {
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
-      onclick="toggleSwapPlayer(${matchId},${r.num},false)"
+      onclick="handleSwapPlayerTap(${matchId},${r.num})"
       oncontextmenu="event.preventDefault();toggleSwapPlayer(${matchId},${r.num},true)"
-      ontouchstart="lpStart(event,${matchId},${r.num},'sw')"
-      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
     >${label}</div>`;
   }).join('');
   const total = m.swapPlayers.length + (m.swapGk ? 1 : 0);
@@ -978,7 +1100,7 @@ function renderScorers(matchId) {
     return `<div class="${cls}"
       onclick="toggleScorer(${matchId},${num})"
       ontouchstart="lpStart(event,${matchId},${num},'sc')"
-      ontouchend="lpEnd(event)" ontouchmove="lpEnd(event)"
+      ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
     ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 }
@@ -1101,23 +1223,46 @@ function generateOutput(mode) {
   lines.push('');
 
   matches.forEach((m, i) => {
-    const starters = [...m.players].sort((a,b) => a-b);
-    let pStr = starters.map(fmt).join('.');
-    if (m.gk !== null) { if (pStr) pStr += '.'; pStr += `GK${fmt(m.gk)}`; }
+    let pStr = '';
 
-    if (m.showSub) {
-      if (m.subMode === 'individual') {
-        const valid = m.subs.filter(s => s.out!==null && s.in!==null);
-        if (valid.length > 0) {
-          let subStr = valid.map(s => s.in).sort((a,b)=>a-b).map(fmt).join('.');
-          if (m.subGkChange) subStr += `.GK${fmt(m.subGkChange)}`;
-          pStr += `→${subStr}`;
-        }
-      } else {
+    if (m.showSub && m.subMode === 'individual') {
+      const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+      const outsSet = new Set(valid.map(s => s.out));
+
+      // スタメンから交代で出る選手を除外
+      const remainingPlayers = [...m.players].filter(n => !outsSet.has(n)).sort((a,b) => a-b);
+      pStr = remainingPlayers.map(fmt).join(',');
+
+      // GKの処理
+      const gkOut = m.gk !== null && outsSet.has(m.gk);
+      if (m.gk !== null && !gkOut) {
+        if (pStr) pStr += ',';
+        pStr += `GK${fmt(m.gk)}`;
+      }
+
+      // 交代情報を追加（OUT→IN形式）
+      if (valid.length > 0) {
+        const subParts = valid.map(s => {
+          const isGkOut = s.out === m.gk;
+          const isGkIn = m.subGkChange === s.in;
+          const outStr = isGkOut ? `GK${fmt(s.out)}` : fmt(s.out);
+          const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
+          return `${outStr}→${inStr}`;
+        });
+        if (pStr) pStr += ',';
+        pStr += subParts.join(',');
+      }
+    } else {
+      // 交代なし or 総入替えの場合
+      const starters = [...m.players].sort((a,b) => a-b);
+      pStr = starters.map(fmt).join(',');
+      if (m.gk !== null) { if (pStr) pStr += ','; pStr += `GK${fmt(m.gk)}`; }
+
+      if (m.showSub && m.subMode === 'fullswap') {
         if (m.swapPlayers.length > 0 || m.swapGk !== null) {
           const sf = [...m.swapPlayers].sort((a,b)=>a-b);
-          let ss = sf.map(fmt).join('.');
-          if (m.swapGk !== null) { if(ss) ss+='.'; ss+=`GK${fmt(m.swapGk)}`; }
+          let ss = sf.map(fmt).join(',');
+          if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
           pStr += `\n　　　　→${ss}`;
         }
       }
@@ -1151,6 +1296,12 @@ function generateOutput(mode) {
     lines.push(`出場選手：${pStr}`);
     lines.push(`スコア：${us}-${opp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
+    // フォーメーション出力
+    if (m.formation && m.formation.length === 8) {
+      lines.push(`フォーメーション：${m.formationType}`);
+      const fmtText = generateFormationTextForMatch(m, useNames);
+      fmtText.split('\n').forEach(l => lines.push(l));
+    }
     pkLines.forEach(l => lines.push(l));
     if (m.memo) lines.push(`メモ：${m.memo}`);
     lines.push('');
@@ -1205,7 +1356,9 @@ function getShareData() {
       pkTheirs: m.pkTheirs,
       customFormat: m.customFormat,
       customMinutes: m.customMinutes,
-      customPeriods: m.customPeriods
+      customPeriods: m.customPeriods,
+      formation: m.formation,
+      formationType: m.formationType
     }))
   };
 }
@@ -1269,7 +1422,9 @@ function loadFromUrl() {
           pkTheirs: md.pkTheirs || [],
           customFormat: md.customFormat || false,
           customMinutes: md.customMinutes || 15,
-          customPeriods: md.customPeriods || 1
+          customPeriods: md.customPeriods || 1,
+          formation: md.formation || null,
+          formationType: md.formationType || '3-2-2'
         };
         matches.push(m);
         renderMatch(m);
@@ -1449,7 +1604,9 @@ function loadFromFirebase(data) {
         pkTheirs: md.pkTheirs || [],
         customFormat: md.customFormat || false,
         customMinutes: md.customMinutes || 15,
-        customPeriods: md.customPeriods || 1
+        customPeriods: md.customPeriods || 1,
+        formation: md.formation || null,
+        formationType: md.formationType || '3-2-2'
       };
       matches.push(m);
       renderMatch(m);
@@ -1489,6 +1646,259 @@ function scheduleSync() {
     debugLog('変更検知、送信予定');
     syncToFirebase();
   }, 1000);
+}
+
+// ========== Formation ==========
+// rows: FW(top) -> MF -> DF -> GK(bottom) の順で表示
+const FORMATIONS = {
+  '3-2-2': { name: '3-2-2', rows: [{pos:'FW',count:2}, {pos:'MF',count:2}, {pos:'DF',count:3}, {pos:'GK',count:1}] },
+  '3-3-1': { name: '3-3-1', rows: [{pos:'FW',count:1}, {pos:'MF',count:3}, {pos:'DF',count:3}, {pos:'GK',count:1}] },
+  '2-3-2': { name: '2-3-2', rows: [{pos:'FW',count:2}, {pos:'MF',count:3}, {pos:'DF',count:2}, {pos:'GK',count:1}] },
+};
+let formationModal = null;
+let formationMatchId = null;
+let formationType = '3-2-2';
+let formationSlots = []; // [{pos, num}]
+let selectingSlot = null;
+
+function openFormation(matchId) {
+  const m = getMatch(matchId);
+  const total = m.players.length + (m.gk ? 1 : 0);
+  if (total < 1) {
+    showToast('先に選手を選んでね');
+    return;
+  }
+  formationMatchId = matchId;
+  formationType = m.formationType || '3-2-2';
+  // Load existing formation or start fresh
+  if (m.formation && m.formation.length > 0) {
+    formationSlots = [...m.formation];
+  } else {
+    formationSlots = [];
+    if (m.gk) formationSlots.push({pos: 'GK', num: m.gk});
+  }
+  selectingSlot = null;
+  renderFormationModal();
+}
+
+function renderFormationModal() {
+  if (formationModal) formationModal.remove();
+
+  const m = getMatch(formationMatchId);
+  const allPlayers = [...m.players];
+  if (m.gk) allPlayers.push(m.gk);
+  const usedNums = formationSlots.map(s => s.num);
+
+  const f = FORMATIONS[formationType];
+
+  // Build field (FW top, GK bottom)
+  let fieldHtml = '';
+  f.rows.forEach((rowDef) => {
+    fieldHtml += '<div class="formation-row">';
+    for (let i = 0; i < rowDef.count; i++) {
+      const posId = rowDef.pos === 'GK' ? 'GK' : `${rowDef.pos}${i}`;
+      const slot = formationSlots.find(s => s.pos === posId);
+      const isGk = rowDef.pos === 'GK';
+
+      let cls = 'formation-slot';
+      if (slot) cls += ' filled';
+      if (isGk && slot) cls += ' gk';
+      if (selectingSlot === posId) cls += ' selecting';
+
+      const displayName = slot ? getName(slot.num) : rowDef.pos;
+      const displayNum = slot ? slot.num : '';
+
+      fieldHtml += `<div class="${cls}" onclick="selectSlot('${posId}')">
+        <span class="slot-name">${displayName}</span>
+        ${displayNum ? `<span class="slot-num">${displayNum}</span>` : ''}
+      </div>`;
+    }
+    fieldHtml += '</div>';
+  });
+
+  // Player picker - always visible
+  let pickerHtml = '<div class="player-picker"><p style="font-size:12px;color:#666;margin-bottom:6px;text-align:center;">';
+  if (selectingSlot) {
+    pickerHtml += `<strong>${selectingSlot}</strong>に入る選手をタップ`;
+  } else {
+    pickerHtml += 'ポジションを選んでから選手をタップ';
+  }
+  pickerHtml += '</p><div class="picker-grid">';
+  allPlayers.sort((a,b) => a-b).forEach(num => {
+    const used = usedNums.includes(num);
+    const isSelecting = selectingSlot !== null;
+    const clickable = isSelecting && (!used || formationSlots.find(s => s.pos === selectingSlot && s.num === num));
+    pickerHtml += `<div class="picker-chip ${used ? 'used' : ''} ${!isSelecting ? 'disabled' : ''}"
+      onclick="${clickable ? `assignSlot(${num})` : ''}"
+      style="${!isSelecting ? 'opacity:0.5;cursor:default;' : ''}">${getName(num)}(${num})</div>`;
+  });
+  pickerHtml += '</div></div>';
+
+  // Output preview
+  let outputHtml = '';
+  if (formationSlots.length === 8) {
+    outputHtml = `<div class="formation-output">${generateFormationText()}</div>`;
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'formation-modal';
+  modal.innerHTML = `
+    <div class="formation-content">
+      <div class="formation-title">⚽ フォーメーション配置</div>
+      <div class="formation-select">
+        ${Object.keys(FORMATIONS).map(k =>
+          `<div class="formation-opt ${k===formationType?'active':''}" onclick="setFormationType('${k}')">${k}</div>`
+        ).join('')}
+      </div>
+      <div class="formation-field">${fieldHtml}</div>
+      ${pickerHtml}
+      ${outputHtml}
+      <div class="formation-actions">
+        <button class="btn btn-secondary" onclick="closeFormation()">閉じる</button>
+        <button class="btn btn-primary" onclick="saveFormation()" ${formationSlots.length < 8 ? 'disabled style="opacity:0.5"' : ''}>保存</button>
+      </div>
+    </div>
+  `;
+  modal.onclick = (e) => { if (e.target === modal) closeFormation(); };
+  document.body.appendChild(modal);
+  formationModal = modal;
+}
+
+function setFormationType(type) {
+  formationType = type;
+  // Keep GK, reset others
+  formationSlots = formationSlots.filter(s => s.pos === 'GK');
+  selectingSlot = null;
+  renderFormationModal();
+}
+
+function selectSlot(posId) {
+  selectingSlot = (selectingSlot === posId) ? null : posId;
+  renderFormationModal();
+}
+
+function assignSlot(num) {
+  if (!selectingSlot) return;
+  // Remove if already placed elsewhere
+  formationSlots = formationSlots.filter(s => s.num !== num);
+  // Remove existing from this slot
+  formationSlots = formationSlots.filter(s => s.pos !== selectingSlot);
+  // Add
+  formationSlots.push({pos: selectingSlot, num: num});
+  selectingSlot = null;
+  renderFormationModal();
+}
+
+function generateFormationText() {
+  const f = FORMATIONS[formationType];
+  let lines = [];
+
+  f.rows.forEach((rowDef) => {
+    let row = [];
+    for (let i = 0; i < rowDef.count; i++) {
+      const posId = rowDef.pos === 'GK' ? 'GK' : `${rowDef.pos}${i}`;
+      const slot = formationSlots.find(s => s.pos === posId);
+      if (slot) {
+        row.push(rowDef.pos === 'GK' ? `GK${getName(slot.num)}` : getName(slot.num));
+      } else {
+        row.push('__');
+      }
+    }
+    const rowStr = row.join('  ');
+    const pad = Math.floor((24 - rowStr.length) / 2);
+    lines.push(' '.repeat(Math.max(0, pad)) + rowStr);
+  });
+
+  return lines.join('\n');
+}
+
+function generateFormationTextForMatch(m, useNames) {
+  if (!m.formation || !m.formationType) return '';
+  const f = FORMATIONS[m.formationType];
+  if (!f) return '';
+  const fmt = n => useNames ? getName(n) : String(n);
+
+  // 全角文字を考慮した表示幅
+  const getWidth = (str) => {
+    let w = 0;
+    for (const c of str) w += c.match(/[^\x00-\x7F]/) ? 2 : 1;
+    return w;
+  };
+
+  // 指定幅で中央揃え
+  const padCenter = (str, width) => {
+    const sw = getWidth(str);
+    if (sw >= width) return str;
+    const left = Math.floor((width - sw) / 2);
+    return ' '.repeat(left) + str + ' '.repeat(width - sw - left);
+  };
+
+  // 交代マップを作成（OUT -> IN）
+  const subMap = {};
+  if (m.showSub && m.subMode === 'individual') {
+    const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+    valid.forEach(s => { subMap[s.out] = s.in; });
+  }
+
+  const SLOT_WIDTH = 6;  // 各スロットの幅
+  const TOTAL_WIDTH = 20; // 全体幅（3人×6 + スペース2）
+
+  let lines = [];
+
+  f.rows.forEach((rowDef) => {
+    let slots = [];
+    let subSlots = [];
+    for (let i = 0; i < rowDef.count; i++) {
+      const posId = rowDef.pos === 'GK' ? 'GK' : `${rowDef.pos}${i}`;
+      const slot = m.formation.find(s => s.pos === posId);
+      if (slot) {
+        const name = rowDef.pos === 'GK' ? `GK${fmt(slot.num)}` : fmt(slot.num);
+        slots.push(padCenter(name, SLOT_WIDTH));
+        if (subMap[slot.num]) {
+          subSlots.push(padCenter(`(→${fmt(subMap[slot.num])})`, SLOT_WIDTH));
+        } else {
+          subSlots.push(' '.repeat(SLOT_WIDTH));
+        }
+      } else {
+        slots.push(padCenter('__', SLOT_WIDTH));
+        subSlots.push(' '.repeat(SLOT_WIDTH));
+      }
+    }
+
+    // 行を結合して全体を中央揃え
+    const rowStr = slots.join('');
+    const rowWidth = getWidth(rowStr);
+    const leftPad = Math.floor((TOTAL_WIDTH - rowWidth) / 2);
+    lines.push(' '.repeat(Math.max(0, leftPad)) + rowStr);
+
+    // 交代情報がある行は追加（独自に中央揃え）
+    if (subSlots.some(s => s.trim() !== '')) {
+      const subRowStr = subSlots.join('');
+      const subRowWidth = getWidth(subRowStr);
+      const subLeftPad = Math.floor((TOTAL_WIDTH - subRowWidth) / 2);
+      lines.push(' '.repeat(Math.max(0, subLeftPad)) + subRowStr);
+    }
+  });
+
+  return lines.join('\n');
+}
+
+function saveFormation() {
+  const m = getMatch(formationMatchId);
+  m.formation = [...formationSlots];
+  m.formationType = formationType;
+  showToast('フォーメーション保存！');
+  closeFormation();
+  scheduleSync();
+}
+
+function closeFormation() {
+  if (formationModal) {
+    formationModal.remove();
+    formationModal = null;
+  }
+  formationMatchId = null;
+  selectingSlot = null;
 }
 
 init();
