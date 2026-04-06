@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>試合ログ入力</title>
+<title>らくらくスコア入力くん</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <style>
@@ -292,8 +292,8 @@
 </head>
 <body>
 
-<h1>⚽ 試合ログ入力 ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.4.1</p>
+<h1>⚽ らくらくスコア入力くん ⚽</h1>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.6.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -308,10 +308,14 @@
   </div>
   <div id="room-status" style="display:none;margin-top:8px;">
     <div style="display:flex;align-items:center;gap:8px;">
-      <span style="width:10px;height:10px;background:#27ae60;border-radius:50%;"></span>
+      <span id="connection-dot" style="width:10px;height:10px;background:#27ae60;border-radius:50%;"></span>
       <span id="room-name" style="font-weight:600;color:#27ae60;"></span>
       <span id="room-role" style="font-size:12px;padding:2px 8px;border-radius:4px;"></span>
       <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+      <span id="presence-count" style="font-size:12px;color:#4a90d9;font-weight:600;"></span>
+      <span id="connection-status" style="font-size:11px;color:#888;"></span>
     </div>
     <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
   </div>
@@ -401,8 +405,12 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let currentRoom = null;
 let roomRef = null;
+let presenceRef = null;
+let myPresenceRef = null;
 let isSyncing = false;
 let isEditor = false;
+let isConnected = false;
+let myUserId = null;
 
 // ========== State ==========
 const DEFAULT_ROSTER = [
@@ -497,6 +505,62 @@ function init() {
   if (!loadFromUrl()) {
     addMatch();
   }
+
+  // Generate unique user ID for this session
+  myUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+  // Monitor Firebase connection status
+  db.ref('.info/connected').on('value', (snapshot) => {
+    isConnected = snapshot.val() === true;
+    updateConnectionStatus();
+    if (isConnected && currentRoom) {
+      // Reconnected - refresh presence
+      registerPresence();
+    }
+  });
+
+  // Handle page visibility change (background/foreground)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentRoom) {
+      debugLog('画面復帰 - 再接続中...');
+      reconnectRoom();
+    }
+  });
+}
+
+function updateConnectionStatus() {
+  const dot = document.getElementById('connection-dot');
+  const status = document.getElementById('connection-status');
+  if (!dot || !status) return;
+
+  if (isConnected) {
+    dot.style.background = '#27ae60';
+    status.textContent = '';
+  } else {
+    dot.style.background = '#f39c12';
+    status.textContent = '⚠️ 接続中...';
+  }
+}
+
+function reconnectRoom() {
+  if (!currentRoom || !roomRef) return;
+
+  // Re-fetch current data from Firebase (support both new and legacy format)
+  roomRef.once('value').then((snapshot) => {
+    const roomData = snapshot.val();
+    let data = null;
+    if (roomData) {
+      data = roomData.data || (roomData.matches ? roomData : null);
+    }
+    if (data) {
+      loadFromFirebase(data);
+      debugLog('再接続完了 - データ復元');
+    }
+    // Re-register presence
+    registerPresence();
+  }).catch(err => {
+    debugLog('再接続エラー: ' + err.message);
+  });
 }
 
 // ========== Roster ==========
@@ -584,7 +648,8 @@ function addMatch() {
     customFormat: false,
     customMinutes: 15,
     customPeriods: 1,
-    formation: null, // [{pos, num}]
+    formationFirst: null, // [{pos, num}] 前半
+    formationSecond: null, // [{pos, num}] 後半
     formationType: '3-2-2'
   };
   matches.push(match);
@@ -1224,24 +1289,18 @@ function generateOutput(mode) {
   lines.push('');
 
   matches.forEach((m, i) => {
-    let pStr = '';
+    // 出場選手（スタメン全員）
+    const starters = [...m.players].sort((a,b) => a-b);
+    let pStr = starters.map(fmt).join(',');
+    if (m.gk !== null) {
+      if (pStr) pStr += ',';
+      pStr += `GK${fmt(m.gk)}`;
+    }
 
+    // 交代情報（別行に出力）
+    let subStr = '';
     if (m.showSub && m.subMode === 'individual') {
       const valid = m.subs.filter(s => s.out!==null && s.in!==null);
-      const outsSet = new Set(valid.map(s => s.out));
-
-      // スタメンから交代で出る選手を除外
-      const remainingPlayers = [...m.players].filter(n => !outsSet.has(n)).sort((a,b) => a-b);
-      pStr = remainingPlayers.map(fmt).join(',');
-
-      // GKの処理
-      const gkOut = m.gk !== null && outsSet.has(m.gk);
-      if (m.gk !== null && !gkOut) {
-        if (pStr) pStr += ',';
-        pStr += `GK${fmt(m.gk)}`;
-      }
-
-      // 交代情報を追加（OUT→IN形式）
       if (valid.length > 0) {
         const subParts = valid.map(s => {
           const isGkOut = s.out === m.gk;
@@ -1250,22 +1309,14 @@ function generateOutput(mode) {
           const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
           return `${outStr}→${inStr}`;
         });
-        if (pStr) pStr += ',';
-        pStr += subParts.join(',');
+        subStr = subParts.join(',');
       }
-    } else {
-      // 交代なし or 総入替えの場合
-      const starters = [...m.players].sort((a,b) => a-b);
-      pStr = starters.map(fmt).join(',');
-      if (m.gk !== null) { if (pStr) pStr += ','; pStr += `GK${fmt(m.gk)}`; }
-
-      if (m.showSub && m.subMode === 'fullswap') {
-        if (m.swapPlayers.length > 0 || m.swapGk !== null) {
-          const sf = [...m.swapPlayers].sort((a,b)=>a-b);
-          let ss = sf.map(fmt).join(',');
-          if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
-          pStr += `\n　　　　→${ss}`;
-        }
+    } else if (m.showSub && m.subMode === 'fullswap') {
+      if (m.swapPlayers.length > 0 || m.swapGk !== null) {
+        const sf = [...m.swapPlayers].sort((a,b)=>a-b);
+        let ss = sf.map(fmt).join(',');
+        if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
+        subStr = `総入替→${ss}`;
       }
     }
 
@@ -1295,13 +1346,40 @@ function generateOutput(mode) {
       lines.push(`試合形式：${mFmt}`);
     }
     lines.push(`出場選手：${pStr}`);
+    if (subStr) {
+      lines.push(`交代：${subStr}`);
+    }
     lines.push(`スコア：${us}-${opp} ${result}`);
     lines.push(`得点者：${scorerStr}`);
-    // フォーメーション出力
-    if (m.formation && m.formation.length === 8) {
+    // フォーメーション出力（前半・後半対応）
+    if (hasFormation(m)) {
       lines.push(`フォーメーション：${m.formationType}`);
-      const fmtText = generateFormationTextForMatch(m, useNames);
-      fmtText.split('\n').forEach(l => lines.push(l));
+      const periods = m.customFormat ? m.customPeriods : formatPeriods;
+      const hasFirst = (m.formationFirst && m.formationFirst.length === 8) || (m.formation && m.formation.length === 8);
+      const hasSecond = m.formationSecond && m.formationSecond.length === 8;
+
+      if (periods >= 2 && hasFirst) {
+        lines.push('（前半）');
+        const fmtText = generateFormationTextForMatch(m, useNames, 'first');
+        fmtText.split('\n').forEach(l => lines.push(l));
+      } else if (hasFirst) {
+        const fmtText = generateFormationTextForMatch(m, useNames, 'first');
+        fmtText.split('\n').forEach(l => lines.push(l));
+      }
+
+      if (periods >= 2 && hasSecond) {
+        // 前半と後半の配置が同じかチェック
+        const firstText = generateFormationTextForMatch(m, useNames, 'first');
+        const secondText = generateFormationTextForMatch(m, useNames, 'second');
+        if (firstText === secondText) {
+          lines.push('');
+          lines.push('（後半も同じ配置）');
+        } else {
+          lines.push('');
+          lines.push('（後半）');
+          secondText.split('\n').forEach(l => lines.push(l));
+        }
+      }
     }
     pkLines.forEach(l => lines.push(l));
     if (m.memo) lines.push(`メモ：${m.memo}`);
@@ -1358,7 +1436,8 @@ function getShareData() {
       customFormat: m.customFormat,
       customMinutes: m.customMinutes,
       customPeriods: m.customPeriods,
-      formation: m.formation,
+      formationFirst: m.formationFirst,
+      formationSecond: m.formationSecond,
       formationType: m.formationType
     }))
   };
@@ -1424,7 +1503,8 @@ function loadFromUrl() {
           customFormat: md.customFormat || false,
           customMinutes: md.customMinutes || 15,
           customPeriods: md.customPeriods || 1,
-          formation: md.formation || null,
+          formationFirst: md.formationFirst || md.formation || null, // 旧形式互換
+          formationSecond: md.formationSecond || null,
           formationType: md.formationType || '3-2-2'
         };
         matches.push(m);
@@ -1471,6 +1551,7 @@ function joinRoom(role) {
   if (!roomId) return;
   currentRoom = roomId;
   roomRef = db.ref('rooms/' + roomId);
+  presenceRef = db.ref('rooms/' + roomId + '/presence');
 
   // Show status
   document.getElementById('room-join').style.display = 'none';
@@ -1481,19 +1562,46 @@ function joinRoom(role) {
   setRoleDisplay(role);
   debugLog(isEditor ? '編集者として参加' : '閲覧者として参加');
 
-  // Load existing data first
+  // Load existing data first (check both new 'data' key and legacy root)
   roomRef.once('value').then((snapshot) => {
-    const data = snapshot.val();
+    const roomData = snapshot.val();
+    let data = null;
+
+    if (roomData) {
+      if (roomData.data) {
+        // New format: data is in 'data' subkey
+        data = roomData.data;
+        debugLog('新形式データ読込');
+      } else if (roomData.matches || roomData.date) {
+        // Legacy format: data is at root level
+        data = roomData;
+        debugLog('旧形式データ読込 - マイグレーション実行');
+        // Migrate to new format if editor
+        if (isEditor) {
+          roomRef.child('data').set(data);
+        }
+      }
+    }
+
     if (data) {
       loadFromFirebase(data);
       debugLog('既存データ読込完了');
     } else if (isEditor) {
-      // New room, save initial data
-      syncToFirebase();
+      // New room - check if there's really no data (not just a connection issue)
+      // Only save if we have matches to save
+      if (matches.length > 0 && matches[0].players && matches[0].players.length > 0) {
+        syncToFirebase();
+        debugLog('新規ルーム作成');
+      } else {
+        debugLog('空のルーム - データなし');
+      }
     }
 
-    // Start listening for changes
-    roomRef.on('value', (snapshot) => {
+    // Register presence
+    registerPresence();
+
+    // Start listening for data changes
+    roomRef.child('data').on('value', (snapshot) => {
       if (isSyncing) return;
       const data = snapshot.val();
       if (data && !isEditor) {
@@ -1501,7 +1609,51 @@ function joinRoom(role) {
         debugLog('データ更新受信');
       }
     });
+
+    // Start listening for presence changes
+    presenceRef.on('value', (snapshot) => {
+      updatePresenceDisplay(snapshot.val());
+    });
+  }).catch(err => {
+    debugLog('接続エラー: ' + err.message);
+    alert('接続エラーが発生しました。ネットワーク接続を確認してください。');
+    leaveRoom();
   });
+}
+
+function registerPresence() {
+  if (!presenceRef || !myUserId) return;
+
+  // Create my presence entry
+  myPresenceRef = presenceRef.child(myUserId);
+  myPresenceRef.set({
+    role: isEditor ? 'editor' : 'viewer',
+    joinedAt: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  // Remove presence on disconnect
+  myPresenceRef.onDisconnect().remove();
+}
+
+function updatePresenceDisplay(presenceData) {
+  const countEl = document.getElementById('presence-count');
+  if (!countEl) return;
+
+  if (!presenceData) {
+    countEl.textContent = '';
+    return;
+  }
+
+  const users = Object.values(presenceData);
+  const total = users.length;
+  const editors = users.filter(u => u.role === 'editor').length;
+  const viewers = total - editors;
+
+  let text = `👥 ${total}人が参加中`;
+  if (editors > 0 && viewers > 0) {
+    text += `（編集者${editors}人）`;
+  }
+  countEl.textContent = text;
 }
 
 function setRoleDisplay(role) {
@@ -1521,6 +1673,15 @@ function setRoleDisplay(role) {
 }
 
 function leaveRoom() {
+  // Remove presence first
+  if (myPresenceRef) {
+    myPresenceRef.remove();
+    myPresenceRef = null;
+  }
+  if (presenceRef) {
+    presenceRef.off();
+    presenceRef = null;
+  }
   if (roomRef) {
     roomRef.off();
     roomRef = null;
@@ -1529,6 +1690,8 @@ function leaveRoom() {
   document.getElementById('room-join').style.display = 'block';
   document.getElementById('room-status').style.display = 'none';
   document.getElementById('room-id').value = '';
+  document.getElementById('presence-count').textContent = '';
+  document.getElementById('connection-status').textContent = '';
 }
 
 function syncToFirebase() {
@@ -1545,7 +1708,8 @@ function syncToFirebase() {
     }
   }, 3000);
 
-  roomRef.set(data).then(() => {
+  // Save to 'data' subkey (separate from 'presence')
+  roomRef.child('data').set(data).then(() => {
     debugLog('送信完了');
     setTimeout(() => { isSyncing = false; }, 500);
   }).catch(err => {
@@ -1606,7 +1770,8 @@ function loadFromFirebase(data) {
         customFormat: md.customFormat || false,
         customMinutes: md.customMinutes || 15,
         customPeriods: md.customPeriods || 1,
-        formation: md.formation || null,
+        formationFirst: md.formationFirst || md.formation || null, // 旧形式互換
+        formationSecond: md.formationSecond || null,
         formationType: md.formationType || '3-2-2'
       };
       matches.push(m);
@@ -1661,6 +1826,7 @@ let formationMatchId = null;
 let formationType = '3-2-2';
 let formationSlots = []; // [{pos, num}]
 let selectingSlot = null;
+let currentHalf = 'first'; // 'first' or 'second'
 
 function openFormation(matchId) {
   const m = getMatch(matchId);
@@ -1671,26 +1837,94 @@ function openFormation(matchId) {
   }
   formationMatchId = matchId;
   formationType = m.formationType || '3-2-2';
-  // Load existing formation or start fresh
-  if (m.formation && m.formation.length > 0) {
-    formationSlots = [...m.formation];
+  currentHalf = 'first'; // 常に前半から開始
+  loadFormationForHalf(m, 'first');
+  selectingSlot = null;
+  renderFormationModal();
+}
+
+function loadFormationForHalf(m, half) {
+  const formation = half === 'first' ? m.formationFirst : m.formationSecond;
+  if (formation && formation.length > 0) {
+    // 既に保存済みの配置があればそれを使う
+    formationSlots = [...formation];
+  } else if (half === 'second') {
+    // 後半の新規入力
+    const hasSubs = hasSubstitutions(m);
+    if (!hasSubs && m.formationFirst && m.formationFirst.length > 0) {
+      // 交代なし → 前半の配置をそのままコピー
+      formationSlots = [...m.formationFirst];
+    } else {
+      // 交代あり → GKだけ引き継いで、他は空から
+      formationSlots = [];
+      // GKを決定（交代でGK変わってたら新GK、変わってなければ前半のGK）
+      let gkNum = m.subGkChange || m.gk;
+      if (gkNum) {
+        formationSlots.push({pos: 'GK', num: gkNum});
+      }
+    }
   } else {
+    // 前半の新規入力
     formationSlots = [];
     if (m.gk) formationSlots.push({pos: 'GK', num: m.gk});
   }
-  selectingSlot = null;
-  renderFormationModal();
+}
+
+function hasSubstitutions(m) {
+  // 交代があるかチェック
+  if (!m.showSub) return false;
+  if (m.subMode === 'individual') {
+    const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
+    return validSubs.length > 0;
+  }
+  if (m.subMode === 'fullswap') {
+    return m.swapPlayers && m.swapPlayers.length > 0;
+  }
+  return false;
+}
+
+function getMatchPeriods(m) {
+  // 試合が何本制か判定
+  if (m.customFormat) {
+    return m.customPeriods;
+  }
+  return formatPeriods;
 }
 
 function renderFormationModal() {
   if (formationModal) formationModal.remove();
 
   const m = getMatch(formationMatchId);
-  const allPlayers = [...m.players];
+  const periods = getMatchPeriods(m);
+  const isMultiPeriod = periods >= 2;
+
+  // 後半用の選手リスト（交代を反映）
+  let allPlayers = [...m.players];
   if (m.gk) allPlayers.push(m.gk);
+
+  if (currentHalf === 'second' && m.showSub && m.subMode === 'individual') {
+    // 交代で入った選手を追加、出た選手を除外
+    const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
+    validSubs.forEach(sub => {
+      allPlayers = allPlayers.filter(n => n !== sub.out);
+      if (!allPlayers.includes(sub.in)) allPlayers.push(sub.in);
+    });
+  }
+
   const usedNums = formationSlots.map(s => s.num);
 
   const f = FORMATIONS[formationType];
+
+  // Half tabs (for multi-period matches)
+  let tabsHtml = '';
+  if (isMultiPeriod) {
+    tabsHtml = `
+      <div class="sub-mode-tabs" style="margin-bottom:12px;">
+        <div class="sub-mode-tab ${currentHalf === 'first' ? 'active' : ''}" onclick="switchHalf('first')">前半</div>
+        <div class="sub-mode-tab ${currentHalf === 'second' ? 'active' : ''}" onclick="switchHalf('second')">後半</div>
+      </div>
+    `;
+  }
 
   // Build field (FW top, GK bottom)
   let fieldHtml = '';
@@ -1728,10 +1962,15 @@ function renderFormationModal() {
   allPlayers.sort((a,b) => a-b).forEach(num => {
     const used = usedNums.includes(num);
     const isSelecting = selectingSlot !== null;
-    const clickable = isSelecting && (!used || formationSlots.find(s => s.pos === selectingSlot && s.num === num));
-    pickerHtml += `<div class="picker-chip ${used ? 'used' : ''} ${!isSelecting ? 'disabled' : ''}"
+    // ポジション選択中なら、配置済み選手でもクリック可能（ポジション入れ替え用）
+    const clickable = isSelecting;
+    const isCurrentSlot = formationSlots.find(s => s.pos === selectingSlot && s.num === num);
+    // usedでもポジション選択中ならクリック可能にする
+    const usedStyle = used && isSelecting ? 'opacity:0.5;pointer-events:auto;cursor:pointer;' : '';
+    const disabledStyle = !isSelecting ? 'opacity:0.5;cursor:default;' : '';
+    pickerHtml += `<div class="picker-chip ${used && !isCurrentSlot ? 'used' : ''} ${!isSelecting ? 'disabled' : ''}"
       onclick="${clickable ? `assignSlot(${num})` : ''}"
-      style="${!isSelecting ? 'opacity:0.5;cursor:default;' : ''}">${getName(num)}(${num})</div>`;
+      style="${usedStyle}${disabledStyle}">${getName(num)}(${num})</div>`;
   });
   pickerHtml += '</div></div>';
 
@@ -1743,9 +1982,11 @@ function renderFormationModal() {
 
   const modal = document.createElement('div');
   modal.className = 'formation-modal';
+  const halfLabel = isMultiPeriod ? (currentHalf === 'first' ? '（前半）' : '（後半）') : '';
   modal.innerHTML = `
     <div class="formation-content">
-      <div class="formation-title">⚽ フォーメーション配置</div>
+      <div class="formation-title">⚽ フォーメーション配置${halfLabel}</div>
+      ${tabsHtml}
       <div class="formation-select">
         ${Object.keys(FORMATIONS).map(k =>
           `<div class="formation-opt ${k===formationType?'active':''}" onclick="setFormationType('${k}')">${k}</div>`
@@ -1763,6 +2004,24 @@ function renderFormationModal() {
   modal.onclick = (e) => { if (e.target === modal) closeFormation(); };
   document.body.appendChild(modal);
   formationModal = modal;
+}
+
+function switchHalf(half) {
+  if (currentHalf === half) return;
+
+  // 現在の配置を保存
+  const m = getMatch(formationMatchId);
+  if (currentHalf === 'first') {
+    m.formationFirst = [...formationSlots];
+  } else {
+    m.formationSecond = [...formationSlots];
+  }
+
+  // 切り替え
+  currentHalf = half;
+  loadFormationForHalf(m, half);
+  selectingSlot = null;
+  renderFormationModal();
 }
 
 function setFormationType(type) {
@@ -1813,8 +2072,16 @@ function generateFormationText() {
   return lines.join('\n');
 }
 
-function generateFormationTextForMatch(m, useNames) {
-  if (!m.formation || !m.formationType) return '';
+function generateFormationTextForMatch(m, useNames, half = 'first') {
+  // 指定されたハーフの配置を取得（互換性: m.formationがある場合は旧形式）
+  let formation;
+  if (half === 'first') {
+    formation = m.formationFirst || m.formation;
+  } else {
+    formation = m.formationSecond;
+  }
+
+  if (!formation || !m.formationType) return '';
   const f = FORMATIONS[m.formationType];
   if (!f) return '';
   const fmt = n => useNames ? getName(n) : String(n);
@@ -1834,13 +2101,6 @@ function generateFormationTextForMatch(m, useNames) {
     return ' '.repeat(left) + str + ' '.repeat(width - sw - left);
   };
 
-  // 交代マップを作成（OUT -> IN）
-  const subMap = {};
-  if (m.showSub && m.subMode === 'individual') {
-    const valid = m.subs.filter(s => s.out!==null && s.in!==null);
-    valid.forEach(s => { subMap[s.out] = s.in; });
-  }
-
   const SLOT_WIDTH = 6;  // 各スロットの幅
   const TOTAL_WIDTH = 20; // 全体幅（3人×6 + スペース2）
 
@@ -1848,21 +2108,14 @@ function generateFormationTextForMatch(m, useNames) {
 
   f.rows.forEach((rowDef) => {
     let slots = [];
-    let subSlots = [];
     for (let i = 0; i < rowDef.count; i++) {
       const posId = rowDef.pos === 'GK' ? 'GK' : `${rowDef.pos}${i}`;
-      const slot = m.formation.find(s => s.pos === posId);
+      const slot = formation.find(s => s.pos === posId);
       if (slot) {
         const name = rowDef.pos === 'GK' ? `GK${fmt(slot.num)}` : fmt(slot.num);
         slots.push(padCenter(name, SLOT_WIDTH));
-        if (subMap[slot.num]) {
-          subSlots.push(padCenter(`(→${fmt(subMap[slot.num])})`, SLOT_WIDTH));
-        } else {
-          subSlots.push(' '.repeat(SLOT_WIDTH));
-        }
       } else {
         slots.push(padCenter('__', SLOT_WIDTH));
-        subSlots.push(' '.repeat(SLOT_WIDTH));
       }
     }
 
@@ -1871,24 +2124,30 @@ function generateFormationTextForMatch(m, useNames) {
     const rowWidth = getWidth(rowStr);
     const leftPad = Math.floor((TOTAL_WIDTH - rowWidth) / 2);
     lines.push(' '.repeat(Math.max(0, leftPad)) + rowStr);
-
-    // 交代情報がある行は追加（独自に中央揃え）
-    if (subSlots.some(s => s.trim() !== '')) {
-      const subRowStr = subSlots.join('');
-      const subRowWidth = getWidth(subRowStr);
-      const subLeftPad = Math.floor((TOTAL_WIDTH - subRowWidth) / 2);
-      lines.push(' '.repeat(Math.max(0, subLeftPad)) + subRowStr);
-    }
   });
 
   return lines.join('\n');
 }
 
+function hasFormation(m) {
+  return (m.formationFirst && m.formationFirst.length === 8) ||
+         (m.formationSecond && m.formationSecond.length === 8) ||
+         (m.formation && m.formation.length === 8); // 旧形式互換
+}
+
 function saveFormation() {
   const m = getMatch(formationMatchId);
-  m.formation = [...formationSlots];
+  const periods = getMatchPeriods(m);
+
+  if (currentHalf === 'first') {
+    m.formationFirst = [...formationSlots];
+  } else {
+    m.formationSecond = [...formationSlots];
+  }
   m.formationType = formationType;
-  showToast('フォーメーション保存！');
+
+  const label = periods >= 2 ? (currentHalf === 'first' ? '前半' : '後半') : '';
+  showToast(`${label}フォーメーション保存！`);
   closeFormation();
   scheduleSync();
 }
