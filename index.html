@@ -299,7 +299,10 @@
   <div class="card-title"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">①</span> まずルームに参加</div>
   <div id="room-join">
     <input type="hidden" id="room-id">
-    <button class="btn btn-primary" onclick="joinToday()" style="width:100%;padding:12px;font-size:16px;font-weight:700;">⚽ 今日の試合に参加する</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="joinToday('1')" style="flex:1;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合①</button>
+      <button class="btn btn-secondary" onclick="joinToday('2')" style="flex:1;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合②</button>
+    </div>
     <div style="text-align:center;margin-top:8px;">
       <span id="other-date-toggle" onclick="toggleOtherDate()" style="font-size:13px;color:#4a90d9;cursor:pointer;text-decoration:underline;">別の日の試合 ＞</span>
     </div>
@@ -1603,9 +1606,9 @@ async function firebaseDelete(url) {
 }
 
 // --- Join / Leave ---
-function joinToday() {
+function joinToday(num) {
   const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  document.getElementById('room-id').value = today;
+  document.getElementById('room-id').value = today + '_' + num;
   joinRoom();
 }
 
@@ -1628,7 +1631,8 @@ function joinRoom() {
 
   document.getElementById('room-join').style.display = 'none';
   document.getElementById('room-status').style.display = 'block';
-  document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
+  const displayName = roomId.endsWith('_1') ? '試合①' : roomId.endsWith('_2') ? '試合②' : roomId;
+  document.getElementById('room-name').textContent = displayName;
 
   isEditor = true;  // 全員エディター
   setRoleDisplay('editor');
