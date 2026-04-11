@@ -1153,14 +1153,6 @@ function renderScorers(matchId) {
   m.scorers = {};
   m.goalSequence.forEach(num => { m.scorers[num] = (m.scorers[num]||0) + 1; });
 
-  // 得点順表示
-  let seqHtml = '';
-  if (m.goalSequence.length > 0) {
-    seqHtml = '<div style="font-size:12px;color:#555;margin-bottom:6px;line-height:1.6;">' +
-      m.goalSequence.map((num, i) => `<span style="color:#e74c3c;font-weight:700;">${i+1}.</span> ${getName(num)}`).join('　') +
-      '</div>';
-  }
-
   const chipsHtml = all.map(num => {
     const count = m.scorers[num] || 0;
     const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
@@ -1171,7 +1163,15 @@ function renderScorers(matchId) {
     ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 
-  grid.innerHTML = seqHtml + chipsHtml;
+  // 得点順表示（チップの下）
+  let seqHtml = '';
+  if (m.goalSequence.length > 0) {
+    seqHtml = '<div style="font-size:12px;color:#555;margin-top:8px;line-height:1.6;">' +
+      m.goalSequence.map((num, i) => `<span style="color:#e74c3c;font-weight:700;">${i+1}.</span> ${getName(num)}`).join('　') +
+      '</div>';
+  }
+
+  grid.innerHTML = chipsHtml + seqHtml;
 }
 
 function toggleScorer(mid, num) {
