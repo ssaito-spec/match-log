@@ -448,7 +448,7 @@ function init() {
   document.getElementById('room-id').value = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
   // Load roster (migrate from old format if needed)
-  const saved = localStorage.getItem('soccer-roster-v4');
+  const saved = localStorage.getItem('soccer-roster-v5');
   if (saved) {
     roster = JSON.parse(saved);
   } else {
@@ -556,7 +556,7 @@ function renderRoster() {
     `<span class="roster-tag">${r.name}(${r.num})<span class="remove" onclick="removeRosterPlayer(${r.num})">×</span></span>`
   ).join('');
   document.getElementById('roster-count').textContent = `(${roster.length}人)`;
-  localStorage.setItem('soccer-roster-v4', JSON.stringify(roster));
+  localStorage.setItem('soccer-roster-v5', JSON.stringify(roster));
   matches.forEach(m => renderMatchPlayers(m.id));
 }
 
