@@ -293,7 +293,7 @@
 <body>
 
 <h1>⚽ らくらくスコア入力くん ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.6.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.7.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -316,6 +316,10 @@
     <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
       <span id="presence-count" style="font-size:12px;color:#4a90d9;font-weight:600;"></span>
       <span id="connection-status" style="font-size:11px;color:#888;"></span>
+    </div>
+    <div id="sync-bar" style="display:none;margin-top:6px;display:flex;align-items:center;gap:8px;">
+      <span id="sync-status" style="font-size:12px;font-weight:600;"></span>
+      <button id="sync-btn" class="btn btn-primary" onclick="manualSync()" style="margin-left:auto;padding:4px 12px;font-size:12px;">📤 今すぐ同期</button>
     </div>
     <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
   </div>
@@ -523,6 +527,11 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && currentRoom) {
       debugLog('画面復帰 - 再接続中...');
+      // 未送信のdebounce timerがあればキャンセルして即時送信
+      if (isEditor && syncTimer) {
+        clearTimeout(syncTimer);
+        syncTimer = null;
+      }
       reconnectRoom();
     }
   });
@@ -545,22 +554,28 @@ function updateConnectionStatus() {
 function reconnectRoom() {
   if (!currentRoom || !roomRef) return;
 
-  // Re-fetch current data from Firebase (support both new and legacy format)
-  roomRef.once('value').then((snapshot) => {
-    const roomData = snapshot.val();
-    let data = null;
-    if (roomData) {
-      data = roomData.data || (roomData.matches ? roomData : null);
-    }
-    if (data) {
-      loadFromFirebase(data);
-      debugLog('再接続完了 - データ復元');
-    }
-    // Re-register presence
+  if (isEditor) {
+    // 編集者: ローカルが正。Firebaseに送信して閲覧者に届ける
+    debugLog('画面復帰（編集者）- ローカル→Firebase送信');
+    syncToFirebase();
     registerPresence();
-  }).catch(err => {
-    debugLog('再接続エラー: ' + err.message);
-  });
+  } else {
+    // 閲覧者: Firebaseから最新データを取得
+    roomRef.once('value').then((snapshot) => {
+      const roomData = snapshot.val();
+      let data = null;
+      if (roomData) {
+        data = roomData.data || (roomData.matches ? roomData : null);
+      }
+      if (data) {
+        loadFromFirebase(data);
+        debugLog('再接続完了 - データ復元');
+      }
+      registerPresence();
+    }).catch(err => {
+      debugLog('再接続エラー: ' + err.message);
+    });
+  }
 }
 
 // ========== Roster ==========
@@ -1659,16 +1674,19 @@ function updatePresenceDisplay(presenceData) {
 function setRoleDisplay(role) {
   const roleEl = document.getElementById('room-role');
   const descEl = document.getElementById('room-desc');
+  const syncBar = document.getElementById('sync-bar');
   if (role === 'editor') {
     roleEl.textContent = '編集者';
     roleEl.style.background = '#e8f5e9';
     roleEl.style.color = '#2e7d32';
     descEl.textContent = 'あなたの編集が他の人に共有されます';
+    if (syncBar) syncBar.style.display = 'flex';
   } else {
     roleEl.textContent = '閲覧者';
     roleEl.style.background = '#e3f2fd';
     roleEl.style.color = '#1565c0';
     descEl.textContent = '編集者の入力がリアルタイムで表示されます';
+    if (syncBar) syncBar.style.display = 'none';
   }
 }
 
@@ -1694,27 +1712,65 @@ function leaveRoom() {
   document.getElementById('connection-status').textContent = '';
 }
 
+function updateSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (state === 'sending') {
+    el.textContent = '📤 送信中...';
+    el.style.color = '#f59e0b';
+  } else if (state === 'ok') {
+    el.textContent = '✅ 同期済み';
+    el.style.color = '#27ae60';
+  } else if (state === 'error') {
+    el.textContent = '❌ 送信失敗（ボタンで再送）';
+    el.style.color = '#e74c3c';
+  } else if (state === 'pending') {
+    el.textContent = '⏳ 未送信の変更あり';
+    el.style.color = '#f59e0b';
+  }
+}
+
+function manualSync() {
+  if (!roomRef || !isEditor) return;
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  syncRetryCount = 0;
+  syncToFirebase();
+}
+
+let syncRetryCount = 0;
+const MAX_SYNC_RETRY = 3;
+
 function syncToFirebase() {
   if (!roomRef) return;
   isSyncing = true;
   debugLog('送信中...');
+  updateSyncStatus('sending');
   const data = getShareData();
 
-  // 3秒後に強制的にisSyncingをリセット（安全策）
+  // 5秒後に強制的にisSyncingをリセット（安全策）
   setTimeout(() => {
     if (isSyncing) {
       debugLog('送信タイムアウト、リセット');
       isSyncing = false;
     }
-  }, 3000);
+  }, 5000);
 
   // Save to 'data' subkey (separate from 'presence')
   roomRef.child('data').set(data).then(() => {
     debugLog('送信完了');
+    updateSyncStatus('ok');
+    syncRetryCount = 0;
     setTimeout(() => { isSyncing = false; }, 500);
   }).catch(err => {
     debugLog('送信エラー: ' + err.message);
+    updateSyncStatus('error');
     isSyncing = false;
+    // リトライ（最大3回）
+    syncRetryCount++;
+    if (syncRetryCount <= MAX_SYNC_RETRY) {
+      debugLog(`リトライ ${syncRetryCount}/${MAX_SYNC_RETRY}...`);
+      setTimeout(() => syncToFirebase(), 2000 * syncRetryCount);
+    }
   });
 }
 
@@ -1807,6 +1863,7 @@ let syncTimer = null;
 function scheduleSync() {
   if (!roomRef) return;
   if (!isEditor) return; // 閲覧者は送信しない
+  updateSyncStatus('pending');
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
     debugLog('変更検知、送信予定');
