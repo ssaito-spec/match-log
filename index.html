@@ -317,8 +317,8 @@
       <span id="connection-status" style="font-size:11px;color:#888;"></span>
     </div>
     <div id="sync-bar" style="display:none;margin-top:6px;display:flex;align-items:center;gap:8px;">
-      <span id="sync-status" style="font-size:12px;font-weight:600;"></span>
-      <button id="sync-btn" class="btn btn-primary" onclick="manualSync()" style="margin-left:auto;padding:4px 12px;font-size:12px;">📤 今すぐ同期</button>
+      <span id="sync-status" style="font-size:12px;font-weight:600;flex:1;"></span>
+      <button id="sync-btn" class="btn btn-primary" onclick="manualSync()" style="flex:1;padding:4px 12px;font-size:12px;white-space:nowrap;">📤 今すぐ同期</button>
     </div>
     <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
   </div>
@@ -513,6 +513,18 @@ function init() {
       }
     }
   });
+
+  // リロード時の自動復帰
+  const savedRoom = sessionStorage.getItem('match-log-room');
+  if (savedRoom) {
+    try {
+      const { roomId, role } = JSON.parse(savedRoom);
+      if (roomId) {
+        document.getElementById('room-id').value = roomId;
+        joinRoom(role || 'viewer');
+      }
+    } catch(e) {}
+  }
 }
 
 // ========== Roster ==========
@@ -1540,6 +1552,7 @@ function joinRoom(role) {
 
   isEditor = (role === 'editor');
   setRoleDisplay(role);
+  sessionStorage.setItem('match-log-room', JSON.stringify({ roomId, role }));
   debugLog(isEditor ? '編集者として参加' : '閲覧者として参加');
 
   // Load existing data
@@ -1573,6 +1586,7 @@ function leaveRoom() {
     firebaseDelete(firebaseMyPresenceUrl()).catch(() => {});
   }
   stopPolling();
+  sessionStorage.removeItem('match-log-room');
   currentRoom = null;
   document.getElementById('room-join').style.display = 'block';
   document.getElementById('room-status').style.display = 'none';
