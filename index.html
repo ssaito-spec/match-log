@@ -297,19 +297,22 @@
 <!-- Room Sync -->
 <div class="card" id="room-card">
   <div class="card-title"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">①</span> まずルームに参加</div>
-  <p style="font-size:12px;color:#888;margin-bottom:8px;">ルームID = 試合日（8桁）。そのまま参加ボタンを押すだけ！</p>
   <div id="room-join">
-    <input type="text" id="room-id" placeholder="試合日8桁（例: 20250301）" style="margin-bottom:8px;" maxlength="8">
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-secondary" onclick="joinRoom('viewer')" style="flex:1;padding:10px;">👀 閲覧で参加</button>
-      <button class="btn btn-primary" onclick="joinRoom('editor')" style="flex:1;padding:10px;">✏️ 編集で参加</button>
+    <input type="hidden" id="room-id">
+    <button class="btn btn-primary" onclick="joinToday()" style="width:100%;padding:12px;font-size:16px;font-weight:700;">⚽ 今日の試合に参加する</button>
+    <div style="text-align:center;margin-top:8px;">
+      <span id="other-date-toggle" onclick="toggleOtherDate()" style="font-size:13px;color:#4a90d9;cursor:pointer;text-decoration:underline;">別の日の試合 ＞</span>
+    </div>
+    <div id="other-date-row" style="display:none;margin-top:8px;">
+      <input type="text" id="room-id-manual" placeholder="試合日8桁（例: 20250301）" style="margin-bottom:8px;" maxlength="8">
+      <button class="btn btn-secondary" onclick="joinManual()" style="width:100%;padding:10px;">参加する</button>
     </div>
   </div>
   <div id="room-status" style="display:none;margin-top:8px;">
     <div style="display:flex;align-items:center;gap:8px;">
       <span id="connection-dot" style="width:10px;height:10px;background:#27ae60;border-radius:50%;"></span>
       <span id="room-name" style="font-weight:600;color:#27ae60;"></span>
-      <span id="room-role" style="font-size:12px;padding:2px 8px;border-radius:4px;"></span>
+      <span id="room-role" style="display:none;"></span>
       <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left:auto;padding:4px 10px;">退出</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
@@ -529,10 +532,10 @@ function init() {
   const savedRoom = sessionStorage.getItem('match-log-room');
   if (savedRoom) {
     try {
-      const { roomId, role } = JSON.parse(savedRoom);
+      const { roomId } = JSON.parse(savedRoom);
       if (roomId) {
         document.getElementById('room-id').value = roomId;
-        joinRoom(role || 'viewer');
+        joinRoom();
       }
     } catch(e) {}
   }
@@ -1601,7 +1604,25 @@ async function firebaseDelete(url) {
 }
 
 // --- Join / Leave ---
-function joinRoom(role) {
+function joinToday() {
+  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  document.getElementById('room-id').value = today;
+  joinRoom();
+}
+
+function joinManual() {
+  const id = document.getElementById('room-id-manual').value.trim();
+  if (!id) return;
+  document.getElementById('room-id').value = id;
+  joinRoom();
+}
+
+function toggleOtherDate() {
+  const row = document.getElementById('other-date-row');
+  row.style.display = row.style.display === 'none' ? 'block' : 'none';
+}
+
+function joinRoom() {
   const roomId = document.getElementById('room-id').value.trim();
   if (!roomId) return;
   currentRoom = roomId;
@@ -1610,10 +1631,10 @@ function joinRoom(role) {
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
 
-  isEditor = (role === 'editor');
-  setRoleDisplay(role);
-  sessionStorage.setItem('match-log-room', JSON.stringify({ roomId, role }));
-  debugLog(isEditor ? '編集者として参加' : '閲覧者として参加');
+  isEditor = true;  // 全員エディター
+  setRoleDisplay('editor');
+  sessionStorage.setItem('match-log-room', JSON.stringify({ roomId, role: 'editor' }));
+  debugLog('ルーム参加: ' + roomId);
 
   // Load existing data
   firebaseGet(firebaseDataUrl()).then(data => {
@@ -1646,10 +1667,8 @@ function leaveRoom() {
   stopPolling();
   sessionStorage.removeItem('match-log-room');
   currentRoom = null;
-  const lastRoomId = currentRoom;
   document.getElementById('room-join').style.display = 'block';
   document.getElementById('room-status').style.display = 'none';
-  document.getElementById('room-id').value = lastRoomId || '';
   document.getElementById('presence-count').textContent = '';
   document.getElementById('connection-status').textContent = '';
 }
@@ -1687,25 +1706,13 @@ function updatePresenceDisplay(presenceData) {
   countEl.textContent = text;
 }
 
-function setRoleDisplay(role) {
-  const roleEl = document.getElementById('room-role');
+function setRoleDisplay() {
   const descEl = document.getElementById('room-desc');
   const syncBar = document.getElementById('sync-bar');
   const dot = document.getElementById('connection-dot');
-  if (role === 'editor') {
-    roleEl.textContent = '編集者';
-    roleEl.style.background = '#e8f5e9';
-    roleEl.style.color = '#2e7d32';
-    descEl.textContent = 'あなたの編集が他の人に共有されます';
-    if (syncBar) syncBar.style.display = 'flex';
-  } else {
-    roleEl.textContent = '閲覧者';
-    roleEl.style.background = '#e3f2fd';
-    roleEl.style.color = '#1565c0';
-    descEl.textContent = '3秒ごとに自動更新されます';
-    if (syncBar) syncBar.style.display = 'none';
-  }
-  if (dot) { dot.style.background = '#27ae60'; }
+  if (descEl) descEl.textContent = '入力すると自動で共有されます';
+  if (syncBar) syncBar.style.display = 'flex';
+  if (dot) dot.style.background = '#27ae60';
 }
 
 // --- Sync Status ---
@@ -1731,7 +1738,7 @@ function updateSyncStatus(state) {
 let isSyncing = false;
 
 function manualSync() {
-  if (!currentRoom || !isEditor) return;
+  if (!currentRoom) return;
   if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
   syncToFirebase();
 }
