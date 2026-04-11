@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>らくらくスコア入力くん</title>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<!-- Firebase SDK removed - using REST API instead -->
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -293,7 +292,7 @@
 <body>
 
 <h1>⚽ らくらくスコア入力くん ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v1.7.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v2.0.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -395,26 +394,13 @@
 <div style="height:40px;"></div>
 
 <script>
-// ========== Firebase ==========
-const firebaseConfig = {
-  apiKey: "AIzaSyDksO5PztbdMK5Vo4BOx0G5wPFj7C_-IX8",
-  authDomain: "match-log-ade47.firebaseapp.com",
-  databaseURL: "https://match-log-ade47-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "match-log-ade47",
-  storageBucket: "match-log-ade47.firebasestorage.app",
-  messagingSenderId: "32294236369",
-  appId: "1:32294236369:web:4388de38dedc36db4715f0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// ========== Firebase REST API ==========
+const FIREBASE_URL = 'https://match-log-ade47-default-rtdb.asia-southeast1.firebasedatabase.app';
 let currentRoom = null;
-let roomRef = null;
-let presenceRef = null;
-let myPresenceRef = null;
-let isSyncing = false;
 let isEditor = false;
-let isConnected = false;
 let myUserId = null;
+let pollTimer = null;
+let lastDataHash = '';  // 変更検知用
 
 // ========== State ==========
 const DEFAULT_ROSTER = [
@@ -513,69 +499,20 @@ function init() {
   // Generate unique user ID for this session
   myUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-  // Monitor Firebase connection status
-  db.ref('.info/connected').on('value', (snapshot) => {
-    isConnected = snapshot.val() === true;
-    updateConnectionStatus();
-    if (isConnected && currentRoom) {
-      // Reconnected - refresh presence
-      registerPresence();
-    }
-  });
-
   // Handle page visibility change (background/foreground)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && currentRoom) {
-      debugLog('画面復帰 - 再接続中...');
-      // 未送信のdebounce timerがあればキャンセルして即時送信
-      if (isEditor && syncTimer) {
-        clearTimeout(syncTimer);
-        syncTimer = null;
+      debugLog('画面復帰');
+      if (isEditor) {
+        // 未送信の変更があれば即送信
+        if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+        syncToFirebase();
+      } else {
+        // 閲覧者: 即座にポーリング
+        pollFirebase();
       }
-      reconnectRoom();
     }
   });
-}
-
-function updateConnectionStatus() {
-  const dot = document.getElementById('connection-dot');
-  const status = document.getElementById('connection-status');
-  if (!dot || !status) return;
-
-  if (isConnected) {
-    dot.style.background = '#27ae60';
-    status.textContent = '';
-  } else {
-    dot.style.background = '#f39c12';
-    status.textContent = '⚠️ 接続中...';
-  }
-}
-
-function reconnectRoom() {
-  if (!currentRoom || !roomRef) return;
-
-  if (isEditor) {
-    // 編集者: ローカルが正。Firebaseに送信して閲覧者に届ける
-    debugLog('画面復帰（編集者）- ローカル→Firebase送信');
-    syncToFirebase();
-    registerPresence();
-  } else {
-    // 閲覧者: Firebaseから最新データを取得
-    roomRef.once('value').then((snapshot) => {
-      const roomData = snapshot.val();
-      let data = null;
-      if (roomData) {
-        data = roomData.data || (roomData.matches ? roomData : null);
-      }
-      if (data) {
-        loadFromFirebase(data);
-        debugLog('再接続完了 - データ復元');
-      }
-      registerPresence();
-    }).catch(err => {
-      debugLog('再接続エラー: ' + err.message);
-    });
-  }
 }
 
 // ========== Roster ==========
@@ -1553,22 +1490,50 @@ function loadFromUrl() {
   return false;
 }
 
-// ========== Firebase Sync ==========
-let isFirstLoad = true;
+// ========== Firebase REST API Sync ==========
 
 function debugLog(msg) {
-  // デバッグ用（本番では無効化）
-  // console.log(msg);
+  console.log('[sync]', msg);
 }
 
+// --- REST API helpers ---
+function firebaseDataUrl() {
+  return `${FIREBASE_URL}/rooms/${currentRoom}/data.json`;
+}
+function firebasePresenceUrl() {
+  return `${FIREBASE_URL}/rooms/${currentRoom}/presence.json`;
+}
+function firebaseMyPresenceUrl() {
+  return `${FIREBASE_URL}/rooms/${currentRoom}/presence/${myUserId}.json`;
+}
+
+async function firebaseGet(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function firebasePut(url, data) {
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function firebaseDelete(url) {
+  const res = await fetch(url, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+
+// --- Join / Leave ---
 function joinRoom(role) {
   const roomId = document.getElementById('room-id').value.trim();
   if (!roomId) return;
   currentRoom = roomId;
-  roomRef = db.ref('rooms/' + roomId);
-  presenceRef = db.ref('rooms/' + roomId + '/presence');
 
-  // Show status
   document.getElementById('room-join').style.display = 'none';
   document.getElementById('room-status').style.display = 'block';
   document.getElementById('room-name').textContent = 'ルーム: ' + roomId;
@@ -1577,87 +1542,65 @@ function joinRoom(role) {
   setRoleDisplay(role);
   debugLog(isEditor ? '編集者として参加' : '閲覧者として参加');
 
-  // Load existing data first (check both new 'data' key and legacy root)
-  roomRef.once('value').then((snapshot) => {
-    const roomData = snapshot.val();
-    let data = null;
-
-    if (roomData) {
-      if (roomData.data) {
-        // New format: data is in 'data' subkey
-        data = roomData.data;
-        debugLog('新形式データ読込');
-      } else if (roomData.matches || roomData.date) {
-        // Legacy format: data is at root level
-        data = roomData;
-        debugLog('旧形式データ読込 - マイグレーション実行');
-        // Migrate to new format if editor
-        if (isEditor) {
-          roomRef.child('data').set(data);
-        }
-      }
-    }
-
+  // Load existing data
+  firebaseGet(firebaseDataUrl()).then(data => {
     if (data) {
+      // Firebase converts arrays to objects — convert back
       loadFromFirebase(data);
       debugLog('既存データ読込完了');
     } else if (isEditor) {
-      // New room - check if there's really no data (not just a connection issue)
-      // Only save if we have matches to save
-      if (matches.length > 0 && matches[0].players && matches[0].players.length > 0) {
-        syncToFirebase();
-        debugLog('新規ルーム作成');
-      } else {
-        debugLog('空のルーム - データなし');
-      }
+      debugLog('新規ルーム');
     }
 
     // Register presence
     registerPresence();
 
-    // Start listening for data changes
-    roomRef.child('data').on('value', (snapshot) => {
-      if (isSyncing) return;
-      const data = snapshot.val();
-      if (data && !isEditor) {
-        loadFromFirebase(data);
-        debugLog('データ更新受信');
-      }
-    });
-
-    // Start listening for presence changes
-    presenceRef.on('value', (snapshot) => {
-      updatePresenceDisplay(snapshot.val());
-    });
+    // Start polling for viewers (editors don't need to poll)
+    if (!isEditor) {
+      lastDataHash = JSON.stringify(data || '');
+      startPolling();
+    }
   }).catch(err => {
     debugLog('接続エラー: ' + err.message);
-    alert('接続エラーが発生しました。ネットワーク接続を確認してください。');
+    alert('接続エラー: ' + err.message);
     leaveRoom();
   });
 }
 
+function leaveRoom() {
+  // Remove presence
+  if (currentRoom && myUserId) {
+    firebaseDelete(firebaseMyPresenceUrl()).catch(() => {});
+  }
+  stopPolling();
+  currentRoom = null;
+  document.getElementById('room-join').style.display = 'block';
+  document.getElementById('room-status').style.display = 'none';
+  document.getElementById('room-id').value = '';
+  document.getElementById('presence-count').textContent = '';
+  document.getElementById('connection-status').textContent = '';
+}
+
+// --- Presence ---
 function registerPresence() {
-  if (!presenceRef || !myUserId) return;
-
-  // Create my presence entry
-  myPresenceRef = presenceRef.child(myUserId);
-  myPresenceRef.set({
+  if (!currentRoom || !myUserId) return;
+  firebasePut(firebaseMyPresenceUrl(), {
     role: isEditor ? 'editor' : 'viewer',
-    joinedAt: firebase.database.ServerValue.TIMESTAMP
-  });
+    joinedAt: Date.now()
+  }).catch(err => debugLog('presence登録エラー: ' + err.message));
+}
 
-  // Remove presence on disconnect
-  myPresenceRef.onDisconnect().remove();
+async function fetchPresence() {
+  try {
+    const data = await firebaseGet(firebasePresenceUrl());
+    updatePresenceDisplay(data);
+  } catch(e) { /* ignore */ }
 }
 
 function updatePresenceDisplay(presenceData) {
   const countEl = document.getElementById('presence-count');
   if (!countEl) return;
-
-  if (!presenceData) {
-    countEl.textContent = '';
-    return;
-  }
+  if (!presenceData) { countEl.textContent = ''; return; }
 
   const users = Object.values(presenceData);
   const total = users.length;
@@ -1675,6 +1618,7 @@ function setRoleDisplay(role) {
   const roleEl = document.getElementById('room-role');
   const descEl = document.getElementById('room-desc');
   const syncBar = document.getElementById('sync-bar');
+  const dot = document.getElementById('connection-dot');
   if (role === 'editor') {
     roleEl.textContent = '編集者';
     roleEl.style.background = '#e8f5e9';
@@ -1685,33 +1629,13 @@ function setRoleDisplay(role) {
     roleEl.textContent = '閲覧者';
     roleEl.style.background = '#e3f2fd';
     roleEl.style.color = '#1565c0';
-    descEl.textContent = '編集者の入力がリアルタイムで表示されます';
+    descEl.textContent = '3秒ごとに自動更新されます';
     if (syncBar) syncBar.style.display = 'none';
   }
+  if (dot) { dot.style.background = '#27ae60'; }
 }
 
-function leaveRoom() {
-  // Remove presence first
-  if (myPresenceRef) {
-    myPresenceRef.remove();
-    myPresenceRef = null;
-  }
-  if (presenceRef) {
-    presenceRef.off();
-    presenceRef = null;
-  }
-  if (roomRef) {
-    roomRef.off();
-    roomRef = null;
-  }
-  currentRoom = null;
-  document.getElementById('room-join').style.display = 'block';
-  document.getElementById('room-status').style.display = 'none';
-  document.getElementById('room-id').value = '';
-  document.getElementById('presence-count').textContent = '';
-  document.getElementById('connection-status').textContent = '';
-}
-
+// --- Sync Status ---
 function updateSyncStatus(state) {
   const el = document.getElementById('sync-status');
   if (!el) return;
@@ -1730,54 +1654,76 @@ function updateSyncStatus(state) {
   }
 }
 
+// --- Editor: Send data ---
+let isSyncing = false;
+
 function manualSync() {
-  if (!roomRef || !isEditor) return;
+  if (!currentRoom || !isEditor) return;
   if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
-  syncRetryCount = 0;
   syncToFirebase();
 }
 
-let syncRetryCount = 0;
-const MAX_SYNC_RETRY = 3;
-
-function syncToFirebase() {
-  if (!roomRef) return;
+async function syncToFirebase() {
+  if (!currentRoom) return;
+  if (isSyncing) return;  // 二重送信防止
   isSyncing = true;
-  debugLog('送信中...');
   updateSyncStatus('sending');
+  debugLog('送信中...');
+
   const data = getShareData();
-
-  // 5秒後に強制的にisSyncingをリセット（安全策）
-  setTimeout(() => {
-    if (isSyncing) {
-      debugLog('送信タイムアウト、リセット');
-      isSyncing = false;
-    }
-  }, 5000);
-
-  // Save to 'data' subkey (separate from 'presence')
-  roomRef.child('data').set(data).then(() => {
-    debugLog('送信完了');
+  try {
+    await firebasePut(firebaseDataUrl(), data);
+    debugLog('送信完了 ✅');
     updateSyncStatus('ok');
-    syncRetryCount = 0;
-    setTimeout(() => { isSyncing = false; }, 500);
-  }).catch(err => {
+  } catch(err) {
     debugLog('送信エラー: ' + err.message);
     updateSyncStatus('error');
+  } finally {
     isSyncing = false;
-    // リトライ（最大3回）
-    syncRetryCount++;
-    if (syncRetryCount <= MAX_SYNC_RETRY) {
-      debugLog(`リトライ ${syncRetryCount}/${MAX_SYNC_RETRY}...`);
-      setTimeout(() => syncToFirebase(), 2000 * syncRetryCount);
-    }
-  });
+  }
 }
 
+// --- Viewer: Poll for updates ---
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(() => pollFirebase(), 3000);
+  debugLog('ポーリング開始（3秒間隔）');
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function pollFirebase() {
+  if (!currentRoom) return;
+  try {
+    const data = await firebaseGet(firebaseDataUrl());
+    const hash = JSON.stringify(data || '');
+    if (hash !== lastDataHash) {
+      lastDataHash = hash;
+      if (data) {
+        loadFromFirebase(data);
+        debugLog('データ更新受信');
+      }
+    }
+    // Presence も更新
+    fetchPresence();
+    // 接続OKの表示
+    const dot = document.getElementById('connection-dot');
+    if (dot) dot.style.background = '#27ae60';
+    document.getElementById('connection-status').textContent = '';
+  } catch(err) {
+    debugLog('ポーリングエラー: ' + err.message);
+    const dot = document.getElementById('connection-dot');
+    if (dot) dot.style.background = '#f39c12';
+    document.getElementById('connection-status').textContent = '⚠️ 接続エラー';
+  }
+}
+
+// --- Load data into UI ---
 function loadFromFirebase(data) {
   debugLog('loadFromFirebase開始');
 
-  // Restore basic info
   if (data.date) document.getElementById('match-date').value = data.date;
   if (data.tournament) document.getElementById('tournament-name').value = data.tournament;
   if (data.venue) document.getElementById('venue').value = data.venue;
@@ -1797,7 +1743,6 @@ function loadFromFirebase(data) {
 
   debugLog('matches数: ' + (matchesData ? matchesData.length : 0));
 
-  // Restore matches
   if (matchesData && matchesData.length > 0) {
     matches = [];
     matchCounter = 0;
@@ -1826,7 +1771,7 @@ function loadFromFirebase(data) {
         customFormat: md.customFormat || false,
         customMinutes: md.customMinutes || 15,
         customPeriods: md.customPeriods || 1,
-        formationFirst: md.formationFirst || md.formation || null, // 旧形式互換
+        formationFirst: md.formationFirst || md.formation || null,
         formationSecond: md.formationSecond || null,
         formationType: md.formationType || '3-2-2'
       };
@@ -1858,11 +1803,11 @@ function loadFromFirebase(data) {
   }
 }
 
-// Auto-sync on changes (debounced)
+// --- Auto-sync on changes (debounced) ---
 let syncTimer = null;
 function scheduleSync() {
-  if (!roomRef) return;
-  if (!isEditor) return; // 閲覧者は送信しない
+  if (!currentRoom) return;
+  if (!isEditor) return;
   updateSyncStatus('pending');
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
