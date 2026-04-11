@@ -1586,9 +1586,10 @@ function leaveRoom() {
   stopPolling();
   sessionStorage.removeItem('match-log-room');
   currentRoom = null;
+  const lastRoomId = currentRoom;
   document.getElementById('room-join').style.display = 'block';
   document.getElementById('room-status').style.display = 'none';
-  document.getElementById('room-id').value = '';
+  document.getElementById('room-id').value = lastRoomId || '';
   document.getElementById('presence-count').textContent = '';
   document.getElementById('connection-status').textContent = '';
 }
