@@ -1740,6 +1740,7 @@ function updateSyncStatus(state) {
 
 // --- Editor: Send data ---
 let isSyncing = false;
+let lastSyncTime = 0;  // sync後のクールダウン用
 
 function manualSync() {
   if (!currentRoom) return;
@@ -1762,6 +1763,7 @@ async function syncToFirebase() {
     // Firebaseが返す形式でhash更新（配列→オブジェクト変換後の形式に合わせる）
     const saved = await firebaseGet(firebaseDataUrl());
     lastDataHash = JSON.stringify(saved || '');
+    lastSyncTime = Date.now();
   } catch(err) {
     debugLog('送信エラー: ' + err.message);
     updateSyncStatus('error');
@@ -1793,7 +1795,10 @@ async function pollFirebase() {
     const hash = JSON.stringify(data || '');
     if (hash !== lastDataHash) {
       lastDataHash = hash;
-      if (data) {
+      // 自分がsyncした直後5秒間はUI再構築しない（hash同期のズレ対策）
+      if (Date.now() - lastSyncTime < 5000) {
+        debugLog('sync直後 - hashのみ更新');
+      } else if (data) {
         loadFromFirebase(data);
         debugLog('データ更新受信');
       }
