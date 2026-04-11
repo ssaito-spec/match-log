@@ -344,6 +344,14 @@
   <label>会場</label>
   <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
 
+  <div id="weather-row" style="margin-top:10px;display:none;">
+    <label>天気</label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="weather-display" style="font-size:15px;font-weight:600;"></span>
+      <button class="btn btn-secondary" onclick="fetchWeather()" style="padding:2px 10px;font-size:11px;">再取得</button>
+    </div>
+  </div>
+
   <label>試合形式</label>
   <div class="format-presets" id="format-presets">
     <div class="format-chip active" data-min="15" data-per="1">15分×1本</div>
@@ -1284,6 +1292,7 @@ function generateOutput(mode) {
   if (tournament) header += ` ${tournament}`;
   lines.push(header);
   lines.push(`会場：${venue}`);
+  if (currentWeather) lines.push(`天気：${currentWeather}`);
   lines.push(`試合形式：${fmtStr}`);
   lines.push('');
 
@@ -1418,6 +1427,7 @@ function getShareData() {
     type: document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM',
     tournament: document.getElementById('tournament-name').value,
     venue: document.getElementById('venue').value,
+    weather: currentWeather,
     formatMinutes,
     formatPeriods,
     matches: matches.map(m => ({
@@ -1478,6 +1488,11 @@ function loadFromUrl() {
     }
     if (data.formatMinutes) formatMinutes = data.formatMinutes;
     if (data.formatPeriods) formatPeriods = data.formatPeriods;
+    if (data.weather) {
+      currentWeather = data.weather;
+      const wd = document.getElementById('weather-display');
+      if (wd) { wd.textContent = currentWeather; document.getElementById('weather-row').style.display = 'block'; }
+    }
 
     // Restore matches
     if (data.matches && data.matches.length > 0) {
@@ -2231,7 +2246,53 @@ function closeFormation() {
   selectingSlot = null;
 }
 
+// ========== Weather ==========
+let currentWeather = '';
+
+const WMO_WEATHER = {
+  0:'☀️ 快晴',1:'🌤️ 晴れ',2:'⛅ くもり時々晴れ',3:'☁️ くもり',
+  45:'🌫️ 霧',48:'🌫️ 霧',
+  51:'🌦️ 小雨',53:'🌧️ 雨',55:'🌧️ 強い雨',
+  56:'🌧️ 雨(冷)',57:'🌧️ 強い雨(冷)',
+  61:'🌧️ 小雨',63:'🌧️ 雨',65:'🌧️ 強い雨',
+  66:'🌧️ 雨(冷)',67:'🌧️ 強い雨(冷)',
+  71:'🌨️ 小雪',73:'🌨️ 雪',75:'🌨️ 大雪',77:'🌨️ 雪',
+  80:'🌦️ にわか雨',81:'🌧️ にわか雨',82:'🌧️ 強いにわか雨',
+  85:'🌨️ にわか雪',86:'🌨️ にわか雪',
+  95:'⛈️ 雷雨',96:'⛈️ 雷雨(雹)',99:'⛈️ 雷雨(雹)'
+};
+
+async function fetchWeather() {
+  const display = document.getElementById('weather-display');
+  if (!display) return;
+  display.textContent = '取得中...';
+  document.getElementById('weather-row').style.display = 'block';
+
+  try {
+    const pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {timeout:10000, enableHighAccuracy:false});
+    });
+    const lat = pos.coords.latitude.toFixed(2);
+    const lon = pos.coords.longitude.toFixed(2);
+
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`);
+    const data = await res.json();
+    const code = data.current.weather_code;
+    const temp = Math.round(data.current.temperature_2m);
+    const label = WMO_WEATHER[code] || '不明';
+    currentWeather = `${label} ${temp}℃`;
+    display.textContent = currentWeather;
+    scheduleSync();
+  } catch(e) {
+    display.textContent = '取得できませんでした';
+    debugLog('天気取得エラー: ' + e.message);
+  }
+}
+
 init();
+// 天気を自動取得（GPS許可ダイアログが出る）
+fetchWeather();
+
 function refreshData() {
   if (currentRoom) {
     if (isEditor) {
