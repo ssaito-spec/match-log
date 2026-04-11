@@ -344,11 +344,11 @@
   <label>会場</label>
   <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
 
-  <div id="weather-row" style="margin-top:10px;display:none;">
+  <div style="margin-top:10px;">
     <label>天気</label>
     <div style="display:flex;align-items:center;gap:8px;">
       <span id="weather-display" style="font-size:15px;font-weight:600;"></span>
-      <button class="btn btn-secondary" onclick="fetchWeather()" style="padding:2px 10px;font-size:11px;">再取得</button>
+      <button id="weather-btn" class="btn btn-secondary" onclick="fetchWeather()" style="padding:4px 12px;font-size:12px;">🌤️ 天気を取得</button>
     </div>
   </div>
 
@@ -1491,7 +1491,9 @@ function loadFromUrl() {
     if (data.weather) {
       currentWeather = data.weather;
       const wd = document.getElementById('weather-display');
-      if (wd) { wd.textContent = currentWeather; document.getElementById('weather-row').style.display = 'block'; }
+      const wb = document.getElementById('weather-btn');
+      if (wd) wd.textContent = currentWeather;
+      if (wb) { wb.textContent = '再取得'; }
     }
 
     // Restore matches
@@ -2264,9 +2266,10 @@ const WMO_WEATHER = {
 
 async function fetchWeather() {
   const display = document.getElementById('weather-display');
+  const btn = document.getElementById('weather-btn');
   if (!display) return;
   display.textContent = '取得中...';
-  document.getElementById('weather-row').style.display = 'block';
+  if (btn) btn.style.display = 'none';
 
   try {
     const pos = await new Promise((resolve, reject) => {
@@ -2282,16 +2285,16 @@ async function fetchWeather() {
     const label = WMO_WEATHER[code] || '不明';
     currentWeather = `${label} ${temp}℃`;
     display.textContent = currentWeather;
+    if (btn) { btn.textContent = '再取得'; btn.style.display = 'inline-block'; }
     scheduleSync();
   } catch(e) {
-    display.textContent = '取得できませんでした';
+    display.textContent = '';
+    if (btn) { btn.textContent = '🌤️ 天気を取得'; btn.style.display = 'inline-block'; }
     debugLog('天気取得エラー: ' + e.message);
   }
 }
 
 init();
-// 天気を自動取得（GPS許可ダイアログが出る）
-fetchWeather();
 
 function refreshData() {
   if (currentRoom) {
