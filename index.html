@@ -1688,8 +1688,9 @@ async function syncToFirebase() {
     await firebasePut(firebaseDataUrl(), data);
     debugLog('送信完了 ✅');
     updateSyncStatus('ok');
-    // 自分が送った内容でhash更新（次のpollで自分の変更を重複受信しない）
-    lastDataHash = JSON.stringify(data);
+    // Firebaseが返す形式でhash更新（配列→オブジェクト変換後の形式に合わせる）
+    const saved = await firebaseGet(firebaseDataUrl());
+    lastDataHash = JSON.stringify(saved || '');
   } catch(err) {
     debugLog('送信エラー: ' + err.message);
     updateSyncStatus('error');
@@ -1741,7 +1742,10 @@ async function pollFirebase() {
 }
 
 // --- Load data into UI ---
+let isLoadingRemote = false;  // loadFromFirebase中はscheduleSync抑止
+
 function loadFromFirebase(data) {
+  isLoadingRemote = true;
   debugLog('loadFromFirebase開始');
 
   if (data.date) document.getElementById('match-date').value = data.date;
@@ -1821,12 +1825,14 @@ function loadFromFirebase(data) {
     });
     debugLog('読込完了: ' + matches.length + '試合');
   }
+  isLoadingRemote = false;
 }
 
 // --- Auto-sync on changes (debounced) ---
 let syncTimer = null;
 function scheduleSync() {
   if (!currentRoom) return;
+  if (isLoadingRemote) return;  // リモートデータ読込中は送信しない
   if (!isEditor) return;
   updateSyncStatus('pending');
   if (syncTimer) clearTimeout(syncTimer);
