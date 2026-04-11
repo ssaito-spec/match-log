@@ -292,7 +292,7 @@
 <body>
 
 <h1>⚽ らくらくスコア入力くん ⚽</h1>
-<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v2.0.0</p>
+<p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v2.1.0</p>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -1568,11 +1568,9 @@ function joinRoom(role) {
     // Register presence
     registerPresence();
 
-    // Start polling for viewers (editors don't need to poll)
-    if (!isEditor) {
-      lastDataHash = JSON.stringify(data || '');
-      startPolling();
-    }
+    // 全員ポーリング（編集者も他の編集者の変更を受信）
+    lastDataHash = JSON.stringify(data || '');
+    startPolling();
   }).catch(err => {
     debugLog('接続エラー: ' + err.message);
     alert('接続エラー: ' + err.message);
@@ -1689,6 +1687,8 @@ async function syncToFirebase() {
     await firebasePut(firebaseDataUrl(), data);
     debugLog('送信完了 ✅');
     updateSyncStatus('ok');
+    // 自分が送った内容でhash更新（次のpollで自分の変更を重複受信しない）
+    lastDataHash = JSON.stringify(data);
   } catch(err) {
     debugLog('送信エラー: ' + err.message);
     updateSyncStatus('error');
@@ -1710,6 +1710,11 @@ function stopPolling() {
 
 async function pollFirebase() {
   if (!currentRoom) return;
+  // 編集者が変更中（未送信 or 送信中）のときはスキップ
+  if (isEditor && (syncTimer || isSyncing)) {
+    debugLog('ポーリングスキップ（ローカル変更中）');
+    return;
+  }
   try {
     const data = await firebaseGet(firebaseDataUrl());
     const hash = JSON.stringify(data || '');
