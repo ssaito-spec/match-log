@@ -1765,6 +1765,10 @@ function joinRoom() {
   debugLog('ルーム参加: ' + roomId);
 
   // UIをリセット（前のルームのデータが残らないように）
+  // リセット中はsyncが走らないようにcurrentRoomを一時退避
+  const savedRoom = currentRoom;
+  currentRoom = null;
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
   matches = [];
   matchCounter = 0;
   document.getElementById('matches-container').innerHTML = '';
@@ -1777,6 +1781,7 @@ function joinRoom() {
   const wb = document.getElementById('weather-btn');
   if (wb) wb.textContent = '🌤️ 現在地の天気を取得';
   document.querySelectorAll('#match-type-options .chip').forEach(c => c.classList.toggle('active', c.dataset.val === 'TM'));
+  currentRoom = savedRoom;
 
   // Load existing data
   firebaseGet(firebaseDataUrl()).then(data => {
