@@ -748,8 +748,9 @@ function renderMatch(match) {
       <label>スコア（自チーム - 相手）</label>
       <div class="score-row">
         <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-        <span class="score-divider">-</span>
+        <span class="score-divider" id="score-divider-${mid}">-</span>
         <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
+        <span class="score-select" id="score-total-${mid}" style="display:none;text-align:center;font-weight:700;"></span>
         <div class="result-badge none" id="result-${mid}">-</div>
       </div>
       <div id="half-scores-${mid}" style="display:none;margin-top:6px;">
@@ -1076,8 +1077,12 @@ function setGk(matchId, val) {
 // ========== Score ==========
 function updateScore(matchId) {
   const m = getMatch(matchId);
-  m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
-  m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
+  if (!isHalfMatch(m)) {
+    // 通常: selectから取得
+    m.scoreUs = parseInt(document.getElementById(`score-us-${matchId}`).value) || 0;
+    m.scoreOpponent = parseInt(document.getElementById(`score-opp-${matchId}`).value) || 0;
+  }
+  // ハーフ制のときはupdateHalfScoreで既にm.scoreUs/scoreOpponentがセット済み
   const el = document.getElementById(`result-${matchId}`);
   if (!el) return;
   el.className = 'result-badge';
@@ -1114,8 +1119,9 @@ function updateHalfScore(matchId) {
   // 合計を自動計算
   m.scoreUs = m.scoreUsFirst + m.scoreUsSecond;
   m.scoreOpponent = m.scoreOppFirst + m.scoreOppSecond;
-  document.getElementById(`score-us-${matchId}`).value = m.scoreUs;
-  document.getElementById(`score-opp-${matchId}`).value = m.scoreOpponent;
+  // 合計テキストを更新
+  const total = document.getElementById(`score-total-${matchId}`);
+  if (total) total.textContent = `${m.scoreUs} - ${m.scoreOpponent}`;
   updateScore(matchId);
 }
 
@@ -1125,15 +1131,24 @@ function refreshHalfUI(matchId) {
   if (!halfDiv) return;
   const show = isHalfMatch(m);
   halfDiv.style.display = show ? 'block' : 'none';
-  // ハーフのとき、メインのスコアは読み取り専用（半透明）に
   const mainUs = document.getElementById(`score-us-${matchId}`);
   const mainOpp = document.getElementById(`score-opp-${matchId}`);
+  const divider = document.getElementById(`score-divider-${matchId}`);
+  const total = document.getElementById(`score-total-${matchId}`);
   if (show) {
-    mainUs.disabled = true; mainUs.style.opacity = '0.5';
-    mainOpp.disabled = true; mainOpp.style.opacity = '0.5';
+    // ハーフ制: selectを隠して合計テキスト表示
+    mainUs.style.display = 'none';
+    mainOpp.style.display = 'none';
+    divider.style.display = 'none';
+    if (total) {
+      total.style.display = 'inline-block';
+      total.textContent = `${m.scoreUs} - ${m.scoreOpponent}`;
+    }
   } else {
-    mainUs.disabled = false; mainUs.style.opacity = '1';
-    mainOpp.disabled = false; mainOpp.style.opacity = '1';
+    mainUs.style.display = '';
+    mainOpp.style.display = '';
+    divider.style.display = '';
+    if (total) total.style.display = 'none';
   }
 }
 
