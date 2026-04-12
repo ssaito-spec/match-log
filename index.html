@@ -308,10 +308,9 @@
       <span id="other-date-toggle" onclick="toggleOtherDate()" style="font-size:13px;color:#4a90d9;cursor:pointer;text-decoration:underline;">別の日の試合 ＞</span>
     </div>
     <div id="other-date-row" style="display:none;margin-top:8px;">
-      <select id="room-id-select" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:16px;background:#fafafa;margin-bottom:8px;">
+      <select id="room-id-select" onchange="joinFromSelect()" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:16px;background:#fafafa;">
         <option value="">読み込み中...</option>
       </select>
-      <button class="btn btn-secondary" onclick="joinFromSelect()" style="width:100%;padding:10px;">参加する</button>
     </div>
   </div>
   <div id="room-status" style="display:none;margin-top:8px;">
