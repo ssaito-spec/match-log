@@ -173,7 +173,18 @@
     max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .opp-chip.active { background: #4a90d9; color: #fff; border-color: #4a90d9; }
-  .opp-input-row { margin-top: 6px; }
+  .opp-input-row { margin-top: 6px; position: relative; }
+  .suggest-list {
+    position: absolute; left: 0; right: 0; top: 100%;
+    background: #fff; border: 1.5px solid #ddd; border-top: none;
+    border-radius: 0 0 8px 8px; max-height: 180px; overflow-y: auto;
+    z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .suggest-item {
+    padding: 10px 12px; font-size: 14px; cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .suggest-item:active { background: #e8f0fe; }
 
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
@@ -790,7 +801,7 @@ function renderOppArea(matchId) {
   if (prevOpps.length === 0) {
     // First match or no previous opponents - just text input
     area.innerHTML = `<input type="text" id="opp-input-${matchId}" placeholder="例: エクセレントフィート"
-      value="${m.opponent || ''}" oninput="setOpp(${matchId},this.value)">`;
+      value="${m.opponent || ''}" oninput="setOpp(${matchId},this.value)" onblur="setTimeout(()=>{const l=document.getElementById('suggest-'+${matchId});if(l)l.remove();saveNewOpponent(this.value)},200)">`;
   } else {
     // Show previous opponents as chips + new input option
     const isNew = !prevOpps.includes(m.opponent);
@@ -802,7 +813,7 @@ function renderOppArea(matchId) {
       </div>
       <div class="opp-input-row" id="opp-new-row-${matchId}" style="display:${isNew?'block':'none'};">
         <input type="text" id="opp-input-${matchId}" placeholder="相手チーム名"
-          value="${isNew ? (m.opponent||'') : ''}" oninput="setOpp(${matchId},this.value)">
+          value="${isNew ? (m.opponent||'') : ''}" oninput="setOpp(${matchId},this.value)" onblur="setTimeout(()=>{const l=document.getElementById('suggest-'+${matchId});if(l)l.remove();saveNewOpponent(this.value)},200)">
       </div>`;
   }
 }
@@ -824,8 +835,81 @@ function selectOppNew(matchId) {
   if (input) input.focus();
 }
 
+// 対戦相手マスタ（jacpa-portalから統合、89チーム）
+const OPP_MASTER = [
+  '1FC川越水上公園','EC FUJIMINO','ESFORCO FC','ES深谷','FC ALONZA',
+  'FC COLORS','FC GLAUNA','FC ゴロアーズ','FC.Waragoma','FCガウーショ',
+  'FCメスターノ','FCリアル','FCレガーレ','FC市川ガナーズ','FC杉野',
+  'FOURWINDS','GLOW','GRANT','INFINITY','INFINITYブラック',
+  'JFCアミスタ市貝','KIDS POWER','MITA','OXALA TOKYO','SCH',
+  'SRサッカークラブ','TD FC','Testigo','Wings U-12','XFC',
+  'messe宮城','なかのFC','アストロンFC','アビリスタ','アベリア',
+  'アントラーズつくば','アントラーズノルテ','エクセレントフィート','オオタFC','オーパスワン',
+  'カシマスクール選抜','カラーズ','クロバティ','コラソン','サンデーFC',
+  'センアーノ神戸','ディアブロッサ高田A','デラサル','トリアネーロ町田','ドラゴンズ柏',
+  'バディーSC','バディーSC千葉','パレイストラ','ファナティコス','フォルツァ松本',
+  'プライド','リバティーFC','レジスタFC','上尾朝日','中野島FC',
+  '久喜東','印西FC','国立SSS','大泉学園','大泉学園シルバー',
+  '小平WS','平山SC','府中二小フェニックスFC','座間レガーレ','愛徳',
+  '戸塚FCJ','新座片山FC','東大和4FC','東本FCオレンジ','東松山ペレーニャ',
+  '柏レイソルTOR','水戸ホーリーホック','江南南','浦和フエルサ','町田JFC',
+  '白百合','秋津SC','立川九小','花小金井シューターズ','西国分寺',
+  '調布イーグルス','足柄','鷹の台ファイターズ','鹿島アントラーズノルテ'
+];
+
+function getOppSuggestions() {
+  // マスタ + localStorageの追加チーム名をマージ
+  const extra = JSON.parse(localStorage.getItem('match-log-opponents') || '[]');
+  return [...new Set([...OPP_MASTER, ...extra])].sort();
+}
+
+function saveNewOpponent(name) {
+  if (!name || OPP_MASTER.includes(name)) return;
+  const extra = JSON.parse(localStorage.getItem('match-log-opponents') || '[]');
+  if (!extra.includes(name)) {
+    extra.push(name);
+    localStorage.setItem('match-log-opponents', JSON.stringify(extra));
+  }
+}
+
 function setOpp(matchId, val) {
   getMatch(matchId).opponent = val;
+  showSuggestions(matchId, val);
+  scheduleSync();
+}
+
+function showSuggestions(matchId, query) {
+  const listId = `suggest-${matchId}`;
+  let list = document.getElementById(listId);
+  if (!query || query.length === 0) {
+    if (list) list.remove();
+    return;
+  }
+  const q = query.toLowerCase();
+  const hits = getOppSuggestions().filter(n => n.toLowerCase().includes(q)).slice(0, 8);
+  if (hits.length === 0 || (hits.length === 1 && hits[0] === query)) {
+    if (list) list.remove();
+    return;
+  }
+  if (!list) {
+    list = document.createElement('div');
+    list.id = listId;
+    list.className = 'suggest-list';
+    const row = document.getElementById(`opp-new-row-${matchId}`) || document.getElementById(`opp-input-${matchId}`).parentElement;
+    row.appendChild(list);
+  }
+  list.innerHTML = hits.map(h =>
+    `<div class="suggest-item" onmousedown="pickSuggestion(${matchId},'${h.replace(/'/g,"\\'")}')">${h}</div>`
+  ).join('');
+}
+
+function pickSuggestion(matchId, name) {
+  const m = getMatch(matchId);
+  m.opponent = name;
+  const input = document.getElementById(`opp-input-${matchId}`);
+  if (input) input.value = name;
+  const list = document.getElementById(`suggest-${matchId}`);
+  if (list) list.remove();
   scheduleSync();
 }
 
