@@ -451,6 +451,7 @@ let formatMinutes = 15;
 let formatPeriods = 1;
 
 function getName(num) {
+  if (num === 0) return '不明';
   const p = roster.find(r => r.num === num);
   return p ? p.name : String(num);
 }
@@ -509,11 +510,12 @@ function init() {
       } else {
         document.getElementById('format-custom').style.display = 'flex';
       }
+      matches.forEach(m => refreshHalfUI(m.id));
       scheduleSync();
     });
   });
   document.getElementById('match-minutes').addEventListener('input', function() { formatMinutes = parseInt(this.value)||15; scheduleSync(); });
-  document.getElementById('match-halves').addEventListener('input', function() { formatPeriods = parseInt(this.value)||1; scheduleSync(); });
+  document.getElementById('match-halves').addEventListener('input', function() { formatPeriods = parseInt(this.value)||1; matches.forEach(m => refreshHalfUI(m.id)); scheduleSync(); });
 
   // Basic info inputs
   ['match-date', 'tournament-name', 'venue'].forEach(id => {
@@ -614,6 +616,12 @@ function toggleRosterInput() {
 // ========== Matches ==========
 function getMatch(id) { return matches.find(m => m.id === id); }
 
+function isHalfMatch(m) {
+  // この試合がハーフ制か判定
+  if (m.customFormat) return m.customPeriods >= 2;
+  return formatPeriods >= 2;
+}
+
 function getUsedOpponents() {
   const opps = [];
   matches.forEach(m => { if (m.opponent && !opps.includes(m.opponent)) opps.push(m.opponent); });
@@ -631,6 +639,10 @@ function addMatch() {
     gk: null,
     scoreUs: 0,
     scoreOpponent: 0,
+    scoreUsFirst: 0,
+    scoreOppFirst: 0,
+    scoreUsSecond: 0,
+    scoreOppSecond: 0,
     scorers: {},
     goalSequence: [],
     showSub: false,
@@ -731,12 +743,28 @@ function renderMatch(match) {
       </div>
     </div>
 
-    <label>スコア（自チーム - 相手）</label>
-    <div class="score-row">
-      <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-      <span class="score-divider">-</span>
-      <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-      <div class="result-badge none" id="result-${mid}">-</div>
+    <div id="score-section-${mid}">
+      <label>スコア（自チーム - 相手）</label>
+      <div class="score-row">
+        <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
+        <span class="score-divider">-</span>
+        <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
+        <div class="result-badge none" id="result-${mid}">-</div>
+      </div>
+      <div id="half-scores-${mid}" style="display:none;margin-top:6px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:12px;color:#888;width:32px;">前半</span>
+          <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+          <span style="font-size:14px;color:#999;">-</span>
+          <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:#888;width:32px;">後半</span>
+          <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+          <span style="font-size:14px;color:#999;">-</span>
+          <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+        </div>
+      </div>
     </div>
 
     <label>得点者</label>
@@ -786,6 +814,7 @@ function renderMatch(match) {
   document.getElementById('matches-container').appendChild(div);
   renderOppArea(mid);
   renderMatchPlayers(mid);
+  refreshHalfUI(mid);
 }
 
 // ========== Opponent per match ==========
@@ -1075,6 +1104,38 @@ function updateScore(matchId) {
   scheduleSync();
 }
 
+function updateHalfScore(matchId) {
+  const m = getMatch(matchId);
+  m.scoreUsFirst = parseInt(document.getElementById(`score-us-first-${matchId}`).value) || 0;
+  m.scoreOppFirst = parseInt(document.getElementById(`score-opp-first-${matchId}`).value) || 0;
+  m.scoreUsSecond = parseInt(document.getElementById(`score-us-second-${matchId}`).value) || 0;
+  m.scoreOppSecond = parseInt(document.getElementById(`score-opp-second-${matchId}`).value) || 0;
+  // 合計を自動計算
+  m.scoreUs = m.scoreUsFirst + m.scoreUsSecond;
+  m.scoreOpponent = m.scoreOppFirst + m.scoreOppSecond;
+  document.getElementById(`score-us-${matchId}`).value = m.scoreUs;
+  document.getElementById(`score-opp-${matchId}`).value = m.scoreOpponent;
+  updateScore(matchId);
+}
+
+function refreshHalfUI(matchId) {
+  const m = getMatch(matchId);
+  const halfDiv = document.getElementById(`half-scores-${matchId}`);
+  if (!halfDiv) return;
+  const show = isHalfMatch(m);
+  halfDiv.style.display = show ? 'block' : 'none';
+  // ハーフのとき、メインのスコアは読み取り専用（半透明）に
+  const mainUs = document.getElementById(`score-us-${matchId}`);
+  const mainOpp = document.getElementById(`score-opp-${matchId}`);
+  if (show) {
+    mainUs.disabled = true; mainUs.style.opacity = '0.5';
+    mainOpp.disabled = true; mainOpp.style.opacity = '0.5';
+  } else {
+    mainUs.disabled = false; mainUs.style.opacity = '1';
+    mainOpp.disabled = false; mainOpp.style.opacity = '1';
+  }
+}
+
 // ========== Substitution ==========
 function toggleSub(matchId) {
   const m = getMatch(matchId);
@@ -1252,6 +1313,13 @@ function renderScorers(matchId) {
     ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 
+  // 「不明」ボタン
+  const unkCount = m.scorers[0] || 0;
+  const unkCls = unkCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
+  chipsHtml += `<div class="${unkCls}" style="color:#999;border-style:dashed;"
+    onclick="toggleScorer(${matchId},0)"
+  ><span>？</span>${unkCount > 1 ? `<span class="count">×${unkCount}</span>` : ''}</div>`;
+
   // 得点順表示（チップの下）
   let seqHtml = '';
   if (m.goalSequence.length > 0) {
@@ -1351,6 +1419,7 @@ function toggleCustomFormat(matchId) {
     m.customMinutes = parseInt(document.getElementById(`custom-min-${matchId}`).value) || 15;
     m.customPeriods = parseInt(document.getElementById(`custom-per-${matchId}`).value) || 1;
   }
+  refreshHalfUI(matchId);
   scheduleSync();
 }
 
@@ -1358,6 +1427,7 @@ function setCustomFormat(matchId) {
   const m = getMatch(matchId);
   m.customMinutes = parseInt(document.getElementById(`custom-min-${matchId}`).value) || 15;
   m.customPeriods = parseInt(document.getElementById(`custom-per-${matchId}`).value) || 1;
+  refreshHalfUI(matchId);
   scheduleSync();
 }
 
@@ -1458,7 +1528,11 @@ function generateOutput(mode) {
     if (subStr) {
       lines.push(`交代：${subStr}`);
     }
-    lines.push(`スコア：${us}-${opp} ${result}`);
+    if (isHalfMatch(m) && (m.scoreUsFirst || m.scoreOppFirst || m.scoreUsSecond || m.scoreOppSecond)) {
+      lines.push(`スコア：${us}-${opp} ${result}（前半${m.scoreUsFirst||0}-${m.scoreOppFirst||0} / 後半${m.scoreUsSecond||0}-${m.scoreOppSecond||0}）`);
+    } else {
+      lines.push(`スコア：${us}-${opp} ${result}`);
+    }
     lines.push(`得点者：${scorerStr}`);
     // フォーメーション出力（前半・後半対応）
     if (hasFormation(m)) {
@@ -1532,6 +1606,10 @@ function getShareData() {
       gk: m.gk,
       scoreUs: m.scoreUs,
       scoreOpponent: m.scoreOpponent,
+      scoreUsFirst: m.scoreUsFirst || 0,
+      scoreOppFirst: m.scoreOppFirst || 0,
+      scoreUsSecond: m.scoreUsSecond || 0,
+      scoreOppSecond: m.scoreOppSecond || 0,
       scorers: m.scorers,
       goalSequence: m.goalSequence || [],
       showSub: m.showSub,
@@ -1607,6 +1685,10 @@ function loadFromUrl() {
           gk: md.gk,
           scoreUs: md.scoreUs || 0,
           scoreOpponent: md.scoreOpponent || 0,
+          scoreUsFirst: md.scoreUsFirst || 0,
+          scoreOppFirst: md.scoreOppFirst || 0,
+          scoreUsSecond: md.scoreUsSecond || 0,
+          scoreOppSecond: md.scoreOppSecond || 0,
           scorers: md.scorers || {},
           goalSequence: md.goalSequence ? (Array.isArray(md.goalSequence) ? md.goalSequence : Object.values(md.goalSequence)) : [],
           showSub: md.showSub || false,
@@ -1632,6 +1714,13 @@ function loadFromUrl() {
         document.getElementById(`score-us-${m.id}`).value = m.scoreUs;
         document.getElementById(`score-opp-${m.id}`).value = m.scoreOpponent;
         updateScore(m.id);
+      refreshHalfUI(m.id);
+      if (isHalfMatch(m)) {
+        document.getElementById(`score-us-first-${m.id}`).value = m.scoreUsFirst;
+        document.getElementById(`score-opp-first-${m.id}`).value = m.scoreOppFirst;
+        document.getElementById(`score-us-second-${m.id}`).value = m.scoreUsSecond;
+        document.getElementById(`score-opp-second-${m.id}`).value = m.scoreOppSecond;
+      }
         if (m.memo) document.getElementById(`memo-${m.id}`).value = m.memo;
         if (m.showSub) {
           document.getElementById(`sub-${m.id}`).style.display = 'block';
@@ -2032,6 +2121,13 @@ function loadFromFirebase(data) {
       document.getElementById(`score-us-${m.id}`).value = m.scoreUs;
       document.getElementById(`score-opp-${m.id}`).value = m.scoreOpponent;
       updateScore(m.id);
+      refreshHalfUI(m.id);
+      if (isHalfMatch(m)) {
+        document.getElementById(`score-us-first-${m.id}`).value = m.scoreUsFirst;
+        document.getElementById(`score-opp-first-${m.id}`).value = m.scoreOppFirst;
+        document.getElementById(`score-us-second-${m.id}`).value = m.scoreUsSecond;
+        document.getElementById(`score-opp-second-${m.id}`).value = m.scoreOppSecond;
+      }
       if (m.memo) document.getElementById(`memo-${m.id}`).value = m.memo;
       if (m.showSub) {
         document.getElementById(`sub-${m.id}`).style.display = 'block';
