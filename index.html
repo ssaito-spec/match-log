@@ -1319,11 +1319,15 @@ function renderScorers(matchId) {
   const unkCls = unkCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
   chipsHtml += `<div class="${unkCls}" style="color:#999;border-style:dashed;"
     onclick="toggleScorer(${matchId},0)"
+    ontouchstart="lpStart(event,${matchId},0,'sc')"
+    ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
   ><span>？</span>${unkCount > 1 ? `<span class="count">×${unkCount}</span>` : ''}</div>`;
   const ogCount = m.scorers[-1] || 0;
   const ogCls = ogCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
   chipsHtml += `<div class="${ogCls}" style="color:#999;border-style:dashed;"
     onclick="toggleScorer(${matchId},-1)"
+    ontouchstart="lpStart(event,${matchId},-1,'sc')"
+    ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
   ><span>OG</span>${ogCount > 1 ? `<span class="count">×${ogCount}</span>` : ''}</div>`;
 
   // 得点順表示（チップの下）
@@ -1895,7 +1899,7 @@ function joinRoom() {
     registerPresence();
 
     // 全員ポーリング（編集者も他の編集者の変更を受信）
-    lastDataHash = JSON.stringify(data || '');
+    lastDataHash = dataHash(data);
     startPolling();
   }).catch(err => {
     debugLog('接続エラー: ' + err.message);
@@ -2008,7 +2012,7 @@ async function syncToFirebase() {
     updateSyncStatus('ok');
     // Firebaseが返す形式でhash更新（配列→オブジェクト変換後の形式に合わせる）
     const saved = await firebaseGet(firebaseDataUrl());
-    lastDataHash = JSON.stringify(saved || '');
+    lastDataHash = dataHash(saved);
     lastSyncTime = Date.now();
   } catch(err) {
     debugLog('送信エラー: ' + err.message);
@@ -2016,6 +2020,30 @@ async function syncToFirebase() {
   } finally {
     isSyncing = false;
   }
+}
+
+// --- Hash normalization (Firebase converts arrays to objects) ---
+function normalizeForHash(obj) {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(normalizeForHash);
+  if (typeof obj === 'object') {
+    // Check if it looks like a Firebase array-as-object (keys are sequential integers)
+    const keys = Object.keys(obj);
+    const isArrayLike = keys.length > 0 && keys.every((k, i) => String(i) === k);
+    if (isArrayLike) {
+      return keys.map(k => normalizeForHash(obj[k]));
+    }
+    const result = {};
+    for (const k of Object.keys(obj).sort()) {
+      result[k] = normalizeForHash(obj[k]);
+    }
+    return result;
+  }
+  return obj;
+}
+
+function dataHash(data) {
+  return JSON.stringify(normalizeForHash(data || ''));
 }
 
 // --- Viewer: Poll for updates ---
@@ -2038,13 +2066,10 @@ async function pollFirebase() {
   }
   try {
     const data = await firebaseGet(firebaseDataUrl());
-    const hash = JSON.stringify(data || '');
+    const hash = dataHash(data);
     if (hash !== lastDataHash) {
       lastDataHash = hash;
-      // 自分がsyncした直後5秒間はUI再構築しない（hash同期のズレ対策）
-      if (Date.now() - lastSyncTime < 5000) {
-        debugLog('sync直後 - hashのみ更新');
-      } else if (data) {
+      if (data) {
         loadFromFirebase(data);
         debugLog('データ更新受信');
       }
