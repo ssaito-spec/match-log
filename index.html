@@ -750,7 +750,7 @@ function renderMatch(match) {
         <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
         <span class="score-divider" id="score-divider-${mid}">-</span>
         <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-        <span class="score-select" id="score-total-${mid}" style="display:none;text-align:center;font-weight:700;"></span>
+        <span id="score-total-${mid}" style="display:none;text-align:center;font-weight:700;font-size:22px;white-space:nowrap;min-width:100px;"></span>
         <div class="result-badge none" id="result-${mid}">-</div>
       </div>
       <div id="half-scores-${mid}" style="display:none;margin-top:6px;">
