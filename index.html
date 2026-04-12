@@ -1627,19 +1627,32 @@ async function toggleOtherDate() {
   const isHidden = row.style.display === 'none';
   row.style.display = isHidden ? 'block' : 'none';
   if (isHidden) {
-    // ルーム一覧を取得
     const sel = document.getElementById('room-id-select');
     sel.innerHTML = '<option value="">読み込み中...</option>';
     try {
       const rooms = await firebaseGet(FIREBASE_URL + '/rooms.json?shallow=true');
-      const keys = Object.keys(rooms || {})
-        .filter(k => /^\d{8}/.test(k))
-        .sort().reverse();
-      sel.innerHTML = '<option value="">-- 試合を選択 --</option>';
-      keys.forEach(k => {
-        const label = k.replace(/^(\d{4})(\d{2})(\d{2})/, '$1/$2/$3').replace('_1',' ①').replace('_2',' ②');
-        sel.innerHTML += `<option value="${k}">${label}</option>`;
-      });
+      const keys = Object.keys(rooms || {}).sort().reverse();
+      // 各ルームのdate/type/tournamentを取得
+      const items = [];
+      for (const k of keys) {
+        try {
+          const d = await firebaseGet(FIREBASE_URL + '/rooms/' + k + '/data.json');
+          if (d && d.matches) {
+            const date = (d.date || k).replace(/^(\d{4})-?(\d{2})-?(\d{2})/, '$1/$2/$3');
+            const suffix = k.endsWith('_1') ? ' ①' : k.endsWith('_2') ? ' ②' : '';
+            const type = d.type || '';
+            const tournament = d.tournament || '';
+            const label = `${date}${suffix} ${type} ${tournament}`.trim();
+            items.push({key: k, label});
+          }
+        } catch(e) {}
+      }
+      if (items.length > 0) {
+        sel.innerHTML = '<option value="">-- 試合を選択 --</option>';
+        items.forEach(it => { sel.innerHTML += `<option value="${it.key}">${it.label}</option>`; });
+      } else {
+        sel.innerHTML = '<option value="">過去の試合はありません</option>';
+      }
     } catch(e) {
       sel.innerHTML = '<option value="">取得できませんでした</option>';
     }
