@@ -1882,24 +1882,29 @@ function joinRoom() {
 
   // Load existing data
   firebaseGet(firebaseDataUrl()).then(data => {
-    if (data) {
-      loadFromFirebase(data);
-      debugLog('既存データ読込完了');
-    } else {
-      // 新規ルーム: 空の試合を1つ追加
-      addMatch();
-      debugLog('新規ルーム');
+    try {
+      if (data) {
+        loadFromFirebase(data);
+        debugLog('既存データ読込完了');
+      } else {
+        // 新規ルーム: 空の試合を1つ追加
+        addMatch();
+        debugLog('新規ルーム');
+      }
+
+      // Register presence
+      registerPresence();
+
+      // 全員ポーリング（編集者も他の編集者の変更を受信）
+      lastDataHash = JSON.stringify(data || '');
+      startPolling();
+    } catch(innerErr) {
+      debugLog('内部エラー: ' + innerErr.message);
+      alert('内部エラー: ' + innerErr.message + '\n' + innerErr.stack);
     }
-
-    // Register presence
-    registerPresence();
-
-    // 全員ポーリング（編集者も他の編集者の変更を受信）
-    lastDataHash = JSON.stringify(data || '');
-    startPolling();
   }).catch(err => {
     debugLog('接続エラー: ' + err.message);
-    alert('接続エラー: ' + err.message);
+    alert('接続エラー: ' + err.message + '\n' + err.stack);
     leaveRoom();
   });
 }
