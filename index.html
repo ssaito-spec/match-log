@@ -1764,13 +1764,28 @@ function joinRoom() {
   if (ca) { ca.style.opacity = '1'; ca.style.pointerEvents = 'auto'; }
   debugLog('ルーム参加: ' + roomId);
 
+  // UIをリセット（前のルームのデータが残らないように）
+  matches = [];
+  matchCounter = 0;
+  document.getElementById('matches-container').innerHTML = '';
+  document.getElementById('match-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('tournament-name').value = '';
+  document.getElementById('venue').value = '';
+  currentWeather = '';
+  const wd = document.getElementById('weather-display');
+  if (wd) wd.textContent = '';
+  const wb = document.getElementById('weather-btn');
+  if (wb) wb.textContent = '🌤️ 現在地の天気を取得';
+  document.querySelectorAll('#match-type-options .chip').forEach(c => c.classList.toggle('active', c.dataset.val === 'TM'));
+
   // Load existing data
   firebaseGet(firebaseDataUrl()).then(data => {
     if (data) {
-      // Firebase converts arrays to objects — convert back
       loadFromFirebase(data);
       debugLog('既存データ読込完了');
-    } else if (isEditor) {
+    } else {
+      // 新規ルーム: 空の試合を1つ追加
+      addMatch();
       debugLog('新規ルーム');
     }
 
