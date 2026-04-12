@@ -1304,7 +1304,7 @@ function renderScorers(matchId) {
   m.scorers = {};
   m.goalSequence.forEach(num => { m.scorers[num] = (m.scorers[num]||0) + 1; });
 
-  const chipsHtml = all.map(num => {
+  let chipsHtml = all.map(num => {
     const count = m.scorers[num] || 0;
     const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
     return `<div class="${cls}"
@@ -1882,29 +1882,24 @@ function joinRoom() {
 
   // Load existing data
   firebaseGet(firebaseDataUrl()).then(data => {
-    try {
-      if (data) {
-        loadFromFirebase(data);
-        debugLog('既存データ読込完了');
-      } else {
-        // 新規ルーム: 空の試合を1つ追加
-        addMatch();
-        debugLog('新規ルーム');
-      }
-
-      // Register presence
-      registerPresence();
-
-      // 全員ポーリング（編集者も他の編集者の変更を受信）
-      lastDataHash = JSON.stringify(data || '');
-      startPolling();
-    } catch(innerErr) {
-      debugLog('内部エラー: ' + innerErr.message);
-      alert('内部エラー: ' + innerErr.message + '\n' + innerErr.stack);
+    if (data) {
+      loadFromFirebase(data);
+      debugLog('既存データ読込完了');
+    } else {
+      // 新規ルーム: 空の試合を1つ追加
+      addMatch();
+      debugLog('新規ルーム');
     }
+
+    // Register presence
+    registerPresence();
+
+    // 全員ポーリング（編集者も他の編集者の変更を受信）
+    lastDataHash = JSON.stringify(data || '');
+    startPolling();
   }).catch(err => {
     debugLog('接続エラー: ' + err.message);
-    alert('接続エラー: ' + err.message + '\n' + err.stack);
+    alert('接続エラー: ' + err.message);
     leaveRoom();
   });
 }
