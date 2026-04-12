@@ -452,6 +452,7 @@ let formatPeriods = 1;
 
 function getName(num) {
   if (num === 0) return '不明';
+  if (num === -1) return 'OG';
   const p = roster.find(r => r.num === num);
   return p ? p.name : String(num);
 }
@@ -1313,12 +1314,17 @@ function renderScorers(matchId) {
     ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
   }).join('');
 
-  // 「不明」ボタン
+  // 「不明」「OG」ボタン
   const unkCount = m.scorers[0] || 0;
   const unkCls = unkCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
   chipsHtml += `<div class="${unkCls}" style="color:#999;border-style:dashed;"
     onclick="toggleScorer(${matchId},0)"
   ><span>？</span>${unkCount > 1 ? `<span class="count">×${unkCount}</span>` : ''}</div>`;
+  const ogCount = m.scorers[-1] || 0;
+  const ogCls = ogCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
+  chipsHtml += `<div class="${ogCls}" style="color:#999;border-style:dashed;"
+    onclick="toggleScorer(${matchId},-1)"
+  ><span>OG</span>${ogCount > 1 ? `<span class="count">×${ogCount}</span>` : ''}</div>`;
 
   // 得点順表示（チップの下）
   let seqHtml = '';
