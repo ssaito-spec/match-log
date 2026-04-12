@@ -342,8 +342,8 @@
   </div>
 </div>
 
+<p id="join-hint" style="text-align:center;font-size:13px;color:#999;margin-bottom:8px;">⬆️ まずルームに参加してください</p>
 <div id="content-area" style="opacity:0.4;pointer-events:none;">
-<p style="text-align:center;font-size:13px;color:#999;margin-bottom:8px;">⬆️ まずルームに参加してください</p>
 
 <!-- Basic Info -->
 <div class="card">
@@ -1762,6 +1762,8 @@ function joinRoom() {
   // コンテンツエリアを解放
   const ca = document.getElementById('content-area');
   if (ca) { ca.style.opacity = '1'; ca.style.pointerEvents = 'auto'; }
+  const hint = document.getElementById('join-hint');
+  if (hint) hint.style.display = 'none';
   debugLog('ルーム参加: ' + roomId);
 
   // UIをリセット（前のルームのデータが残らないように）
@@ -1822,6 +1824,8 @@ function leaveRoom() {
   // コンテンツエリアをグレーアウトに戻す
   const ca = document.getElementById('content-area');
   if (ca) { ca.style.opacity = '0.4'; ca.style.pointerEvents = 'none'; }
+  const hint = document.getElementById('join-hint');
+  if (hint) hint.style.display = 'block';
 }
 
 // --- Presence ---
