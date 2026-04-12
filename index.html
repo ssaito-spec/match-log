@@ -312,7 +312,7 @@
     <input type="hidden" id="room-id">
     <div style="display:flex;gap:8px;">
       <button class="btn btn-primary" onclick="joinToday('1')" style="flex:1;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合①</button>
-      <button class="btn btn-secondary" onclick="joinToday('2')" style="flex:1;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合②</button>
+      <button class="btn" onclick="joinToday('2')" style="flex:1;padding:12px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;">⚽ 今日の試合②</button>
     </div>
     <p style="font-size:11px;color:#aaa;margin-top:6px;text-align:center;">※ 2チーム活動の場合、お子さんのチームを確認してください</p>
     <div style="text-align:center;margin-top:6px;">
@@ -341,6 +341,9 @@
     <p id="room-desc" style="font-size:11px;color:#888;margin-top:4px;"></p>
   </div>
 </div>
+
+<div id="content-area" style="opacity:0.4;pointer-events:none;">
+<p style="text-align:center;font-size:13px;color:#999;margin-bottom:8px;">⬆️ まずルームに参加してください</p>
 
 <!-- Basic Info -->
 <div class="card">
@@ -419,6 +422,7 @@
 <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
 
 <div style="height:40px;"></div>
+</div><!-- /content-area -->
 
 <script>
 // ========== Firebase REST API ==========
@@ -1755,6 +1759,9 @@ function joinRoom() {
   isEditor = true;  // 全員エディター
   setRoleDisplay('editor');
   sessionStorage.setItem('match-log-room', JSON.stringify({ roomId, role: 'editor' }));
+  // コンテンツエリアを解放
+  const ca = document.getElementById('content-area');
+  if (ca) { ca.style.opacity = '1'; ca.style.pointerEvents = 'auto'; }
   debugLog('ルーム参加: ' + roomId);
 
   // Load existing data
@@ -1792,6 +1799,9 @@ function leaveRoom() {
   document.getElementById('room-status').style.display = 'none';
   document.getElementById('presence-count').textContent = '';
   document.getElementById('connection-status').textContent = '';
+  // コンテンツエリアをグレーアウトに戻す
+  const ca = document.getElementById('content-area');
+  if (ca) { ca.style.opacity = '0.4'; ca.style.pointerEvents = 'none'; }
 }
 
 // --- Presence ---
