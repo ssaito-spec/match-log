@@ -2184,6 +2184,10 @@ function loadFromFirebase(data) {
         gk: md.gk,
         scoreUs: md.scoreUs || 0,
         scoreOpponent: md.scoreOpponent || 0,
+        scoreUsFirst: md.scoreUsFirst || 0,
+        scoreOppFirst: md.scoreOppFirst || 0,
+        scoreUsSecond: md.scoreUsSecond || 0,
+        scoreOppSecond: md.scoreOppSecond || 0,
         scorers: md.scorers || {},
         goalSequence: md.goalSequence ? (Array.isArray(md.goalSequence) ? md.goalSequence : Object.values(md.goalSequence)) : [],
         showSub: md.showSub || false,
@@ -2296,8 +2300,8 @@ function loadFormationForHalf(m, half) {
     } else {
       // 交代あり → GKだけ引き継いで、他は空から
       formationSlots = [];
-      // GKを決定（交代でGK変わってたら新GK、変わってなければ前半のGK）
-      let gkNum = m.subGkChange || m.gk;
+      // GKを決定（総入れ替えならswapGk、個別交代ならsubGkChange、なければ前半のGK）
+      let gkNum = m.subMode === 'fullswap' ? (m.swapGk || m.gk) : (m.subGkChange || m.gk);
       if (gkNum) {
         formationSlots.push({pos: 'GK', num: gkNum});
       }
@@ -2335,32 +2339,42 @@ function renderFormationModal() {
 
   const m = getMatch(formationMatchId);
   const periods = getMatchPeriods(m);
-  const isMultiPeriod = periods >= 2;
+  const hasSubs = hasSubstitutions(m);
+  const isMultiPeriod = periods >= 2 || hasSubs;
 
-  // 後半用の選手リスト（交代を反映）
+  // 選手リスト（後半は交代を反映）
   let allPlayers = [...m.players];
   if (m.gk) allPlayers.push(m.gk);
 
-  if (currentHalf === 'second' && m.showSub && m.subMode === 'individual') {
-    // 交代で入った選手を追加、出た選手を除外
-    const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
-    validSubs.forEach(sub => {
-      allPlayers = allPlayers.filter(n => n !== sub.out);
-      if (!allPlayers.includes(sub.in)) allPlayers.push(sub.in);
-    });
+  if (currentHalf === 'second' && hasSubs) {
+    if (m.subMode === 'individual') {
+      // 個別交代: 入った選手を追加、出た選手を除外
+      const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
+      validSubs.forEach(sub => {
+        allPlayers = allPlayers.filter(n => n !== sub.out);
+        if (!allPlayers.includes(sub.in)) allPlayers.push(sub.in);
+      });
+    } else if (m.subMode === 'fullswap') {
+      // 総入れ替え: 交代後の全メンバーで置き換え
+      allPlayers = [...m.swapPlayers];
+      if (m.swapGk) allPlayers.push(m.swapGk);
+    }
   }
 
   const usedNums = formationSlots.map(s => s.num);
 
   const f = FORMATIONS[formationType];
 
-  // Half tabs (for multi-period matches)
+  // Half tabs (multi-period or substitution)
+  const isNaturalHalf = periods >= 2;
+  const firstLabel = isNaturalHalf ? '前半' : '交代前';
+  const secondLabel = isNaturalHalf ? '後半' : '交代後';
   let tabsHtml = '';
   if (isMultiPeriod) {
     tabsHtml = `
       <div class="sub-mode-tabs" style="margin-bottom:12px;">
-        <div class="sub-mode-tab ${currentHalf === 'first' ? 'active' : ''}" onclick="switchHalf('first')">前半</div>
-        <div class="sub-mode-tab ${currentHalf === 'second' ? 'active' : ''}" onclick="switchHalf('second')">後半</div>
+        <div class="sub-mode-tab ${currentHalf === 'first' ? 'active' : ''}" onclick="switchHalf('first')">${firstLabel}</div>
+        <div class="sub-mode-tab ${currentHalf === 'second' ? 'active' : ''}" onclick="switchHalf('second')">${secondLabel}</div>
       </div>
     `;
   }
@@ -2421,7 +2435,7 @@ function renderFormationModal() {
 
   const modal = document.createElement('div');
   modal.className = 'formation-modal';
-  const halfLabel = isMultiPeriod ? (currentHalf === 'first' ? '（前半）' : '（後半）') : '';
+  const halfLabel = isMultiPeriod ? (currentHalf === 'first' ? `（${firstLabel}）` : `（${secondLabel}）`) : '';
   modal.innerHTML = `
     <div class="formation-content">
       <div class="formation-title">⚽ フォーメーション配置${halfLabel}</div>
