@@ -95,7 +95,10 @@
 
   /* PK Shootout */
   .pk-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
-  .pk-toggle { font-size: 13px; color: #e74c3c; cursor: pointer; font-weight: 600; }
+  .pk-toggle {
+    font-size: 13px; color: #e74c3c; cursor: pointer; font-weight: 600;
+  }
+  .pk-toggle.btn-style { border: 1.5px dashed #e74c3c; background: #fff5f5; }
   .pk-content { margin-top: 10px; }
   .pk-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .pk-label { font-size: 13px; font-weight: 700; color: #555; min-width: 50px; }
@@ -127,6 +130,7 @@
   .scorer-chip.selected { background: #e74c3c; color: #fff; border-color: #e74c3c; }
   .scorer-chip .count { font-size: 10px; opacity: 0.9; }
   .hint { font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4; }
+  .hint-reset { color: #e74c3c; font-weight: 600; }
 
   /* Substitution */
   .sub-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
@@ -134,6 +138,11 @@
     font-size: 13px; color: #4a90d9; cursor: pointer;
     font-weight: 600; -webkit-tap-highlight-color: transparent;
   }
+  .sub-toggle.btn-style, .pk-toggle.btn-style {
+    display: inline-block; padding: 6px 12px;
+    border-radius: 8px;
+  }
+  .sub-toggle.btn-style { border: 1.5px dashed #4a90d9; background: #f0f6ff; }
   .sub-content { margin-top: 8px; }
   .sub-mode-tabs {
     display: flex; margin-bottom: 10px; border-radius: 8px;
@@ -715,7 +724,7 @@ function renderMatch(match) {
     </div>
 
     <div class="sub-section">
-      <span class="sub-toggle" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
+      <span class="sub-toggle btn-style" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
       <div class="sub-content" id="sub-${mid}" style="display:none;">
         <div class="sub-mode-tabs">
           <div class="sub-mode-tab active" data-mode="individual" onclick="setSubMode(${mid},'individual')">個別交代</div>
@@ -776,7 +785,7 @@ function renderMatch(match) {
     </div>
 
     <div class="pk-section">
-      <span class="pk-toggle" id="pk-toggle-${mid}" onclick="togglePK(${mid})">＋ PK戦を入力</span>
+      <span class="pk-toggle btn-style" id="pk-toggle-${mid}" onclick="togglePK(${mid})">＋ PK戦を入力</span>
       <div class="pk-content" id="pk-content-${mid}" style="display:none;">
         <div class="pk-row">
           <span class="pk-label">JACPA</span>
@@ -893,7 +902,7 @@ const OPP_MASTER = [
   '調布イーグルス','足柄FC','鷹の台ファイターズ','鹿島アントラーズノルテジュニア',
   // 新規: クラブ内A/Bチーム系
   'FC大泉学園レッド','FC大泉学園シルバー','FC COLORZ A','FC COLORZ B','Grant FC A',
-  'Grant FC B','FCバーシモン(W)','FCバーシモン(O)','レジスタFC八潮',
+  'Grant FC B','FCバーシモン','レジスタFC八潮',
   // 新規: 小平・東大和・東村山地区（NO 1-39、14/25/38欠番、19=自チーム除く）
   'O.P.J.FC','ホワイトダックSC','小平FCイレブン','学園東小ミラクルキッズ','KS LEONE',
   '小平FC','FCジュベニール小平','小平FCウイングス','鈴木SC','BSサッカークラブ',
@@ -906,13 +915,16 @@ const OPP_MASTER = [
 ];
 
 function getOppSuggestions() {
-  // マスタ + localStorageの追加チーム名をマージ
+  // マスタ + localStorageの追加チーム名をマージ（マスタの部分文字列は除外）
   const extra = JSON.parse(localStorage.getItem('match-log-opponents') || '[]');
-  return [...new Set([...OPP_MASTER, ...extra])].sort();
+  const filtered = extra.filter(e => !OPP_MASTER.some(m => m.includes(e)));
+  return [...new Set([...OPP_MASTER, ...filtered])].sort();
 }
 
 function saveNewOpponent(name) {
   if (!name || OPP_MASTER.includes(name)) return;
+  // マスタのチーム名に含まれる文字列は保存しない（入力途中の可能性）
+  if (OPP_MASTER.some(m => m.includes(name))) return;
   const extra = JSON.parse(localStorage.getItem('match-log-opponents') || '[]');
   if (!extra.includes(name)) {
     extra.push(name);
@@ -1052,6 +1064,8 @@ function lpStart(e, mid, num, type) {
 function lpMove() {}
 function lpEnd() {
   if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+  // 長押し後のonclickをブロックした後、300msでリセット（他の操作に影響させない）
+  if (lpFired) setTimeout(() => { lpFired = false; }, 300);
 }
 
 function togglePlayer(matchId, num, asGk) {
@@ -1367,6 +1381,16 @@ function renderScorers(matchId) {
   }
 
   grid.innerHTML = chipsHtml + seqHtml;
+
+  // 得点があるときはリセットヒントを強調
+  const hintEl = grid.parentElement.querySelector('.hint');
+  if (hintEl) {
+    if (m.goalSequence.length > 0) {
+      hintEl.innerHTML = 'タップ: +1点 ／ <span class="hint-reset">長押し: その選手をリセット</span>';
+    } else {
+      hintEl.innerHTML = 'タップ: +1点 ／ 長押し: リセット';
+    }
+  }
 }
 
 function toggleScorer(mid, num) {
@@ -1472,7 +1496,11 @@ function setCustomFormat(matchId) {
 // ========== Generate ==========
 function generateOutput(mode) {
   const useNames = (mode === 'name');
-  const fmt = n => useNames ? getName(n) : String(n);
+  const fmt = n => {
+    if (n === 0) return '不明';
+    if (n === -1) return 'OG';
+    return useNames ? getName(n) : String(n);
+  };
 
   const date = document.getElementById('match-date').value;
   const type = document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM';
