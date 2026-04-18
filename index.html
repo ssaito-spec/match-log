@@ -754,6 +754,8 @@ function addMatch() {
     customFormat: false,
     customMinutes: 15,
     customPeriods: 1,
+    secondHalfPlayers: [],
+    secondHalfGk: null,
     formationFirst: null, // [{pos, num}] 前半
     formationSecond: null, // [{pos, num}] 後半
     formationType: '3-2-2'
@@ -799,15 +801,24 @@ function renderMatch(match) {
     </div>
 
     <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span>出場選手（タップで選択 / ダブルタップでGK）</span>
+      <span id="player-section-label-${mid}">出場選手（タップで選択 / ダブルタップでGK）</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
     </label>
     <div id="player-summary-${mid}" style="display:none;font-size:15px;color:#555;margin-bottom:6px;padding:4px 6px;background:#f5f5f5;border-radius:6px;"></div>
     <div class="player-grid" id="players-${mid}"></div>
 
+    <div id="second-half-section-${mid}" style="display:none;">
+      <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <span>後半メンバー（タップで選択 / ダブルタップでGK）</span>
+        <span class="player-count" id="pcount-second-${mid}">0人</span>
+      </label>
+      <div id="player-summary-second-${mid}" style="display:none;font-size:15px;color:#555;margin-bottom:6px;padding:4px 6px;background:#f5f5f5;border-radius:6px;"></div>
+      <div class="player-grid" id="players-second-${mid}"></div>
+    </div>
+
     <span class="sub-toggle" onclick="openFormation(${mid})" style="display:inline-block;margin-top:8px;">🏟️ フォーメーションを入力（任意）</span>
 
-    <div class="sub-section">
+    <div class="sub-section" id="sub-section-${mid}">
       <span class="sub-toggle btn-style" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
       <div class="sub-content" id="sub-${mid}" style="display:none;">
         <div class="sub-mode-tabs">
@@ -1100,15 +1111,28 @@ function updatePlayerSummary(matchId) {
   const m = getMatch(matchId);
   const el = document.getElementById(`player-summary-${matchId}`);
   if (!m || !el) return;
-  const nums = [...m.players].sort((a, b) => a - b);
-  const parts = [];
-  if (nums.length > 0) parts.push(nums.join('・'));
-  if (m.gk) parts.push(`GK${m.gk}`);
-  if (parts.length === 0) {
-    el.style.display = 'none';
+
+  const nums1 = [...m.players].sort((a, b) => a - b);
+  const parts1 = [];
+  if (nums1.length > 0) parts1.push(nums1.join('・'));
+  if (m.gk) parts1.push(`GK${m.gk}`);
+
+  if (isHalfMatch(m)) {
+    el.textContent = parts1.length > 0 ? '前半: ' + parts1.join('・') : '';
+    el.style.display = parts1.length > 0 ? '' : 'none';
+
+    const el2 = document.getElementById(`player-summary-second-${matchId}`);
+    if (el2) {
+      const nums2 = [...m.secondHalfPlayers].sort((a, b) => a - b);
+      const parts2 = [];
+      if (nums2.length > 0) parts2.push(nums2.join('・'));
+      if (m.secondHalfGk) parts2.push(`GK${m.secondHalfGk}`);
+      el2.textContent = parts2.length > 0 ? '後半: ' + parts2.join('・') : '';
+      el2.style.display = parts2.length > 0 ? '' : 'none';
+    }
   } else {
-    el.textContent = '出場: ' + parts.join('・');
-    el.style.display = '';
+    el.textContent = parts1.length > 0 ? '出場: ' + parts1.join('・') : '';
+    el.style.display = parts1.length > 0 ? '' : 'none';
   }
 }
 
@@ -1272,7 +1296,6 @@ function refreshHalfUI(matchId) {
   const totalUs = document.getElementById(`score-total-us-${matchId}`);
   const totalOpp = document.getElementById(`score-total-opp-${matchId}`);
   if (show) {
-    // ハーフ制: selectを隠して合計テキスト表示
     if (mainUs) mainUs.style.display = 'none';
     if (mainOpp) mainOpp.style.display = 'none';
     if (totalUs) { totalUs.style.display = 'inline-block'; totalUs.textContent = m.scoreUs; }
@@ -1283,6 +1306,18 @@ function refreshHalfUI(matchId) {
     if (totalUs) totalUs.style.display = 'none';
     if (totalOpp) totalOpp.style.display = 'none';
   }
+
+  // 前後半メンバー選択セクションの表示切替
+  const secondSection = document.getElementById(`second-half-section-${matchId}`);
+  const subSection = document.getElementById(`sub-section-${matchId}`);
+  const playerLabel = document.getElementById(`player-section-label-${matchId}`);
+  if (secondSection) secondSection.style.display = show ? 'block' : 'none';
+  if (subSection) subSection.style.display = show ? 'none' : 'block';
+  if (playerLabel) playerLabel.textContent = show
+    ? '前半メンバー（タップで選択 / ダブルタップでGK）'
+    : '出場選手（タップで選択 / ダブルタップでGK）';
+  if (show) renderSecondHalfPlayers(matchId);
+  updatePlayerSummary(matchId);
 }
 
 // ========== Substitution ==========
@@ -1417,6 +1452,63 @@ function setSwapGk(matchId, val) {
   renderScorers(matchId);
 }
 
+// ========== Second half players ==========
+function renderSecondHalfPlayers(matchId) {
+  const m = getMatch(matchId);
+  if (!m) return;
+  const grid = document.getElementById(`players-second-${matchId}`);
+  if (!grid) return;
+
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  grid.innerHTML = sorted.map(r => {
+    const isGk = m.secondHalfGk === r.num;
+    const isSel = m.secondHalfPlayers.includes(r.num);
+    let cls = 'player-chip';
+    if (isGk) cls += ' gk';
+    else if (isSel) cls += ' selected';
+    const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
+                       : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
+    return `<div class="${cls}"
+      onclick="handleSecondHalfPlayerTap(${matchId},${r.num})"
+      oncontextmenu="event.preventDefault();toggleSecondHalfPlayer(${matchId},${r.num},true)"
+    >${label}</div>`;
+  }).join('');
+
+  const total = m.secondHalfPlayers.length + (m.secondHalfGk ? 1 : 0);
+  const c = document.getElementById(`pcount-second-${matchId}`);
+  if (c) c.textContent = `${total}人`;
+
+  updatePlayerSummary(matchId);
+  renderScorers(matchId);
+}
+
+function handleSecondHalfPlayerTap(mid, num) {
+  const now = Date.now();
+  const isDoubleTap = (lastTapNum === num && lastTapMid === mid && lastTapType === 'second' && now - lastTapTime < 400);
+  if (isDoubleTap) {
+    toggleSecondHalfPlayer(mid, num, true);
+    lastTapTime = 0; lastTapNum = null;
+  } else {
+    toggleSecondHalfPlayer(mid, num, false);
+    lastTapTime = now; lastTapNum = num; lastTapMid = mid; lastTapType = 'second';
+  }
+}
+
+function toggleSecondHalfPlayer(matchId, num, asGk) {
+  if (lpFired && !asGk) return;
+  const m = getMatch(matchId);
+  if (asGk) {
+    if (m.secondHalfGk === num) { m.secondHalfGk = null; if (!m.secondHalfPlayers.includes(num)) m.secondHalfPlayers.push(num); }
+    else { m.secondHalfPlayers = m.secondHalfPlayers.filter(n => n !== num); m.secondHalfGk = num; }
+  } else {
+    if (m.secondHalfGk === num) { m.secondHalfGk = null; }
+    else if (m.secondHalfPlayers.includes(num)) { m.secondHalfPlayers = m.secondHalfPlayers.filter(n => n !== num); }
+    else { m.secondHalfPlayers.push(num); }
+  }
+  renderSecondHalfPlayers(matchId);
+  scheduleSync();
+}
+
 // ========== Scorers ==========
 function renderScorers(matchId) {
   const m = getMatch(matchId);
@@ -1433,7 +1525,10 @@ function renderScorers(matchId) {
 
   let all = [...m.players];
   if (m.gk) all.push(m.gk);
-  if (m.showSub) {
+  if (isHalfMatch(m)) {
+    m.secondHalfPlayers.forEach(n => { if (!all.includes(n)) all.push(n); });
+    if (m.secondHalfGk && !all.includes(m.secondHalfGk)) all.push(m.secondHalfGk);
+  } else if (m.showSub) {
     if (m.subMode === 'individual') {
       m.subs.forEach(s => { if (s.in && !all.includes(s.in)) all.push(s.in); });
     } else {
@@ -1635,34 +1730,41 @@ function generateOutput(mode) {
   lines.push('');
 
   matches.forEach((m, i) => {
-    // 出場選手（スタメン全員）
+    // 出場選手
     const starters = [...m.players].sort((a,b) => a-b);
     let pStr = starters.map(fmt).join(',');
-    if (m.gk !== null) {
-      if (pStr) pStr += ',';
-      pStr += `GK${fmt(m.gk)}`;
+    if (m.gk !== null) { if (pStr) pStr += ','; pStr += `GK${fmt(m.gk)}`; }
+
+    // 後半出場選手（前後半形式）
+    let pStr2 = '';
+    if (isHalfMatch(m)) {
+      const starters2 = [...m.secondHalfPlayers].sort((a,b) => a-b);
+      pStr2 = starters2.map(fmt).join(',');
+      if (m.secondHalfGk !== null) { if (pStr2) pStr2 += ','; pStr2 += `GK${fmt(m.secondHalfGk)}`; }
     }
 
-    // 交代情報（別行に出力）
+    // 交代情報（1本形式のみ）
     let subStr = '';
-    if (m.showSub && m.subMode === 'individual') {
-      const valid = m.subs.filter(s => s.out!==null && s.in!==null);
-      if (valid.length > 0) {
-        const subParts = valid.map(s => {
-          const isGkOut = s.out === m.gk;
-          const isGkIn = m.subGkChange === s.in;
-          const outStr = isGkOut ? `GK${fmt(s.out)}` : fmt(s.out);
-          const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
-          return `${outStr}→${inStr}`;
-        });
-        subStr = subParts.join(',');
-      }
-    } else if (m.showSub && m.subMode === 'fullswap') {
-      if (m.swapPlayers.length > 0 || m.swapGk !== null) {
-        const sf = [...m.swapPlayers].sort((a,b)=>a-b);
-        let ss = sf.map(fmt).join(',');
-        if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
-        subStr = `総入替→${ss}`;
+    if (!isHalfMatch(m)) {
+      if (m.showSub && m.subMode === 'individual') {
+        const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+        if (valid.length > 0) {
+          const subParts = valid.map(s => {
+            const isGkOut = s.out === m.gk;
+            const isGkIn = m.subGkChange === s.in;
+            const outStr = isGkOut ? `GK${fmt(s.out)}` : fmt(s.out);
+            const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
+            return `${outStr}→${inStr}`;
+          });
+          subStr = subParts.join(',');
+        }
+      } else if (m.showSub && m.subMode === 'fullswap') {
+        if (m.swapPlayers.length > 0 || m.swapGk !== null) {
+          const sf = [...m.swapPlayers].sort((a,b)=>a-b);
+          let ss = sf.map(fmt).join(',');
+          if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
+          subStr = `総入替→${ss}`;
+        }
       }
     }
 
@@ -1696,9 +1798,12 @@ function generateOutput(mode) {
       const mFmt = m.customPeriods === 2 ? `${m.customMinutes}分ハーフ` : `${m.customMinutes}分×${m.customPeriods}`;
       lines.push(`試合形式：${mFmt}`);
     }
-    lines.push(`出場選手：${pStr}`);
-    if (subStr) {
-      lines.push(`交代：${subStr}`);
+    if (isHalfMatch(m)) {
+      if (pStr) lines.push(`前半出場：${pStr}`);
+      if (pStr2) lines.push(`後半出場：${pStr2}`);
+    } else {
+      lines.push(`出場選手：${pStr}`);
+      if (subStr) lines.push(`交代：${subStr}`);
     }
     if (isHalfMatch(m) && (m.scoreUsFirst || m.scoreOppFirst || m.scoreUsSecond || m.scoreOppSecond)) {
       lines.push(`スコア：${us}-${opp} ${result}（前半${m.scoreUsFirst||0}-${m.scoreOppFirst||0} / 後半${m.scoreUsSecond||0}-${m.scoreOppSecond||0}）`);
@@ -1789,6 +1894,8 @@ function getShareData() {
       subGkChange: m.subGkChange,
       swapPlayers: m.swapPlayers,
       swapGk: m.swapGk,
+      secondHalfPlayers: m.secondHalfPlayers || [],
+      secondHalfGk: m.secondHalfGk || null,
       memo: m.memo,
       showPK: m.showPK,
       pkOurs: m.pkOurs,
@@ -1869,6 +1976,8 @@ function loadFromUrl() {
           subGkChange: md.subGkChange,
           swapPlayers: md.swapPlayers || [],
           swapGk: md.swapGk,
+          secondHalfPlayers: md.secondHalfPlayers || [],
+          secondHalfGk: md.secondHalfGk || null,
           memo: md.memo || '',
           showPK: md.showPK || false,
           pkOurs: md.pkOurs || [],
@@ -1876,7 +1985,7 @@ function loadFromUrl() {
           customFormat: md.customFormat || false,
           customMinutes: md.customMinutes || 15,
           customPeriods: md.customPeriods || 1,
-          formationFirst: md.formationFirst || md.formation || null, // 旧形式互換
+          formationFirst: md.formationFirst || md.formation || null,
           formationSecond: md.formationSecond || null,
           formationType: md.formationType || '3-2-2'
         };
@@ -2302,6 +2411,8 @@ function loadFromFirebase(data) {
         subGkChange: md.subGkChange,
         swapPlayers: md.swapPlayers || [],
         swapGk: md.swapGk,
+        secondHalfPlayers: md.secondHalfPlayers || [],
+        secondHalfGk: md.secondHalfGk || null,
         memo: md.memo || '',
         showPK: md.showPK || false,
         pkOurs: md.pkOurs || [],
