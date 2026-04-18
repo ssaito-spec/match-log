@@ -1085,14 +1085,14 @@ function renderMatchPlayers(matchId) {
   if (!grid) return;
 
   const sorted = [...roster].sort((a,b) => a.num - b.num);
-  const hasFirst = m.players.length > 0 || m.gk !== null;
+  const totalFirst = m.players.length + (m.gk ? 1 : 0);
   grid.innerHTML = sorted.map(r => {
     const isGk = m.gk === r.num;
     const isSel = m.players.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
-    else if (hasFirst) cls += ' dim';
+    else if (totalFirst >= 8) cls += ' dim';
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
@@ -1457,14 +1457,14 @@ function renderSecondHalfPlayers(matchId) {
   if (!grid) return;
 
   const sorted = [...roster].sort((a,b) => a.num - b.num);
-  const hasSecond = m.secondHalfPlayers.length > 0 || m.secondHalfGk !== null;
+  const totalSecond = m.secondHalfPlayers.length + (m.secondHalfGk ? 1 : 0);
   grid.innerHTML = sorted.map(r => {
     const isGk = m.secondHalfGk === r.num;
     const isSel = m.secondHalfPlayers.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
-    else if (hasSecond) cls += ' dim';
+    else if (totalSecond >= 8) cls += ' dim';
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
