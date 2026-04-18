@@ -850,14 +850,14 @@ function renderMatch(match) {
         <div class="result-badge none" id="result-${mid}">-</div>
       </div>
       <div id="half-scores-${mid}" style="display:none;margin-top:6px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span style="font-size:12px;color:#888;width:32px;">前半</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;justify-content:center;">
+          <span style="font-size:12px;color:#888;width:32px;text-align:right;">前半</span>
           <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
           <span style="font-size:14px;color:#999;">-</span>
           <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:12px;color:#888;width:32px;">後半</span>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span style="font-size:12px;color:#888;width:32px;text-align:right;">後半</span>
           <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
           <span style="font-size:14px;color:#999;">-</span>
           <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
