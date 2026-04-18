@@ -840,7 +840,7 @@ function renderMatch(match) {
       </div>
     </div>
 
-    <div id="score-section-${mid}">
+    <div id="score-section-${mid}" style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
       <label>スコア（自チーム - 相手）</label>
       <div class="score-row">
         <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
@@ -865,10 +865,12 @@ function renderMatch(match) {
       </div>
     </div>
 
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
     <label>得点者</label>
     <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
     <div class="scorer-grid" id="scorers-${mid}">
       <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
+    </div>
     </div>
 
     <div class="pk-section">
