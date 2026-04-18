@@ -2769,16 +2769,19 @@ function initStepIndicator() {
     { id: 'section-match',  step: 'step-3' },
     { id: 'section-output', step: 'step-4' },
   ];
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const s = sections.find(s => s.id === entry.target.id);
-      if (s) document.getElementById(s.step).classList.toggle('active', entry.isIntersecting);
+  function updateSteps() {
+    const offset = 120;
+    let activeStep = 'step-1';
+    sections.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el && el.getBoundingClientRect().top <= offset) activeStep = s.step;
     });
-  }, { threshold: 0.05, rootMargin: '0px 0px -50% 0px' });
-  sections.forEach(s => {
-    const el = document.getElementById(s.id);
-    if (el) observer.observe(el);
-  });
+    document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+    const activeEl = document.getElementById(activeStep);
+    if (activeEl) activeEl.classList.add('active');
+  }
+  window.addEventListener('scroll', updateSteps, { passive: true });
+  updateSteps();
 }
 
 function pushData() {
