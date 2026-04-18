@@ -800,19 +800,19 @@ function renderMatch(match) {
       <div id="opp-area-${mid}"></div>
     </div>
 
-    <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span id="player-section-label-${mid}">出場選手（タップで選択 / ダブルタップでGK）</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+      <span id="player-section-label-${mid}" style="font-size:14px;font-weight:600;color:#777;">出場選手</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
-    </label>
-    <div id="player-summary-${mid}" style="display:none;font-size:15px;color:#555;margin-bottom:6px;padding:4px 6px;background:#f5f5f5;border-radius:6px;"></div>
+      <span id="player-nums-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
+    </div>
     <div class="player-grid" id="players-${mid}"></div>
 
     <div id="second-half-section-${mid}" style="display:none;">
-      <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;">
-        <span>後半メンバー（タップで選択 / ダブルタップでGK）</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;margin-top:14px;">
+        <span style="font-size:14px;font-weight:600;color:#777;">後半</span>
         <span class="player-count" id="pcount-second-${mid}">0人</span>
-      </label>
-      <div id="player-summary-second-${mid}" style="display:none;font-size:15px;color:#555;margin-bottom:6px;padding:4px 6px;background:#f5f5f5;border-radius:6px;"></div>
+        <span id="player-nums-second-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
+      </div>
       <div class="player-grid" id="players-second-${mid}"></div>
     </div>
 
@@ -1109,30 +1109,22 @@ function renderMatchPlayers(matchId) {
 
 function updatePlayerSummary(matchId) {
   const m = getMatch(matchId);
-  const el = document.getElementById(`player-summary-${matchId}`);
-  if (!m || !el) return;
+  const numsEl = document.getElementById(`player-nums-${matchId}`);
+  if (!m || !numsEl) return;
 
   const nums1 = [...m.players].sort((a, b) => a - b);
   const parts1 = [];
   if (nums1.length > 0) parts1.push(nums1.join('・'));
   if (m.gk) parts1.push(`GK${m.gk}`);
+  numsEl.textContent = parts1.join('・');
 
-  if (isHalfMatch(m)) {
-    el.textContent = parts1.length > 0 ? '前半: ' + parts1.join('・') : '';
-    el.style.display = parts1.length > 0 ? '' : 'none';
-
-    const el2 = document.getElementById(`player-summary-second-${matchId}`);
-    if (el2) {
-      const nums2 = [...m.secondHalfPlayers].sort((a, b) => a - b);
-      const parts2 = [];
-      if (nums2.length > 0) parts2.push(nums2.join('・'));
-      if (m.secondHalfGk) parts2.push(`GK${m.secondHalfGk}`);
-      el2.textContent = parts2.length > 0 ? '後半: ' + parts2.join('・') : '';
-      el2.style.display = parts2.length > 0 ? '' : 'none';
-    }
-  } else {
-    el.textContent = parts1.length > 0 ? '出場: ' + parts1.join('・') : '';
-    el.style.display = parts1.length > 0 ? '' : 'none';
+  const numsEl2 = document.getElementById(`player-nums-second-${matchId}`);
+  if (numsEl2) {
+    const nums2 = [...m.secondHalfPlayers].sort((a, b) => a - b);
+    const parts2 = [];
+    if (nums2.length > 0) parts2.push(nums2.join('・'));
+    if (m.secondHalfGk) parts2.push(`GK${m.secondHalfGk}`);
+    numsEl2.textContent = parts2.join('・');
   }
 }
 
@@ -1313,9 +1305,7 @@ function refreshHalfUI(matchId) {
   const playerLabel = document.getElementById(`player-section-label-${matchId}`);
   if (secondSection) secondSection.style.display = show ? 'block' : 'none';
   if (subSection) subSection.style.display = show ? 'none' : 'block';
-  if (playerLabel) playerLabel.textContent = show
-    ? '前半メンバー（タップで選択 / ダブルタップでGK）'
-    : '出場選手（タップで選択 / ダブルタップでGK）';
+  if (playerLabel) playerLabel.textContent = show ? '前半' : '出場選手';
   if (show) renderSecondHalfPlayers(matchId);
   updatePlayerSummary(matchId);
 }
