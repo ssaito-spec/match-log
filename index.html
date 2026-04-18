@@ -312,6 +312,36 @@
   }
   .player-chip.lp-active { transform: scale(1.1); background: #f59e0b !important; border-color: #f59e0b !important; }
 
+  .half-block {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  .half-block-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c5f8d;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+  .half-total {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 10px;
+    background: #fff8e7;
+    border-radius: 8px;
+    border: 1px solid #e2d9b0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+  }
+
   .roster-input-row { display: flex; gap: 6px; margin-top: 8px; }
   .roster-input-row input { flex: 1; }
   .roster-input-row .btn { flex-shrink: 0; width: auto; }
@@ -734,6 +764,10 @@ function addMatch() {
     scoreOppSecond: 0,
     scorers: {},
     goalSequence: [],
+    scorersFirst: {},
+    scorersSecond: {},
+    goalSequenceFirst: [],
+    goalSequenceSecond: [],
     showSub: false,
     subMode: 'individual',
     subs: [],
@@ -793,97 +827,133 @@ function renderMatch(match) {
       <div id="opp-area-${mid}"></div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;margin-top:14px;">
-      <span style="color:#4a90d9;">②</span>
-      <span id="player-section-label-${mid}" style="font-size:14px;font-weight:600;color:#777;">出場選手</span>
-      <span class="player-count" id="pcount-${mid}">0人</span>
-      <span id="player-nums-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
-    </div>
-    <div id="player-section-hint-${mid}" style="display:none;font-size:11px;color:#aaa;margin-bottom:4px;">前半に出場した選手を選んでください（交代選手含む）</div>
-    <div class="player-grid" id="players-${mid}"></div>
-
-    <div id="second-half-section-${mid}" style="display:none;">
+    <!-- 1本形式モード -->
+    <div id="single-mode-${mid}">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;margin-top:14px;">
-        <span style="font-size:14px;font-weight:600;color:#777;">後半</span>
-        <span class="player-count" id="pcount-second-${mid}">0人</span>
-        <span id="player-nums-second-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
+        <span style="color:#4a90d9;">②</span>
+        <span id="player-section-label-${mid}" style="font-size:14px;font-weight:600;color:#777;">出場選手</span>
+        <span class="player-count" id="pcount-${mid}">0人</span>
+        <span id="player-nums-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
       </div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">後半に出場した選手を選んでください（交代選手含む）</div>
-      <div class="player-grid" id="players-second-${mid}"></div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">出場した選手を選んでください（交代含む）</div>
+      <div class="player-grid" id="players-${mid}"></div>
+
+      <div class="sub-section" id="sub-section-${mid}">
+        <span class="sub-toggle btn-style" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
+        <div class="sub-content" id="sub-${mid}" style="display:none;">
+          <div class="sub-mode-tabs">
+            <div class="sub-mode-tab active" data-mode="individual" onclick="setSubMode(${mid},'individual')">個別交代</div>
+            <div class="sub-mode-tab" data-mode="fullswap" onclick="setSubMode(${mid},'fullswap')">総入替え</div>
+          </div>
+          <div id="sub-individual-${mid}">
+            <div id="sub-rows-${mid}"></div>
+            <button class="btn btn-add-sub" onclick="addSubRow(${mid})">＋ 交代を追加</button>
+            <div class="sub-gk-change" id="sub-gk-area-${mid}" style="display:none;">
+              <label>GK変更→</label>
+              <select id="sub-gk-change-${mid}" onchange="setSubGkChange(${mid},this.value)">
+                <option value="">変更なし</option>
+              </select>
+            </div>
+          </div>
+          <div id="sub-fullswap-${mid}" style="display:none;">
+            <label>交代後の全メンバー
+              <span class="player-count" id="swapcount-${mid}">0人</span>
+            </label>
+            <div class="player-grid" id="swap-players-${mid}"></div>
+            <div class="gk-row">
+              <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
+              <select id="swap-gk-${mid}" onchange="setSwapGk(${mid},this.value)"><option value="">選択</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="score-section-${mid}" style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
+        <label><span style="color:#4a90d9;margin-right:4px;">③</span>スコア（自チーム - 相手）</label>
+        <div class="score-row">
+          <div style="width:36px;flex-shrink:0;"></div>
+          <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
+          </div>
+          <span class="score-divider">-</span>
+          <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
+          </div>
+          <div class="result-badge none" id="result-${mid}">-</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
+        <label><span style="color:#4a90d9;margin-right:4px;">④</span>得点者</label>
+        <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
+        <div class="scorer-grid" id="scorers-${mid}">
+          <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 前後半形式モード -->
+    <div id="half-mode-${mid}" style="display:none;">
+      <div class="half-block">
+        <div class="half-block-title">前半</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:6px;">出場した選手を選んでください（交代含む）</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <span class="player-count" id="pcount-hf1-${mid}">0人</span>
+          <span id="player-nums-hf1-${mid}" style="font-size:13px;color:#555;"></span>
+        </div>
+        <div class="player-grid" id="players-hf1-${mid}"></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2d9b0;">
+          <label style="font-size:13px;color:#666;font-weight:600;">スコア</label>
+          <div class="score-row" style="margin-top:4px;">
+            <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})">${scoreOpts}</select>
+            <span class="score-divider">-</span>
+            <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})">${scoreOpts}</select>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2d9b0;">
+          <label style="font-size:13px;color:#666;font-weight:600;">得点者</label>
+          <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
+          <div class="scorer-grid" id="scorers-hf1-${mid}">
+            <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="half-block">
+        <div class="half-block-title">後半</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:6px;">出場した選手を選んでください（交代含む）</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <span class="player-count" id="pcount-hf2-${mid}">0人</span>
+          <span id="player-nums-hf2-${mid}" style="font-size:13px;color:#555;"></span>
+        </div>
+        <div class="player-grid" id="players-hf2-${mid}"></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2d9b0;">
+          <label style="font-size:13px;color:#666;font-weight:600;">スコア</label>
+          <div class="score-row" style="margin-top:4px;">
+            <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})">${scoreOpts}</select>
+            <span class="score-divider">-</span>
+            <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})">${scoreOpts}</select>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2d9b0;">
+          <label style="font-size:13px;color:#666;font-weight:600;">得点者</label>
+          <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
+          <div class="scorer-grid" id="scorers-hf2-${mid}">
+            <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="half-total">
+        <span style="font-size:13px;color:#777;font-weight:600;">合計スコア</span>
+        <span id="score-total-us-${mid}" style="font-weight:700;font-size:22px;">0</span>
+        <span class="score-divider">-</span>
+        <span id="score-total-opp-${mid}" style="font-weight:700;font-size:22px;">0</span>
+        <div class="result-badge none" id="result-hf-${mid}">-</div>
+      </div>
     </div>
 
     <span class="sub-toggle" onclick="openFormation(${mid})" style="display:inline-block;margin-top:8px;">🏟️ フォーメーションを入力（任意）</span>
-
-    <div class="sub-section" id="sub-section-${mid}">
-      <span class="sub-toggle btn-style" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
-      <div class="sub-content" id="sub-${mid}" style="display:none;">
-        <div class="sub-mode-tabs">
-          <div class="sub-mode-tab active" data-mode="individual" onclick="setSubMode(${mid},'individual')">個別交代</div>
-          <div class="sub-mode-tab" data-mode="fullswap" onclick="setSubMode(${mid},'fullswap')">総入替え</div>
-        </div>
-        <div id="sub-individual-${mid}">
-          <div id="sub-rows-${mid}"></div>
-          <button class="btn btn-add-sub" onclick="addSubRow(${mid})">＋ 交代を追加</button>
-          <div class="sub-gk-change" id="sub-gk-area-${mid}" style="display:none;">
-            <label>GK変更→</label>
-            <select id="sub-gk-change-${mid}" onchange="setSubGkChange(${mid},this.value)">
-              <option value="">変更なし</option>
-            </select>
-          </div>
-        </div>
-        <div id="sub-fullswap-${mid}" style="display:none;">
-          <label>交代後の全メンバー
-            <span class="player-count" id="swapcount-${mid}">0人</span>
-          </label>
-          <div class="player-grid" id="swap-players-${mid}"></div>
-          <div class="gk-row">
-            <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
-            <select id="swap-gk-${mid}" onchange="setSwapGk(${mid},this.value)"><option value="">選択</option></select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="score-section-${mid}" style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
-      <label><span style="color:#4a90d9;margin-right:4px;">③</span>スコア（自チーム - 相手）</label>
-      <div class="score-row">
-        <div style="width:36px;flex-shrink:0;"></div>
-        <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-          <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
-          <span id="score-total-us-${mid}" style="display:none;font-weight:700;font-size:22px;text-align:center;width:70px;"></span>
-        </div>
-        <span class="score-divider">-</span>
-        <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-          <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
-          <span id="score-total-opp-${mid}" style="display:none;font-weight:700;font-size:22px;text-align:center;width:70px;"></span>
-        </div>
-        <div class="result-badge none" id="result-${mid}">-</div>
-      </div>
-      <div id="half-scores-${mid}" style="display:none;margin-top:4px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;justify-content:center;">
-          <span style="font-size:12px;color:#888;width:36px;text-align:right;flex-shrink:0;">前半</span>
-          <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
-          <span class="score-divider" style="flex-shrink:0;">-</span>
-          <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
-          <div style="width:36px;flex-shrink:0;"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
-          <span style="font-size:12px;color:#888;width:36px;text-align:right;flex-shrink:0;">後半</span>
-          <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
-          <span class="score-divider" style="flex-shrink:0;">-</span>
-          <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
-          <div style="width:36px;flex-shrink:0;"></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
-    <label><span style="color:#4a90d9;margin-right:4px;">④</span>得点者</label>
-    <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
-    <div class="scorer-grid" id="scorers-${mid}">
-      <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
-    </div>
-    </div>
 
     <div class="pk-section">
       <span class="pk-toggle btn-style" id="pk-toggle-${mid}" onclick="togglePK(${mid})">＋ PK戦を入力</span>
@@ -901,7 +971,6 @@ function renderMatch(match) {
         <div class="pk-result" id="pk-result-${mid}"></div>
       </div>
     </div>
-
 
     <div style="margin-top:8px;">
       <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
@@ -1099,7 +1168,11 @@ function renderMatchPlayers(matchId) {
   if (c) c.textContent = `${total}人`;
 
   updateGkSelect(matchId);
-  renderScorers(matchId);
+  if (isHalfMatch(m)) {
+    renderMatchPlayersHalf(matchId, 1);
+  } else {
+    renderScorers(matchId);
+  }
   updateSubDropdowns(matchId);
   renderSwapPlayers(matchId);
   updatePlayerSummary(matchId);
@@ -1174,13 +1247,22 @@ function handleSwapPlayerTap(mid, num) {
 let lpTimer = null;
 let lpFired = false;
 function lpStart(e, mid, num, type) {
-  if (type !== 'sc') return;
-  lpFired = false;
-  lpTimer = setTimeout(() => {
-    lpFired = true;
-    if (navigator.vibrate) navigator.vibrate(50);
-    resetScorer(mid, num);
-  }, 600);
+  if (type === 'sc') {
+    lpFired = false;
+    lpTimer = setTimeout(() => {
+      lpFired = true;
+      if (navigator.vibrate) navigator.vibrate(50);
+      resetScorer(mid, num);
+    }, 600);
+  } else if (type === 'sc-hf1' || type === 'sc-hf2') {
+    const half = type === 'sc-hf1' ? 1 : 2;
+    lpFired = false;
+    lpTimer = setTimeout(() => {
+      lpFired = true;
+      if (navigator.vibrate) navigator.vibrate(50);
+      resetScorerHalf(mid, num, half);
+    }, 600);
+  }
 }
 function lpMove() {}
 function lpEnd() {
@@ -1232,8 +1314,6 @@ function updateScore(matchId) {
   }
   // ハーフ制のときはupdateHalfScoreで既にm.scoreUs/scoreOpponentがセット済み
   const el = document.getElementById(`result-${matchId}`);
-  if (!el) return;
-  el.className = 'result-badge';
 
   let finalResult;
   if (m.scoreUs > m.scoreOpponent) {
@@ -1252,9 +1332,15 @@ function updateScore(matchId) {
     }
   }
 
-  if (finalResult === 'win') { el.classList.add('win'); el.textContent = '○'; }
-  else if (finalResult === 'draw') { el.classList.add('draw'); el.textContent = '△'; }
-  else { el.classList.add('lose'); el.textContent = '×'; }
+  const applyResult = (badge) => {
+    if (!badge) return;
+    badge.className = 'result-badge';
+    if (finalResult === 'win') { badge.classList.add('win'); badge.textContent = '○'; }
+    else if (finalResult === 'draw') { badge.classList.add('draw'); badge.textContent = '△'; }
+    else { badge.classList.add('lose'); badge.textContent = '×'; }
+  };
+  applyResult(el);
+  applyResult(document.getElementById(`result-hf-${matchId}`));
   scheduleSync();
 }
 
@@ -1277,37 +1363,25 @@ function updateHalfScore(matchId) {
 
 function refreshHalfUI(matchId) {
   const m = getMatch(matchId);
-  const halfDiv = document.getElementById(`half-scores-${matchId}`);
-  if (!halfDiv) return;
+  if (!m) return;
   const show = isHalfMatch(m);
-  halfDiv.style.display = show ? 'block' : 'none';
-  const mainUs = document.getElementById(`score-us-${matchId}`);
-  const mainOpp = document.getElementById(`score-opp-${matchId}`);
-  const totalUs = document.getElementById(`score-total-us-${matchId}`);
-  const totalOpp = document.getElementById(`score-total-opp-${matchId}`);
-  if (show) {
-    if (mainUs) mainUs.style.display = 'none';
-    if (mainOpp) mainOpp.style.display = 'none';
-    if (totalUs) { totalUs.style.display = 'inline-block'; totalUs.textContent = m.scoreUs; }
-    if (totalOpp) { totalOpp.style.display = 'inline-block'; totalOpp.textContent = m.scoreOpponent; }
-  } else {
-    if (mainUs) mainUs.style.display = '';
-    if (mainOpp) mainOpp.style.display = '';
-    if (totalUs) totalUs.style.display = 'none';
-    if (totalOpp) totalOpp.style.display = 'none';
-  }
 
-  // 前後半メンバー選択セクションの表示切替
-  const secondSection = document.getElementById(`second-half-section-${matchId}`);
-  const subSection = document.getElementById(`sub-section-${matchId}`);
-  const playerLabel = document.getElementById(`player-section-label-${matchId}`);
-  if (secondSection) secondSection.style.display = show ? 'block' : 'none';
-  if (subSection) subSection.style.display = show ? 'none' : 'block';
-  if (playerLabel) playerLabel.textContent = show ? '前半' : '出場選手';
-  const hintEl = document.getElementById(`player-section-hint-${matchId}`);
-  if (hintEl) hintEl.style.display = show ? '' : 'none';
-  if (show) renderSecondHalfPlayers(matchId);
-  updatePlayerSummary(matchId);
+  const singleMode = document.getElementById(`single-mode-${matchId}`);
+  const halfMode = document.getElementById(`half-mode-${matchId}`);
+  if (singleMode) singleMode.style.display = show ? 'none' : 'block';
+  if (halfMode) halfMode.style.display = show ? 'block' : 'none';
+
+  if (show) {
+    renderMatchPlayersHalf(matchId, 1);
+    renderMatchPlayersHalf(matchId, 2);
+    const totalUs = document.getElementById(`score-total-us-${matchId}`);
+    const totalOpp = document.getElementById(`score-total-opp-${matchId}`);
+    if (totalUs) totalUs.textContent = m.scoreUs;
+    if (totalOpp) totalOpp.textContent = m.scoreOpponent;
+    updateScore(matchId);
+  } else {
+    updatePlayerSummary(matchId);
+  }
 }
 
 // ========== Substitution ==========
@@ -1444,34 +1518,147 @@ function setSwapGk(matchId, val) {
 
 // ========== Second half players ==========
 function renderSecondHalfPlayers(matchId) {
+  renderMatchPlayersHalf(matchId, 2);
+}
+
+function renderMatchPlayersHalf(matchId, half) {
   const m = getMatch(matchId);
   if (!m) return;
-  const grid = document.getElementById(`players-second-${matchId}`);
+  const gridId = half === 1 ? `players-hf1-${matchId}` : `players-hf2-${matchId}`;
+  const grid = document.getElementById(gridId);
   if (!grid) return;
 
+  const players = half === 1 ? m.players : m.secondHalfPlayers;
+  const gk = half === 1 ? m.gk : m.secondHalfGk;
+  const tapFn = half === 1 ? 'handlePlayerTap' : 'handleSecondHalfPlayerTap';
+  const toggleFn = half === 1 ? 'togglePlayer' : 'toggleSecondHalfPlayer';
+
   const sorted = [...roster].sort((a,b) => a.num - b.num);
-  const totalSecond = m.secondHalfPlayers.length + (m.secondHalfGk ? 1 : 0);
+  const total = players.length + (gk ? 1 : 0);
   grid.innerHTML = sorted.map(r => {
-    const isGk = m.secondHalfGk === r.num;
-    const isSel = m.secondHalfPlayers.includes(r.num);
+    const isGk = gk === r.num;
+    const isSel = players.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
-    else if (totalSecond >= 8) cls += ' dim';
+    else if (total >= 8) cls += ' dim';
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
-      onclick="handleSecondHalfPlayerTap(${matchId},${r.num})"
-      oncontextmenu="event.preventDefault();toggleSecondHalfPlayer(${matchId},${r.num},true)"
+      onclick="${tapFn}(${matchId},${r.num})"
+      oncontextmenu="event.preventDefault();${toggleFn}(${matchId},${r.num},true)"
     >${label}</div>`;
   }).join('');
 
-  const total = m.secondHalfPlayers.length + (m.secondHalfGk ? 1 : 0);
-  const c = document.getElementById(`pcount-second-${matchId}`);
-  if (c) c.textContent = `${total}人`;
+  const pcountEl = document.getElementById(half === 1 ? `pcount-hf1-${matchId}` : `pcount-hf2-${matchId}`);
+  if (pcountEl) pcountEl.textContent = `${total}人`;
 
-  updatePlayerSummary(matchId);
-  renderScorers(matchId);
+  const numsEl = document.getElementById(half === 1 ? `player-nums-hf1-${matchId}` : `player-nums-hf2-${matchId}`);
+  if (numsEl) {
+    const nums = [...players].sort((a,b) => a-b);
+    const parts = [];
+    if (nums.length > 0) parts.push(nums.join('・'));
+    if (gk) parts.push(`GK${gk}`);
+    numsEl.textContent = parts.join('・');
+  }
+
+  renderScorersHalf(matchId, half);
+}
+
+function renderScorersHalf(matchId, half) {
+  const m = getMatch(matchId);
+  if (!m) return;
+  const gridId = half === 1 ? `scorers-hf1-${matchId}` : `scorers-hf2-${matchId}`;
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+
+  const scorersKey = half === 1 ? 'scorersFirst' : 'scorersSecond';
+  const seqKey = half === 1 ? 'goalSequenceFirst' : 'goalSequenceSecond';
+  const typeStr = half === 1 ? 'sc-hf1' : 'sc-hf2';
+  if (!m[seqKey]) m[seqKey] = [];
+  if (!m[scorersKey]) m[scorersKey] = {};
+
+  const players = half === 1 ? m.players : m.secondHalfPlayers;
+  const gk = half === 1 ? m.gk : m.secondHalfGk;
+  let all = [...players];
+  if (gk) all.push(gk);
+  all = [...new Set(all)].sort((a,b) => a-b);
+
+  if (all.length === 0) {
+    grid.innerHTML = '<span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>';
+    return;
+  }
+
+  m[scorersKey] = {};
+  m[seqKey].forEach(num => { m[scorersKey][num] = (m[scorersKey][num]||0) + 1; });
+
+  let chipsHtml = all.map(num => {
+    const count = m[scorersKey][num] || 0;
+    const cls = count > 0 ? 'scorer-chip selected' : 'scorer-chip';
+    return `<div class="${cls}"
+      onclick="toggleScorerHalf(${matchId},${num},${half})"
+      ontouchstart="lpStart(event,${matchId},${num},'${typeStr}')"
+      ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
+    ><span>${getName(num)}</span>${count > 1 ? `<span class="count">×${count}</span>` : ''}</div>`;
+  }).join('');
+
+  const unkCount = m[scorersKey][0] || 0;
+  const unkCls = unkCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
+  chipsHtml += `<div class="${unkCls}" style="color:#999;border-style:dashed;"
+    onclick="toggleScorerHalf(${matchId},0,${half})"
+    ontouchstart="lpStart(event,${matchId},0,'${typeStr}')"
+    ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
+  ><span>？</span>${unkCount > 1 ? `<span class="count">×${unkCount}</span>` : ''}</div>`;
+
+  const ogCount = m[scorersKey][-1] || 0;
+  const ogCls = ogCount > 0 ? 'scorer-chip selected' : 'scorer-chip';
+  chipsHtml += `<div class="${ogCls}" style="color:#999;border-style:dashed;"
+    onclick="toggleScorerHalf(${matchId},-1,${half})"
+    ontouchstart="lpStart(event,${matchId},-1,'${typeStr}')"
+    ontouchend="lpEnd(event)" ontouchmove="lpMove(event)"
+  ><span>OG</span>${ogCount > 1 ? `<span class="count">×${ogCount}</span>` : ''}</div>`;
+
+  let seqHtml = '';
+  if (m[seqKey].length > 0) {
+    seqHtml = '<div style="font-size:12px;color:#555;margin-top:8px;line-height:1.6;">' +
+      m[seqKey].map((num, i) => `<span style="color:#e74c3c;font-weight:700;">${i+1}.</span> ${getName(num)}`).join('　') +
+      '</div>';
+  }
+  grid.innerHTML = chipsHtml + seqHtml;
+
+  const hintEl = grid.parentElement.querySelector('.hint');
+  if (hintEl) {
+    if (m[seqKey].length > 0) {
+      hintEl.innerHTML = 'タップ: +1点 ／ <span class="hint-reset">長押し: その選手をリセット</span>';
+    } else {
+      hintEl.innerHTML = 'タップ: +1点 ／ 長押し: リセット';
+    }
+  }
+}
+
+function toggleScorerHalf(mid, num, half) {
+  if (lpFired) return;
+  const m = getMatch(mid);
+  const seqKey = half === 1 ? 'goalSequenceFirst' : 'goalSequenceSecond';
+  const scorersKey = half === 1 ? 'scorersFirst' : 'scorersSecond';
+  if (!m[seqKey]) m[seqKey] = [];
+  if (!m[scorersKey]) m[scorersKey] = {};
+  m[seqKey].push(num);
+  m[scorersKey][num] = (m[scorersKey][num]||0) + 1;
+  renderScorersHalf(mid, half);
+  scheduleSync();
+}
+
+function resetScorerHalf(mid, num, half) {
+  const m = getMatch(mid);
+  const seqKey = half === 1 ? 'goalSequenceFirst' : 'goalSequenceSecond';
+  const scorersKey = half === 1 ? 'scorersFirst' : 'scorersSecond';
+  if (!m[seqKey]) m[seqKey] = [];
+  const lastIdx = m[seqKey].lastIndexOf(num);
+  if (lastIdx >= 0) m[seqKey].splice(lastIdx, 1);
+  delete m[scorersKey][num];
+  renderScorersHalf(mid, half);
+  scheduleSync();
 }
 
 function handleSecondHalfPlayerTap(mid, num) {
@@ -1775,15 +1962,6 @@ function generateOutput(mode) {
       pkLines.push(`${m.opponent || '相手'}：${m.pkTheirs.join('')}`);
     }
 
-    let scorerStr;
-    if (m.goalSequence && m.goalSequence.length > 0) {
-      scorerStr = m.goalSequence.map((num, i) => `${fmt(num)}`).join(',');
-    } else {
-      let scorerParts = [];
-      Object.entries(m.scorers).forEach(([p, c]) => { for(let i=0;i<c;i++) scorerParts.push(fmt(parseInt(p))); });
-      scorerStr = scorerParts.length > 0 ? scorerParts.join(',') : 'なし';
-    }
-
     lines.push(`(${i+1}試合目)`);
     if (m.opponent) lines.push(`対戦相手：${m.opponent}`);
     if (m.customFormat) {
@@ -1802,7 +1980,36 @@ function generateOutput(mode) {
     } else {
       lines.push(`スコア：${us}-${opp} ${result}`);
     }
-    lines.push(`得点者：${scorerStr}`);
+
+    if (isHalfMatch(m)) {
+      const seq1 = m.goalSequenceFirst || [];
+      const seq2 = m.goalSequenceSecond || [];
+      if (seq1.length > 0 || seq2.length > 0) {
+        if (seq1.length > 0) lines.push(`前半得点者：${seq1.map(n => fmt(n)).join(',')}`);
+        if (seq2.length > 0) lines.push(`後半得点者：${seq2.map(n => fmt(n)).join(',')}`);
+      } else {
+        // 後方互換: 旧データのscorers/goalSequenceを使用
+        let scorerStr;
+        if (m.goalSequence && m.goalSequence.length > 0) {
+          scorerStr = m.goalSequence.map(n => fmt(n)).join(',');
+        } else {
+          let parts = [];
+          Object.entries(m.scorers || {}).forEach(([p, c]) => { for(let j=0;j<c;j++) parts.push(fmt(parseInt(p))); });
+          scorerStr = parts.length > 0 ? parts.join(',') : 'なし';
+        }
+        lines.push(`得点者：${scorerStr}`);
+      }
+    } else {
+      let scorerStr;
+      if (m.goalSequence && m.goalSequence.length > 0) {
+        scorerStr = m.goalSequence.map(n => fmt(n)).join(',');
+      } else {
+        let parts = [];
+        Object.entries(m.scorers || {}).forEach(([p, c]) => { for(let j=0;j<c;j++) parts.push(fmt(parseInt(p))); });
+        scorerStr = parts.length > 0 ? parts.join(',') : 'なし';
+      }
+      lines.push(`得点者：${scorerStr}`);
+    }
     // フォーメーション出力（前半・後半対応）
     if (hasFormation(m)) {
       lines.push(`フォーメーション：${m.formationType}`);
@@ -1880,6 +2087,10 @@ function getShareData() {
       scoreOppSecond: m.scoreOppSecond || 0,
       scorers: m.scorers,
       goalSequence: m.goalSequence || [],
+      scorersFirst: m.scorersFirst || {},
+      scorersSecond: m.scorersSecond || {},
+      goalSequenceFirst: m.goalSequenceFirst || [],
+      goalSequenceSecond: m.goalSequenceSecond || [],
       showSub: m.showSub,
       subMode: m.subMode,
       subs: m.subs,
@@ -1962,6 +2173,10 @@ function loadFromUrl() {
           scoreOppSecond: md.scoreOppSecond || 0,
           scorers: md.scorers || {},
           goalSequence: md.goalSequence ? (Array.isArray(md.goalSequence) ? md.goalSequence : Object.values(md.goalSequence)) : [],
+          scorersFirst: md.scorersFirst || {},
+          scorersSecond: md.scorersSecond || {},
+          goalSequenceFirst: md.goalSequenceFirst ? (Array.isArray(md.goalSequenceFirst) ? md.goalSequenceFirst : Object.values(md.goalSequenceFirst)) : [],
+          goalSequenceSecond: md.goalSequenceSecond ? (Array.isArray(md.goalSequenceSecond) ? md.goalSequenceSecond : Object.values(md.goalSequenceSecond)) : [],
           showSub: md.showSub || false,
           subMode: md.subMode || 'individual',
           subs: md.subs || [],
@@ -1987,13 +2202,13 @@ function loadFromUrl() {
         document.getElementById(`score-us-${m.id}`).value = m.scoreUs;
         document.getElementById(`score-opp-${m.id}`).value = m.scoreOpponent;
         updateScore(m.id);
-      refreshHalfUI(m.id);
-      if (isHalfMatch(m)) {
-        document.getElementById(`score-us-first-${m.id}`).value = m.scoreUsFirst;
-        document.getElementById(`score-opp-first-${m.id}`).value = m.scoreOppFirst;
-        document.getElementById(`score-us-second-${m.id}`).value = m.scoreUsSecond;
-        document.getElementById(`score-opp-second-${m.id}`).value = m.scoreOppSecond;
-      }
+        refreshHalfUI(m.id);
+        if (isHalfMatch(m)) {
+          document.getElementById(`score-us-first-${m.id}`).value = m.scoreUsFirst;
+          document.getElementById(`score-opp-first-${m.id}`).value = m.scoreOppFirst;
+          document.getElementById(`score-us-second-${m.id}`).value = m.scoreUsSecond;
+          document.getElementById(`score-opp-second-${m.id}`).value = m.scoreOppSecond;
+        }
         if (m.showSub) {
           document.getElementById(`sub-${m.id}`).style.display = 'block';
           document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
@@ -2397,6 +2612,10 @@ function loadFromFirebase(data) {
         scoreOppSecond: md.scoreOppSecond || 0,
         scorers: md.scorers || {},
         goalSequence: md.goalSequence ? (Array.isArray(md.goalSequence) ? md.goalSequence : Object.values(md.goalSequence)) : [],
+        scorersFirst: md.scorersFirst || {},
+        scorersSecond: md.scorersSecond || {},
+        goalSequenceFirst: md.goalSequenceFirst ? (Array.isArray(md.goalSequenceFirst) ? md.goalSequenceFirst : Object.values(md.goalSequenceFirst)) : [],
+        goalSequenceSecond: md.goalSequenceSecond ? (Array.isArray(md.goalSequenceSecond) ? md.goalSequenceSecond : Object.values(md.goalSequenceSecond)) : [],
         showSub: md.showSub || false,
         subMode: md.subMode || 'individual',
         subs: md.subs || [],
