@@ -342,16 +342,6 @@
     color: #555;
   }
 
-  .roster-input-row { display: flex; gap: 6px; margin-top: 8px; }
-  .roster-input-row input { flex: 1; }
-  .roster-input-row .btn { flex-shrink: 0; width: auto; }
-  .roster-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .roster-tag {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: #e8ecf1; border-radius: 6px; padding: 4px 8px;
-    font-size: 13px; font-weight: 600;
-  }
-  .roster-tag .remove { cursor: pointer; color: #999; font-size: 16px; line-height: 1; }
 
   /* Step Indicator */
   .step-indicator {
@@ -485,25 +475,6 @@
   </div>
 </div>
 
-<!-- Roster (master data) -->
-<div class="card" style="border-color:#ddd;background:#fafafa;">
-  <div class="card-title" onclick="toggleRosterCard()" style="cursor:pointer;color:#888;font-size:13px;">
-    <span>⚙️</span> メンバー管理（マスタ）
-    <span id="roster-count" style="font-size:11px;color:#bbb;margin-left:4px;"></span>
-    <span id="roster-arrow" style="margin-left:auto;color:#ccc;font-size:12px;">▼</span>
-  </div>
-  <div id="roster-content" style="display:none;">
-    <p style="font-size:11px;color:#bbb;margin-bottom:6px;">選手の名前・背番号を管理するマスタです。試合当日は「参加選手」で絞ってください</p>
-    <div class="roster-tags" id="roster-tags"></div>
-    <span class="sub-toggle" id="roster-toggle" onclick="toggleRosterInput()" style="margin-top:8px;display:inline-block;">＋ メンバー追加</span>
-    <div class="roster-input-row" id="roster-input-row" style="display:none;">
-      <input type="number" id="roster-num" placeholder="背番号" min="1" max="99" style="width:70px;">
-      <input type="text" id="roster-name" placeholder="名前（下の名前）">
-      <button class="btn btn-secondary" onclick="addRosterPlayer()" style="padding:8px 12px;">追加</button>
-    </div>
-  </div>
-</div>
-
 <!-- Session Players -->
 <div id="section-players" style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">③</span> 今日の参加選手</div>
 <div class="card">
@@ -608,27 +579,7 @@ function init() {
   // ルームIDに今日の日付を自動入力
   document.getElementById('room-id').value = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
-  // Load roster (migrate from old format if needed)
-  const saved = localStorage.getItem('soccer-roster-v5');
-  if (saved) {
-    roster = JSON.parse(saved);
-  } else {
-    const old = localStorage.getItem('soccer-roster');
-    if (old) {
-      const nums = JSON.parse(old);
-      if (nums.length > 0 && typeof nums[0] === 'number') {
-        roster = nums.map(n => {
-          const def = DEFAULT_ROSTER.find(d => d.num === n);
-          return def || {num: n, name: String(n)};
-        });
-      } else {
-        roster = DEFAULT_ROSTER.slice();
-      }
-    } else {
-      roster = DEFAULT_ROSTER.slice();
-    }
-  }
-  renderRoster();
+  roster = DEFAULT_ROSTER.slice();
   renderSessionPlayerGrid();
 
   // Match type chips
@@ -664,10 +615,6 @@ function init() {
     document.getElementById(id).addEventListener('input', scheduleSync);
   });
 
-  document.getElementById('roster-name').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); addRosterPlayer(); }
-  });
-
   // Load from URL or add empty match
   if (!loadFromUrl()) {
     addMatch();
@@ -701,57 +648,6 @@ function init() {
         joinRoom();
       }
     } catch(e) {}
-  }
-}
-
-// ========== Roster ==========
-let rosterExpanded = false;
-
-function toggleRosterCard() {
-  rosterExpanded = !rosterExpanded;
-  document.getElementById('roster-content').style.display = rosterExpanded ? 'block' : 'none';
-  document.getElementById('roster-arrow').textContent = rosterExpanded ? '▲' : '▼';
-}
-
-function renderRoster() {
-  roster.sort((a,b) => a.num - b.num);
-  document.getElementById('roster-tags').innerHTML = roster.map(r =>
-    `<span class="roster-tag">${r.name}(${r.num})<span class="remove" onclick="removeRosterPlayer(${r.num})">×</span></span>`
-  ).join('');
-  document.getElementById('roster-count').textContent = `(${roster.length}人)`;
-  localStorage.setItem('soccer-roster-v5', JSON.stringify(roster));
-  matches.forEach(m => renderMatchPlayers(m.id));
-}
-
-function addRosterPlayer() {
-  const numInput = document.getElementById('roster-num');
-  const nameInput = document.getElementById('roster-name');
-  const num = parseInt(numInput.value);
-  const name = nameInput.value.trim();
-  if (!num || num < 1 || !name) return;
-  if (!roster.find(r => r.num === num)) {
-    roster.push({num, name});
-    renderRoster();
-  }
-  numInput.value = '';
-  nameInput.value = '';
-  numInput.focus();
-}
-
-function removeRosterPlayer(num) {
-  roster = roster.filter(r => r.num !== num);
-  renderRoster();
-}
-
-function toggleRosterInput() {
-  const row = document.getElementById('roster-input-row');
-  const toggle = document.getElementById('roster-toggle');
-  if (row.style.display === 'none') {
-    row.style.display = 'flex';
-    toggle.textContent = '× 閉じる';
-  } else {
-    row.style.display = 'none';
-    toggle.textContent = '＋ メンバー追加';
   }
 }
 
