@@ -397,12 +397,16 @@
     <span class="step-num">②</span><span class="step-label">基本情報</span>
   </div>
   <span class="step-arrow">›</span>
-  <div class="step-item" id="step-3" onclick="scrollToSection('section-match')">
-    <span class="step-num">③</span><span class="step-label">試合記録</span>
+  <div class="step-item" id="step-3" onclick="scrollToSection('section-players')">
+    <span class="step-num">③</span><span class="step-label">参加選手</span>
   </div>
   <span class="step-arrow">›</span>
-  <div class="step-item" id="step-4" onclick="scrollToSection('section-output')">
-    <span class="step-num">④</span><span class="step-label">コピー</span>
+  <div class="step-item" id="step-4" onclick="scrollToSection('section-match')">
+    <span class="step-num">④</span><span class="step-label">試合記録</span>
+  </div>
+  <span class="step-arrow">›</span>
+  <div class="step-item" id="step-5" onclick="scrollToSection('section-output')">
+    <span class="step-num">⑤</span><span class="step-label">コピー</span>
   </div>
 </div>
 
@@ -481,15 +485,15 @@
   </div>
 </div>
 
-<!-- Roster -->
-<div class="card">
-  <div class="card-title" onclick="toggleRosterCard()" style="cursor:pointer;">
-    <span>👕</span> 登録メンバー
-    <span id="roster-count" style="font-size:12px;color:#4a90d9;margin-left:4px;"></span>
-    <span id="roster-arrow" style="margin-left:auto;color:#999;font-size:12px;">▼</span>
+<!-- Roster (master data) -->
+<div class="card" style="border-color:#ddd;background:#fafafa;">
+  <div class="card-title" onclick="toggleRosterCard()" style="cursor:pointer;color:#888;font-size:13px;">
+    <span>⚙️</span> メンバー管理（マスタ）
+    <span id="roster-count" style="font-size:11px;color:#bbb;margin-left:4px;"></span>
+    <span id="roster-arrow" style="margin-left:auto;color:#ccc;font-size:12px;">▼</span>
   </div>
   <div id="roster-content" style="display:none;">
-    <p style="font-size:12px;color:#999;margin-bottom:6px;">各試合の選手選択に表示されます</p>
+    <p style="font-size:11px;color:#bbb;margin-bottom:6px;">選手の名前・背番号を管理するマスタです。試合当日は「参加選手」で絞ってください</p>
     <div class="roster-tags" id="roster-tags"></div>
     <span class="sub-toggle" id="roster-toggle" onclick="toggleRosterInput()" style="margin-top:8px;display:inline-block;">＋ メンバー追加</span>
     <div class="roster-input-row" id="roster-input-row" style="display:none;">
@@ -500,14 +504,25 @@
   </div>
 </div>
 
+<!-- Session Players -->
+<div id="section-players" style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">③</span> 今日の参加選手</div>
+<div class="card">
+  <p style="font-size:12px;color:#888;margin-bottom:8px;">今日参加する選手を選んでください。試合カードの選手選択に反映されます。</p>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+    <span id="session-player-count" style="font-size:13px;color:#555;font-weight:600;">全員（<span id="session-player-num">0</span>人）</span>
+    <button class="btn btn-secondary" onclick="clearSessionPlayers()" style="padding:4px 10px;font-size:12px;">全員リセット</button>
+  </div>
+  <div class="player-grid" id="session-player-grid"></div>
+</div>
+
 <!-- Matches -->
-<div id="section-match" style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">③</span> 試合を記録！</div>
+<div id="section-match" style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> 試合を記録！</div>
 <div id="matches-container"></div>
 
 <button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">＋ 試合を追加</button>
 
 <!-- LINE出力 -->
-<div id="section-output" style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> LINEノートにコピー</div>
+<div id="section-output" style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">⑤</span> LINEノートにコピー</div>
 <div style="font-size:12px;color:#888;margin-bottom:8px;">どちらのバージョンを使ってもOK！</div>
 <div style="display:flex;gap:8px;">
   <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;background:#16a085;border-color:#16a085;">📝 背番号版</button>
@@ -541,6 +556,7 @@ const DEFAULT_ROSTER = [
 ];
 
 let roster = []; // {num, name}[]
+let sessionPlayers = []; // 今日の参加選手の背番号リスト。空=全員
 let matches = [];
 let matchCounter = 0;
 let formatMinutes = 15;
@@ -575,6 +591,12 @@ function getName(num) {
   return p ? p.name : String(num);
 }
 
+function getActiveRoster() {
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  if (!sessionPlayers || sessionPlayers.length === 0) return sorted;
+  return sorted.filter(r => sessionPlayers.includes(r.num));
+}
+
 function getLabel(num) {
   const p = roster.find(r => r.num === num);
   return p ? `${p.name}(${num})` : String(num);
@@ -607,6 +629,7 @@ function init() {
     }
   }
   renderRoster();
+  renderSessionPlayerGrid();
 
   // Match type chips
   document.querySelectorAll('#match-type-options .chip').forEach(chip => {
@@ -730,6 +753,64 @@ function toggleRosterInput() {
     row.style.display = 'none';
     toggle.textContent = '＋ メンバー追加';
   }
+}
+
+// ========== Session Players ==========
+function renderSessionPlayerGrid() {
+  const grid = document.getElementById('session-player-grid');
+  if (!grid) return;
+  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  grid.innerHTML = sorted.map(r => {
+    const active = sessionPlayers.length === 0 || sessionPlayers.includes(r.num);
+    const cls = active ? 'player-chip selected' : 'player-chip';
+    return `<div class="${cls}" onclick="toggleSessionPlayer(${r.num})">
+      <span class="pname">${r.name}</span><span class="pnum">${r.num}</span>
+    </div>`;
+  }).join('');
+
+  const countEl = document.getElementById('session-player-count');
+  const numEl = document.getElementById('session-player-num');
+  if (numEl) numEl.textContent = sessionPlayers.length === 0 ? roster.length : sessionPlayers.length;
+  if (countEl) {
+    countEl.innerHTML = sessionPlayers.length === 0
+      ? `全員（<span id="session-player-num">${roster.length}</span>人）`
+      : `<span id="session-player-num">${sessionPlayers.length}</span>人を選択中`;
+  }
+}
+
+function toggleSessionPlayer(num) {
+  if (sessionPlayers.length === 0) {
+    // 全員状態から1人タップ → その人以外を全員選択（＝その人を除外）
+    sessionPlayers = roster.filter(r => r.num !== num).map(r => r.num);
+  } else if (sessionPlayers.includes(num)) {
+    sessionPlayers = sessionPlayers.filter(n => n !== num);
+    if (sessionPlayers.length === 0) sessionPlayers = []; // 全員除外は全員モードにしない
+  } else {
+    sessionPlayers = [...sessionPlayers, num];
+    // 全員選択になったら全員モードに戻す
+    if (sessionPlayers.length === roster.length) sessionPlayers = [];
+  }
+  renderSessionPlayerGrid();
+  refreshAllMatchPlayers();
+  scheduleSync();
+}
+
+function clearSessionPlayers() {
+  sessionPlayers = [];
+  renderSessionPlayerGrid();
+  refreshAllMatchPlayers();
+  scheduleSync();
+}
+
+function refreshAllMatchPlayers() {
+  matches.forEach(m => {
+    if (isHalfMatch(m)) {
+      renderMatchPlayersHalf(m.id, 1);
+      renderMatchPlayersHalf(m.id, 2);
+    } else {
+      renderMatchPlayers(m.id);
+    }
+  });
 }
 
 // ========== Matches ==========
@@ -1146,7 +1227,7 @@ function renderMatchPlayers(matchId) {
   const grid = document.getElementById(`players-${matchId}`);
   if (!grid) return;
 
-  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  const sorted = getActiveRoster();
   const totalFirst = m.players.length + (m.gk ? 1 : 0);
   grid.innerHTML = sorted.map(r => {
     const isGk = m.gk === r.num;
@@ -1533,7 +1614,7 @@ function renderMatchPlayersHalf(matchId, half) {
   const tapFn = half === 1 ? 'handlePlayerTap' : 'handleSecondHalfPlayerTap';
   const toggleFn = half === 1 ? 'togglePlayer' : 'toggleSecondHalfPlayer';
 
-  const sorted = [...roster].sort((a,b) => a.num - b.num);
+  const sorted = getActiveRoster();
   const total = players.length + (gk ? 1 : 0);
   grid.innerHTML = sorted.map(r => {
     const isGk = gk === r.num;
@@ -2075,6 +2156,7 @@ function getShareData() {
     weather: currentWeather,
     formatMinutes,
     formatPeriods,
+    sessionPlayers: sessionPlayers || [],
     matches: matches.map(m => ({
       opponent: m.opponent,
       players: m.players,
@@ -2144,6 +2226,8 @@ function loadFromUrl() {
     if (data.formatMinutes) formatMinutes = data.formatMinutes;
     if (data.formatPeriods) formatPeriods = data.formatPeriods;
     restoreFormatChipUI();
+    sessionPlayers = Array.isArray(data.sessionPlayers) ? (data.sessionPlayers || []) : [];
+    renderSessionPlayerGrid();
     if (data.weather) {
       currentWeather = data.weather;
       const wd = document.getElementById('weather-display');
@@ -2583,6 +2667,12 @@ function loadFromFirebase(data) {
   if (data.formatMinutes) formatMinutes = data.formatMinutes;
   if (data.formatPeriods) formatPeriods = data.formatPeriods;
   restoreFormatChipUI();
+  if (data.sessionPlayers) {
+    sessionPlayers = Array.isArray(data.sessionPlayers) ? data.sessionPlayers : Object.values(data.sessionPlayers);
+  } else {
+    sessionPlayers = [];
+  }
+  renderSessionPlayerGrid();
 
   // Firebaseは配列をオブジェクトに変換するので、配列に戻す
   let matchesData = data.matches;
@@ -3104,9 +3194,10 @@ function scrollToSection(id) {
 function initStepIndicator() {
   const sections = [
     { id: 'room-card',      step: 'step-1' },
-    { id: 'section-basic',  step: 'step-2' },
-    { id: 'section-match',  step: 'step-3' },
-    { id: 'section-output', step: 'step-4' },
+    { id: 'section-basic',   step: 'step-2' },
+    { id: 'section-players', step: 'step-3' },
+    { id: 'section-match',   step: 'step-4' },
+    { id: 'section-output',  step: 'step-5' },
   ];
   function updateSteps() {
     const offset = 120;
