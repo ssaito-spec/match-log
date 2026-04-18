@@ -209,8 +209,21 @@
   .btn-danger { background: #fee; color: #e74c3c; font-size: 12px; padding: 6px 12px; }
   .btn-add-sub { background: #e8f4fd; color: #4a90d9; font-size: 13px; padding: 8px 14px; width: 100%; }
 
-  .match-header { display: flex; justify-content: space-between; align-items: center; }
-  .match-number { font-size: 16px; font-weight: 700; color: #4a90d9; }
+  .match-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
+  .match-number {
+    position: absolute; top: -14px; left: 16px;
+    background: #2c5f8d; color: #fff;
+    padding: 4px 14px; border-radius: 12px;
+    font-size: 13px; font-weight: 700;
+  }
+  .match-card {
+    background: #fff8e7 !important;
+    border: 2px solid #2c5f8d !important;
+    position: relative !important;
+    margin-top: 24px !important;
+    overflow: visible !important;
+    padding-top: 22px !important;
+  }
 
   .format-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .format-chip {
@@ -308,12 +321,59 @@
     font-size: 13px; font-weight: 600;
   }
   .roster-tag .remove { cursor: pointer; color: #999; font-size: 16px; line-height: 1; }
+
+  /* Step Indicator */
+  .step-indicator {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff; border-radius: 12px;
+    padding: 8px 10px; margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    display: flex; align-items: center; justify-content: space-around;
+  }
+  .step-item {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; padding: 4px 8px; border-radius: 8px;
+    transition: all 0.2s; opacity: 0.35;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .step-item.active { opacity: 1; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #2c5f8d; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .step-item.active .step-num {
+    background: #4a90d9;
+    box-shadow: 0 2px 6px rgba(74,144,217,0.45);
+  }
+  .step-label { font-size: 10px; font-weight: 600; color: #555; margin-top: 3px; white-space: nowrap; }
+  .step-arrow { color: #ccc; font-size: 14px; flex-shrink: 0; }
 </style>
 </head>
 <body>
 
 <h1>⚽ らくらくスコア入力くん ⚽</h1>
 <p style="text-align:center;font-size:10px;color:#aaa;margin-top:-8px;margin-bottom:8px;">v3.0.0</p>
+
+<!-- Step Indicator -->
+<div class="step-indicator">
+  <div class="step-item active" id="step-1" onclick="scrollToSection('room-card')">
+    <span class="step-num">①</span><span class="step-label">参加</span>
+  </div>
+  <span class="step-arrow">›</span>
+  <div class="step-item" id="step-2" onclick="scrollToSection('section-basic')">
+    <span class="step-num">②</span><span class="step-label">基本情報</span>
+  </div>
+  <span class="step-arrow">›</span>
+  <div class="step-item" id="step-3" onclick="scrollToSection('section-match')">
+    <span class="step-num">③</span><span class="step-label">試合記録</span>
+  </div>
+  <span class="step-arrow">›</span>
+  <div class="step-item" id="step-4" onclick="scrollToSection('section-output')">
+    <span class="step-num">④</span><span class="step-label">コピー</span>
+  </div>
+</div>
 
 <!-- Room Sync -->
 <div class="card" id="room-card">
@@ -356,8 +416,8 @@
 <div id="content-area" style="opacity:0.4;pointer-events:none;">
 
 <!-- Basic Info -->
-<div class="card">
-  <div class="card-title"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">②</span> 基本情報を入力</div>
+<div class="card" id="section-basic">
+  <div class="card-title"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">②</span> 基本情報を入力</div>
   <label>日付</label>
   <input type="date" id="match-date">
 
@@ -418,13 +478,13 @@
 </div>
 
 <!-- Matches -->
-<div style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">③</span> 試合を記録！</div>
+<div id="section-match" style="font-size:14px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">③</span> 試合を記録！</div>
 <div id="matches-container"></div>
 
 <button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">＋ 試合を追加</button>
 
 <!-- LINE出力 -->
-<div style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> LINEノートにコピー</div>
+<div id="section-output" style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#2c5f8d;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> LINEノートにコピー</div>
 <div style="font-size:12px;color:#888;margin-bottom:8px;">どちらのバージョンを使ってもOK！</div>
 <div style="display:flex;gap:8px;">
   <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;background:#16a085;border-color:#16a085;">📝 背番号版</button>
@@ -728,8 +788,8 @@ function renderMatch(match) {
     .map(i => `<option value="${i}">${i}</option>`).join('');
 
   div.innerHTML = `
+    <span class="match-number">第${idx}試合</span>
     <div class="match-header">
-      <span class="match-number">第${idx}試合</span>
       <button class="btn btn-danger" onclick="removeMatch(${mid})">削除</button>
     </div>
 
@@ -2695,6 +2755,31 @@ async function fetchWeather() {
 }
 
 init();
+initStepIndicator();
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function initStepIndicator() {
+  const sections = [
+    { id: 'room-card',      step: 'step-1' },
+    { id: 'section-basic',  step: 'step-2' },
+    { id: 'section-match',  step: 'step-3' },
+    { id: 'section-output', step: 'step-4' },
+  ];
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const s = sections.find(s => s.id === entry.target.id);
+      if (s) document.getElementById(s.step).classList.toggle('active', entry.isIntersecting);
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -50% 0px' });
+  sections.forEach(s => {
+    const el = document.getElementById(s.id);
+    if (el) observer.observe(el);
+  });
+}
 
 function pushData() {
   if (currentRoom) {
@@ -2718,6 +2803,6 @@ function fetchLatest() {
 <!-- 情報更新ボタン（左下固定） -->
 <button onclick="pushData()" style="position:fixed;bottom:20px;left:20px;padding:14px 22px;border-radius:30px;background:#e8a020;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↑ 情報更新</button>
 <!-- 最新取得ボタン（右下固定） -->
-<button onclick="fetchLatest()" style="position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:30px;background:#4a90d9;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↓ 最新取得</button>
+<button onclick="fetchLatest()" style="position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:30px;background:#8e44ad;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↓ 最新取得</button>
 </body>
 </html>
