@@ -580,6 +580,8 @@ function init() {
   document.getElementById('room-id').value = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
   roster = DEFAULT_ROSTER.slice();
+  // 5(正斗)・23(惺渚)はU11帯同のためデフォルトでオフ
+  sessionPlayers = roster.filter(r => r.num !== 5 && r.num !== 23).map(r => r.num);
   renderSessionPlayerGrid();
 
   // Match type chips
