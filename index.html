@@ -2668,23 +2668,28 @@ async function fetchWeather() {
 
 init();
 
-function refreshData() {
+function pushData() {
   if (currentRoom) {
-    if (isEditor) {
-      // 編集者: ローカルを送信
-      if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
-      syncToFirebase();
-    } else {
-      // 閲覧者: 最新データ取得
-      pollFirebase();
-    }
+    if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+    syncToFirebase();
+    showToast('情報を更新しました');
+  } else {
+    showToast('ルームに接続していません');
+  }
+}
+
+function fetchLatest() {
+  if (currentRoom) {
+    pollFirebase();
+    showToast('最新情報を取得しました');
   } else {
     location.reload();
   }
-  showToast('更新しました');
 }
 </script>
-<!-- 更新ボタン（右下固定） -->
-<button onclick="refreshData()" style="position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:30px;background:#4a90d9;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↻ 更新</button>
+<!-- 情報更新ボタン（左下固定） -->
+<button onclick="pushData()" style="position:fixed;bottom:20px;left:20px;padding:14px 22px;border-radius:30px;background:#e8a020;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↑ 情報更新</button>
+<!-- 最新取得ボタン（右下固定） -->
+<button onclick="fetchLatest()" style="position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:30px;background:#4a90d9;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↓ 最新取得</button>
 </body>
 </html>
