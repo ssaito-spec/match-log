@@ -421,6 +421,10 @@
 <div id="matches-container"></div>
 
 <button class="btn btn-secondary" onclick="addMatch()" style="margin-bottom:12px;">＋ 試合を追加</button>
+
+<!-- LINE出力 -->
+<div style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> LINEノートにコピー</div>
+<div style="font-size:12px;color:#888;margin-bottom:8px;">どちらのバージョンを使ってもOK！</div>
 <div style="display:flex;gap:8px;">
   <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;">📝 背番号版</button>
   <button class="btn btn-primary" onclick="generateOutput('name')" style="flex:1;">📝 名前版</button>
@@ -458,6 +462,28 @@ let matches = [];
 let matchCounter = 0;
 let formatMinutes = 15;
 let formatPeriods = 1;
+
+function restoreFormatChipUI() {
+  const chips = document.querySelectorAll('#format-presets .format-chip');
+  let matched = false;
+  chips.forEach(c => {
+    c.classList.remove('active');
+    if (c.dataset.min && c.dataset.per &&
+        parseInt(c.dataset.min) === formatMinutes &&
+        parseInt(c.dataset.per) === formatPeriods) {
+      c.classList.add('active');
+      document.getElementById('format-custom').style.display = 'none';
+      matched = true;
+    }
+  });
+  if (!matched) {
+    // カスタム選択
+    chips.forEach(c => { if (!c.dataset.min) c.classList.add('active'); });
+    document.getElementById('format-custom').style.display = 'flex';
+    document.getElementById('match-minutes').value = formatMinutes;
+    document.getElementById('match-halves').value = formatPeriods;
+  }
+}
 
 function getName(num) {
   if (num === 0) return '不明';
@@ -1728,6 +1754,7 @@ function loadFromUrl() {
     }
     if (data.formatMinutes) formatMinutes = data.formatMinutes;
     if (data.formatPeriods) formatPeriods = data.formatPeriods;
+    restoreFormatChipUI();
     if (data.weather) {
       currentWeather = data.weather;
       const wd = document.getElementById('weather-display');
@@ -2161,6 +2188,7 @@ function loadFromFirebase(data) {
   }
   if (data.formatMinutes) formatMinutes = data.formatMinutes;
   if (data.formatPeriods) formatPeriods = data.formatPeriods;
+  restoreFormatChipUI();
 
   // Firebaseは配列をオブジェクトに変換するので、配列に戻す
   let matchesData = data.matches;
