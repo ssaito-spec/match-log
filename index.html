@@ -427,15 +427,14 @@
 <div style="font-size:14px;font-weight:700;color:#555;margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><span style="background:#4a90d9;color:#fff;font-size:12px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">④</span> LINEノートにコピー</div>
 <div style="font-size:12px;color:#888;margin-bottom:8px;">どちらのバージョンを使ってもOK！</div>
 <div style="display:flex;gap:8px;">
-  <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;">📝 背番号版</button>
-  <button class="btn btn-primary" onclick="generateOutput('name')" style="flex:1;">📝 名前版</button>
+  <button class="btn btn-primary" onclick="generateOutput('number')" style="flex:1;background:#16a085;border-color:#16a085;">📝 背番号版</button>
+  <button class="btn btn-primary" onclick="generateOutput('name')" style="flex:1;background:#16a085;border-color:#16a085;">📝 名前版</button>
 </div>
-<button class="btn btn-secondary" onclick="generateShareUrl()" style="margin-top:8px;">📤 共有URLをコピー</button>
 
 <pre id="output-area"></pre>
 <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
 
-<div style="height:40px;"></div>
+<div style="height:90px;"></div>
 </div><!-- /content-area -->
 
 <script>
