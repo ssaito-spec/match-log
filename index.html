@@ -803,6 +803,7 @@ function renderMatch(match) {
       <span class="player-count" id="pcount-${mid}">0人</span>
     </label>
     <div class="player-grid" id="players-${mid}"></div>
+    <div id="player-summary-${mid}" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:4px 6px;background:#f5f5f5;border-radius:6px;"></div>
 
     <span class="sub-toggle" onclick="openFormation(${mid})" style="display:inline-block;margin-top:8px;">🏟️ フォーメーションを入力（任意）</span>
 
@@ -839,24 +840,32 @@ function renderMatch(match) {
     <div id="score-section-${mid}" style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
       <label>スコア（自チーム - 相手）</label>
       <div class="score-row">
-        <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-        <span class="score-divider" id="score-divider-${mid}">-</span>
-        <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})">${scoreOpts}</select>
-        <span id="score-total-${mid}" style="display:none;text-align:center;font-weight:700;font-size:22px;white-space:nowrap;min-width:100px;"></span>
+        <div style="width:36px;flex-shrink:0;"></div>
+        <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <select class="score-select" id="score-us-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
+          <span id="score-total-us-${mid}" style="display:none;font-weight:700;font-size:22px;text-align:center;width:70px;"></span>
+        </div>
+        <span class="score-divider">-</span>
+        <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <select class="score-select" id="score-opp-${mid}" onchange="updateScore(${mid})" style="width:70px;">${scoreOpts}</select>
+          <span id="score-total-opp-${mid}" style="display:none;font-weight:700;font-size:22px;text-align:center;width:70px;"></span>
+        </div>
         <div class="result-badge none" id="result-${mid}">-</div>
       </div>
-      <div id="half-scores-${mid}" style="display:none;margin-top:6px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;justify-content:center;">
-          <span style="font-size:12px;color:#888;width:32px;text-align:right;">前半</span>
-          <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
-          <span style="font-size:14px;color:#999;">-</span>
-          <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+      <div id="half-scores-${mid}" style="display:none;margin-top:4px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;justify-content:center;">
+          <span style="font-size:12px;color:#888;width:36px;text-align:right;flex-shrink:0;">前半</span>
+          <select class="score-select" id="score-us-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
+          <span class="score-divider" style="flex-shrink:0;">-</span>
+          <select class="score-select" id="score-opp-first-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
+          <div style="width:36px;flex-shrink:0;"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
-          <span style="font-size:12px;color:#888;width:32px;text-align:right;">後半</span>
-          <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
-          <span style="font-size:14px;color:#999;">-</span>
-          <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:50px !important;">${scoreOpts}</select>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+          <span style="font-size:12px;color:#888;width:36px;text-align:right;flex-shrink:0;">後半</span>
+          <select class="score-select" id="score-us-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
+          <span class="score-divider" style="flex-shrink:0;">-</span>
+          <select class="score-select" id="score-opp-second-${mid}" onchange="updateHalfScore(${mid})" style="font-size:16px !important;width:70px !important;flex-shrink:0;">${scoreOpts}</select>
+          <div style="width:36px;flex-shrink:0;"></div>
         </div>
       </div>
     </div>
@@ -1084,6 +1093,23 @@ function renderMatchPlayers(matchId) {
   renderScorers(matchId);
   updateSubDropdowns(matchId);
   renderSwapPlayers(matchId);
+  updatePlayerSummary(matchId);
+}
+
+function updatePlayerSummary(matchId) {
+  const m = getMatch(matchId);
+  const el = document.getElementById(`player-summary-${matchId}`);
+  if (!m || !el) return;
+  const nums = [...m.players].sort((a, b) => a - b);
+  const parts = [];
+  if (nums.length > 0) parts.push(nums.join('・'));
+  if (m.gk) parts.push(`GK${m.gk}`);
+  if (parts.length === 0) {
+    el.style.display = 'none';
+  } else {
+    el.textContent = '出場: ' + parts.join('・');
+    el.style.display = '';
+  }
 }
 
 // Double tap for GK selection (instant single tap)
@@ -1228,8 +1254,10 @@ function updateHalfScore(matchId) {
   m.scoreUs = m.scoreUsFirst + m.scoreUsSecond;
   m.scoreOpponent = m.scoreOppFirst + m.scoreOppSecond;
   // 合計テキストを更新
-  const total = document.getElementById(`score-total-${matchId}`);
-  if (total) total.textContent = `${m.scoreUs} - ${m.scoreOpponent}`;
+  const totalUs = document.getElementById(`score-total-us-${matchId}`);
+  const totalOpp = document.getElementById(`score-total-opp-${matchId}`);
+  if (totalUs) totalUs.textContent = m.scoreUs;
+  if (totalOpp) totalOpp.textContent = m.scoreOpponent;
   updateScore(matchId);
 }
 
@@ -1241,22 +1269,19 @@ function refreshHalfUI(matchId) {
   halfDiv.style.display = show ? 'block' : 'none';
   const mainUs = document.getElementById(`score-us-${matchId}`);
   const mainOpp = document.getElementById(`score-opp-${matchId}`);
-  const divider = document.getElementById(`score-divider-${matchId}`);
-  const total = document.getElementById(`score-total-${matchId}`);
+  const totalUs = document.getElementById(`score-total-us-${matchId}`);
+  const totalOpp = document.getElementById(`score-total-opp-${matchId}`);
   if (show) {
     // ハーフ制: selectを隠して合計テキスト表示
-    mainUs.style.display = 'none';
-    mainOpp.style.display = 'none';
-    divider.style.display = 'none';
-    if (total) {
-      total.style.display = 'inline-block';
-      total.textContent = `${m.scoreUs} - ${m.scoreOpponent}`;
-    }
+    if (mainUs) mainUs.style.display = 'none';
+    if (mainOpp) mainOpp.style.display = 'none';
+    if (totalUs) { totalUs.style.display = 'inline-block'; totalUs.textContent = m.scoreUs; }
+    if (totalOpp) { totalOpp.style.display = 'inline-block'; totalOpp.textContent = m.scoreOpponent; }
   } else {
-    mainUs.style.display = '';
-    mainOpp.style.display = '';
-    divider.style.display = '';
-    if (total) total.style.display = 'none';
+    if (mainUs) mainUs.style.display = '';
+    if (mainOpp) mainOpp.style.display = '';
+    if (totalUs) totalUs.style.display = 'none';
+    if (totalOpp) totalOpp.style.display = 'none';
   }
 }
 
