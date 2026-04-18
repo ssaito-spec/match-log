@@ -891,8 +891,10 @@ function renderMatch(match) {
     </div>
 
     <div style="margin-top:8px;">
-      <label>メモ（任意）</label>
-      <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value;scheduleSync()">
+      <span class="sub-toggle btn-style" onclick="this.style.display='none';document.getElementById('memo-area-${mid}').style.display='block';">＋ メモを追加</span>
+      <div id="memo-area-${mid}" style="display:none;">
+        <input type="text" id="memo-${mid}" placeholder="特記事項があれば" oninput="getMatch(${mid}).memo=this.value;scheduleSync()">
+      </div>
     </div>
 
     <div style="margin-top:8px;">
@@ -1877,7 +1879,7 @@ function loadFromUrl() {
         document.getElementById(`score-us-second-${m.id}`).value = m.scoreUsSecond;
         document.getElementById(`score-opp-second-${m.id}`).value = m.scoreOppSecond;
       }
-        if (m.memo) document.getElementById(`memo-${m.id}`).value = m.memo;
+        if (m.memo) { document.getElementById(`memo-${m.id}`).value = m.memo; const ma=document.getElementById(`memo-area-${m.id}`); if(ma){ma.style.display='block'; const t=ma.previousElementSibling; if(t)t.style.display='none';} }
         if (m.showSub) {
           document.getElementById(`sub-${m.id}`).style.display = 'block';
           document.getElementById(`sub-toggle-${m.id}`).textContent = '－ 交代を閉じる';
