@@ -34,7 +34,7 @@
 
   input[type="text"], input[type="date"], input[type="number"], select {
     width: 100%; padding: 10px 12px; border: 1.5px solid #ddd;
-    border-radius: 8px; font-size: 16px; background: #fafafa;
+    border-radius: 8px; font-size: 16px; background: #f0f0f0;
     transition: border-color 0.2s; -webkit-appearance: none;
   }
   input:focus, select:focus { outline: none; border-color: #4a90d9; background: #fff; }
@@ -436,14 +436,6 @@
   <label>会場</label>
   <input type="text" id="venue" placeholder="例: SFAフットボールセンター">
 
-  <div style="margin-top:10px;">
-    <label>天気</label>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span id="weather-display" style="font-size:14px;font-weight:600;"></span>
-      <button id="weather-btn" onclick="fetchWeather()" style="padding:7px 12px;border:2px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;background:#fafafa;cursor:pointer;-webkit-tap-highlight-color:transparent;">🌤️ 現在地の天気を取得</button>
-    </div>
-  </div>
-
   <label>試合形式</label>
   <div class="format-presets" id="format-presets">
     <div class="format-chip active" data-min="15" data-per="1">15分×1本</div>
@@ -797,16 +789,17 @@ function renderMatch(match) {
     </div>
 
     <div class="opp-section">
-      <label>対戦相手</label>
+      <label><span style="color:#4a90d9;margin-right:4px;">①</span>対戦相手</label>
       <div id="opp-area-${mid}"></div>
     </div>
 
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;margin-top:14px;">
+      <span style="color:#4a90d9;">②</span>
       <span id="player-section-label-${mid}" style="font-size:14px;font-weight:600;color:#777;">出場選手</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
       <span id="player-nums-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
     </div>
-    <div id="player-section-hint-${mid}" style="display:none;font-size:11px;color:#aaa;margin-bottom:4px;">交代選手含む</div>
+    <div id="player-section-hint-${mid}" style="display:none;font-size:11px;color:#aaa;margin-bottom:4px;">前半に出場した選手を選んでください（交代選手含む）</div>
     <div class="player-grid" id="players-${mid}"></div>
 
     <div id="second-half-section-${mid}" style="display:none;">
@@ -815,7 +808,7 @@ function renderMatch(match) {
         <span class="player-count" id="pcount-second-${mid}">0人</span>
         <span id="player-nums-second-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
       </div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">交代選手含む</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">後半に出場した選手を選んでください（交代選手含む）</div>
       <div class="player-grid" id="players-second-${mid}"></div>
     </div>
 
@@ -852,7 +845,7 @@ function renderMatch(match) {
     </div>
 
     <div id="score-section-${mid}" style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
-      <label>スコア（自チーム - 相手）</label>
+      <label><span style="color:#4a90d9;margin-right:4px;">③</span>スコア（自チーム - 相手）</label>
       <div class="score-row">
         <div style="width:36px;flex-shrink:0;"></div>
         <div style="width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
@@ -885,7 +878,7 @@ function renderMatch(match) {
     </div>
 
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2d9b0;">
-    <label>得点者</label>
+    <label><span style="color:#4a90d9;margin-right:4px;">④</span>得点者</label>
     <div class="hint">タップ: +1点 ／ 長押し: リセット</div>
     <div class="scorer-grid" id="scorers-${mid}">
       <span style="font-size:12px;color:#999;">先に出場選手を選択してください</span>
@@ -948,8 +941,8 @@ function renderOppArea(matchId) {
 
   if (prevOpps.length === 0) {
     // First match or no previous opponents - just text input
-    area.innerHTML = `<input type="text" id="opp-input-${matchId}" placeholder="例: エクセレントフィート"
-      value="${m.opponent || ''}" oninput="setOpp(${matchId},this.value)" onblur="setTimeout(()=>{const l=document.getElementById('suggest-'+${matchId});if(l)l.remove();saveNewOpponent(this.value)},200)">`;
+    area.innerHTML = `<div id="opp-new-row-${matchId}" style="position:relative;"><input type="text" id="opp-input-${matchId}" placeholder="例: エクセレントフィート"
+      value="${m.opponent || ''}" oninput="setOpp(${matchId},this.value)" onblur="setTimeout(()=>{const l=document.getElementById('suggest-'+${matchId});if(l)l.remove();saveNewOpponent(this.value)},200)"></div>`;
   } else {
     // Show previous opponents as chips + new input option
     const isNew = !prevOpps.includes(m.opponent);
