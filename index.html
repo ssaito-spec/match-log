@@ -801,13 +801,14 @@ function renderMatch(match) {
     <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span>出場選手（タップで選択 / ダブルタップでGK）</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
-      <button class="btn" style="padding:4px 10px;font-size:11px;background:#e8f5e9;color:#2e7d32;margin-left:auto;" onclick="openFormation(${mid})">配置図</button>
     </label>
     <div class="player-grid" id="players-${mid}"></div>
     <div class="gk-row">
       <label style="font-size:13px;color:#f59e0b;font-weight:700;">GK:</label>
       <select id="gk-${mid}" onchange="setGk(${mid},this.value)"><option value="">選択</option></select>
     </div>
+
+    <button class="btn btn-secondary" onclick="openFormation(${mid})" style="margin-top:10px;color:#2e7d32;background:#e8f5e9;border:1.5px dashed #a5d6a7;">🏟️ フォーメーションを入力（任意）</button>
 
     <div class="sub-section">
       <span class="sub-toggle btn-style" id="sub-toggle-${mid}" onclick="toggleSub(${mid})">＋ 交代を入力</span>
