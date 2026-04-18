@@ -64,10 +64,11 @@
   .player-chip.gk .pnum { color: rgba(255,255,255,0.7); }
 
   .player-count {
-    display: inline-block; background: #4a90d9; color: #fff;
+    display: inline-block; background: #6b7280; color: #fff;
     font-size: 12px; font-weight: 700; padding: 2px 8px;
     border-radius: 10px; margin-left: 6px;
   }
+  .player-chip.dim { opacity: 0.3; }
 
   .gk-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
   .gk-row label { margin: 0; white-space: nowrap; }
@@ -800,19 +801,21 @@ function renderMatch(match) {
       <div id="opp-area-${mid}"></div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;margin-top:14px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;margin-top:14px;">
       <span id="player-section-label-${mid}" style="font-size:14px;font-weight:600;color:#777;">出場選手</span>
       <span class="player-count" id="pcount-${mid}">0人</span>
       <span id="player-nums-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
     </div>
+    <div id="player-section-hint-${mid}" style="display:none;font-size:11px;color:#aaa;margin-bottom:4px;">交代選手含む</div>
     <div class="player-grid" id="players-${mid}"></div>
 
     <div id="second-half-section-${mid}" style="display:none;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;margin-top:14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;margin-top:14px;">
         <span style="font-size:14px;font-weight:600;color:#777;">後半</span>
         <span class="player-count" id="pcount-second-${mid}">0人</span>
         <span id="player-nums-second-${mid}" style="font-size:13px;color:#555;font-weight:normal;"></span>
       </div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">交代選手含む</div>
       <div class="player-grid" id="players-second-${mid}"></div>
     </div>
 
@@ -1082,12 +1085,14 @@ function renderMatchPlayers(matchId) {
   if (!grid) return;
 
   const sorted = [...roster].sort((a,b) => a.num - b.num);
+  const hasFirst = m.players.length > 0 || m.gk !== null;
   grid.innerHTML = sorted.map(r => {
     const isGk = m.gk === r.num;
     const isSel = m.players.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
+    else if (hasFirst) cls += ' dim';
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
@@ -1306,6 +1311,8 @@ function refreshHalfUI(matchId) {
   if (secondSection) secondSection.style.display = show ? 'block' : 'none';
   if (subSection) subSection.style.display = show ? 'none' : 'block';
   if (playerLabel) playerLabel.textContent = show ? '前半' : '出場選手';
+  const hintEl = document.getElementById(`player-section-hint-${matchId}`);
+  if (hintEl) hintEl.style.display = show ? '' : 'none';
   if (show) renderSecondHalfPlayers(matchId);
   updatePlayerSummary(matchId);
 }
@@ -1450,12 +1457,14 @@ function renderSecondHalfPlayers(matchId) {
   if (!grid) return;
 
   const sorted = [...roster].sort((a,b) => a.num - b.num);
+  const hasSecond = m.secondHalfPlayers.length > 0 || m.secondHalfGk !== null;
   grid.innerHTML = sorted.map(r => {
     const isGk = m.secondHalfGk === r.num;
     const isSel = m.secondHalfPlayers.includes(r.num);
     let cls = 'player-chip';
     if (isGk) cls += ' gk';
     else if (isSel) cls += ' selected';
+    else if (hasSecond) cls += ' dim';
     const label = isGk ? `<span class="pname">GK ${r.name}</span><span class="pnum">${r.num}</span>`
                        : `<span class="pname">${r.name}</span><span class="pnum">${r.num}</span>`;
     return `<div class="${cls}"
