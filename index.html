@@ -2375,7 +2375,11 @@ function joinRoom() {
 
   document.getElementById('room-join').style.display = 'none';
   document.getElementById('room-status').style.display = 'block';
-  const displayName = roomId.endsWith('_1') ? '試合①' : roomId.endsWith('_2') ? '試合②' : roomId;
+  const rmatch = roomId.match(/^(\d{4})(\d{2})(\d{2})(?:_(\d+))?$/);
+  const nums = ['①','②','③','④','⑤','⑥'];
+  const displayName = rmatch
+    ? `${parseInt(rmatch[2])}/${parseInt(rmatch[3])}${rmatch[4] ? ' 試合' + (nums[parseInt(rmatch[4])-1] || rmatch[4]) : ''}`
+    : roomId;
   document.getElementById('room-name').textContent = displayName;
 
   isEditor = true;  // 全員エディター
