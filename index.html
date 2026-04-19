@@ -427,21 +427,21 @@
     </div>
   </div>
   <div id="room-status" style="display:none;margin-top:8px;">
-    <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;min-width:0;">
       <!-- 左: ステータス -->
       <div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
           <span id="connection-dot" style="width:9px;height:9px;background:#27ae60;border-radius:50%;flex-shrink:0;"></span>
           <span id="room-name" style="font-weight:700;color:#27ae60;font-size:14px;"></span>
         </div>
-        <div style="font-size:12px;color:#555;margin-bottom:2px;">
+        <div style="font-size:12px;color:#555;margin-bottom:2px;min-width:120px;">
           <span id="presence-count" style="font-weight:600;color:#4a90d9;"></span>
           <span id="connection-status" style="color:#888;margin-left:4px;"></span>
         </div>
         <div id="sync-bar" style="display:none;"><span id="sync-status" style="font-size:11px;font-weight:600;"></span></div>
         <p id="room-desc" style="font-size:11px;color:#888;margin:2px 0 0;"></p>
         <span id="room-role" style="display:none;"></span>
-        <button class="btn btn-danger" onclick="leaveRoom()" style="margin-top:8px;padding:4px 12px;font-size:12px;">退出</button>
+        <button onclick="leaveRoom()" style="margin-top:8px;padding:4px 14px;font-size:12px;font-weight:600;border:1.5px solid #ccc;border-radius:20px;background:#fff;color:#666;cursor:pointer;">退出</button>
       </div>
       <!-- 右: 操作説明 -->
       <div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
@@ -2418,8 +2418,9 @@ function joinRoom() {
       debugLog('新規ルーム');
     }
 
-    // Register presence
+    // Register presence & 古いエントリを掃除
     registerPresence();
+    sweepStalePresence();
 
     // 全員ポーリング（編集者も他の編集者の変更を受信）
     lastDataHash = dataHash(data);
@@ -2466,12 +2467,15 @@ async function fetchPresence() {
   } catch(e) { /* ignore */ }
 }
 
+const PRESENCE_TTL_MS = 2 * 60 * 60 * 1000; // 2時間
+
 function updatePresenceDisplay(presenceData) {
   const countEl = document.getElementById('presence-count');
   if (!countEl) return;
   if (!presenceData) { countEl.textContent = ''; return; }
 
-  const users = Object.values(presenceData);
+  const now = Date.now();
+  const users = Object.values(presenceData).filter(u => !u.joinedAt || now - u.joinedAt < PRESENCE_TTL_MS);
   const total = users.length;
   const editors = users.filter(u => u.role === 'editor').length;
   const viewers = total - editors;
@@ -2481,6 +2485,20 @@ function updatePresenceDisplay(presenceData) {
     text += `（編集者${editors}人）`;
   }
   countEl.textContent = text;
+}
+
+async function sweepStalePresence() {
+  if (!currentRoom) return;
+  try {
+    const data = await firebaseGet(firebasePresenceUrl());
+    if (!data) return;
+    const now = Date.now();
+    Object.entries(data).forEach(([uid, u]) => {
+      if (uid !== myUserId && u.joinedAt && now - u.joinedAt > PRESENCE_TTL_MS) {
+        firebaseDelete(`${FIREBASE_URL}/rooms/${currentRoom}/presence/${uid}.json`).catch(() => {});
+      }
+    });
+  } catch(e) { /* ignore */ }
 }
 
 function setRoleDisplay() {
