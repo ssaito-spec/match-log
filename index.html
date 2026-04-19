@@ -444,10 +444,16 @@
         <button class="btn btn-danger" onclick="leaveRoom()" style="margin-top:8px;padding:4px 12px;font-size:12px;">退出</button>
       </div>
       <!-- 右: 操作説明 -->
-      <div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;line-height:2.2;">
-        <div style="font-size:13px;color:#444;"><b style="color:#e8a020;">↑ 情報更新</b>：みんなに共有</div>
-        <div style="font-size:13px;color:#444;"><b style="color:#8e44ad;">↓ 最新取得</b>：最新を取得</div>
-        <div style="font-size:13px;color:#444;"><b style="color:#555;">↺ リロード</b>：最新情報も取得できる</div>
+      <div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="background:#e8a020;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;">↑ 情報更新</span>
+          <span style="font-size:12px;color:#555;">みんなに共有</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="background:#8e44ad;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;">↓ 最新取得</span>
+          <span style="font-size:12px;color:#555;">新情報あり時</span>
+        </div>
+        <div style="font-size:11px;color:#aaa;">↺ リロードも最新取得OK</div>
       </div>
     </div>
   </div>
