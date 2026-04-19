@@ -2756,18 +2756,20 @@ function loadFormationForHalf(m, half) {
     // 既に保存済みの配置があればそれを使う
     formationSlots = [...formation];
   } else if (half === 'second') {
-    // 後半の新規入力
-    const hasSubs = hasSubstitutions(m);
-    if (!hasSubs && m.formationFirst && m.formationFirst.length > 0) {
-      // 交代なし → 前半の配置をそのままコピー
-      formationSlots = [...m.formationFirst];
-    } else {
-      // 交代あり → GKだけ引き継いで、他は空から
+    if (isHalfMatch(m)) {
+      // 前後半モード: 後半GKは secondHalfGk から取得
       formationSlots = [];
-      // GKを決定（総入れ替えならswapGk、個別交代ならsubGkChange、なければ前半のGK）
-      let gkNum = m.subMode === 'fullswap' ? (m.swapGk || m.gk) : (m.subGkChange || m.gk);
-      if (gkNum) {
-        formationSlots.push({pos: 'GK', num: gkNum});
+      const gkNum = (m.secondHalfGk !== null && m.secondHalfGk !== undefined) ? m.secondHalfGk : m.gk;
+      if (gkNum !== null && gkNum !== undefined) formationSlots.push({pos: 'GK', num: gkNum});
+    } else {
+      // 1本形式+交代モード: 交代なしなら前半コピー、交代ありはGKだけ引き継ぎ
+      const hasSubs = hasSubstitutions(m);
+      if (!hasSubs && m.formationFirst && m.formationFirst.length > 0) {
+        formationSlots = [...m.formationFirst];
+      } else {
+        formationSlots = [];
+        let gkNum = m.subMode === 'fullswap' ? (m.swapGk || m.gk) : (m.subGkChange || m.gk);
+        if (gkNum) formationSlots.push({pos: 'GK', num: gkNum});
       }
     }
   } else {
