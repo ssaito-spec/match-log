@@ -295,6 +295,8 @@
   .formation-slot:not(.filled) .slot-name { color: rgba(255,255,255,0.7); font-size: 11px; }
   .formation-slot.selecting { background: rgba(74,144,217,0.8); border: 2px solid #fff; animation: pulse 0.8s infinite; }
   @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes pushPulse { 0%, 100% { box-shadow: 0 3px 12px rgba(0,0,0,0.25); } 50% { box-shadow: 0 0 0 6px rgba(232,160,32,0.4), 0 3px 12px rgba(0,0,0,0.25); } }
+  #push-btn.dirty { animation: pushPulse 1.2s ease-in-out infinite; }
   .formation-actions { display: flex; gap: 8px; margin-top: 16px; }
   .formation-actions .btn { flex: 1; }
   .player-picker { margin-top: 12px; }
@@ -635,14 +637,7 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && currentRoom) {
       debugLog('画面復帰');
-      if (isEditor) {
-        // 未送信の変更があれば即送信
-        if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
-        syncToFirebase();
-      } else {
-        // 閲覧者: 即座にポーリング
-        pollFirebase();
-      }
+      pollFirebase();
     }
   });
 
@@ -2523,6 +2518,7 @@ async function syncToFirebase() {
     await firebasePut(firebaseDataUrl(), data);
     debugLog('送信完了 ✅');
     updateSyncStatus('ok');
+    clearDirty();
     // Firebaseが返す形式でhash更新（配列→オブジェクト変換後の形式に合わせる）
     const saved = await firebaseGet(firebaseDataUrl());
     lastDataHash = dataHash(saved);
@@ -2714,16 +2710,25 @@ function loadFromFirebase(data) {
 
 // --- Auto-sync on changes (debounced) ---
 let syncTimer = null;
-function scheduleSync() {
+let isDirty = false;
+
+function markDirty() {
   if (!currentRoom) return;
-  if (isLoadingRemote) return;  // リモートデータ読込中は送信しない
+  if (isLoadingRemote) return;
   if (!isEditor) return;
-  updateSyncStatus('pending');
-  if (syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => {
-    debugLog('変更検知、送信予定');
-    syncToFirebase();
-  }, 1000);
+  isDirty = true;
+  const btn = document.getElementById('push-btn');
+  if (btn) btn.classList.add('dirty');
+}
+
+function clearDirty() {
+  isDirty = false;
+  const btn = document.getElementById('push-btn');
+  if (btn) btn.classList.remove('dirty');
+}
+
+function scheduleSync() {
+  markDirty();
 }
 
 // ========== Formation ==========
@@ -3197,7 +3202,7 @@ function fetchLatest() {
 }
 </script>
 <!-- 情報更新ボタン（左下固定） -->
-<button onclick="pushData()" style="position:fixed;bottom:20px;left:20px;padding:14px 22px;border-radius:30px;background:#e8a020;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↑ 情報更新</button>
+<button id="push-btn" onclick="pushData()" style="position:fixed;bottom:20px;left:20px;padding:14px 22px;border-radius:30px;background:#e8a020;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↑ 情報更新</button>
 <!-- 最新取得ボタン（右下固定） -->
 <button onclick="fetchLatest()" style="position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:30px;background:#8e44ad;color:white;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;border:none;box-shadow:0 3px 12px rgba(0,0,0,0.25);z-index:200;cursor:pointer;-webkit-tap-highlight-color:transparent;">↓ 最新取得</button>
 </body>
