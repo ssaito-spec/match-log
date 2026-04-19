@@ -447,7 +447,7 @@
       <div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;line-height:2.2;">
         <div style="font-size:13px;color:#444;"><b style="color:#e8a020;">↑ 情報更新</b>：みんなに共有</div>
         <div style="font-size:13px;color:#444;"><b style="color:#8e44ad;">↓ 最新取得</b>：最新を取得</div>
-        <div style="font-size:13px;color:#444;"><b style="color:#555;">↺ リロード</b>：最新情報を取得できるよ</div>
+        <div style="font-size:13px;color:#444;"><b style="color:#555;">↺ リロード</b>：最新情報も取得できる</div>
       </div>
     </div>
   </div>
@@ -2481,7 +2481,7 @@ function setRoleDisplay() {
   const descEl = document.getElementById('room-desc');
   const syncBar = document.getElementById('sync-bar');
   const dot = document.getElementById('connection-dot');
-  if (descEl) descEl.textContent = '入力すると自動で共有されます';
+  if (descEl) descEl.textContent = '';
   if (syncBar) syncBar.style.display = 'flex';
   if (dot) dot.style.background = '#27ae60';
 }
