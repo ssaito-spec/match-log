@@ -501,7 +501,8 @@
 </div>
 
 <pre id="output-area"></pre>
-<button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;margin-top:8px;background:#27ae60;">📋 コピー</button>
+<div id="partial-copy-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+<button class="btn btn-primary" id="copy-btn" onclick="copyOutput()" style="display:none;"></button>
 
 <div style="height:90px;"></div>
 </div><!-- /content-area -->
@@ -804,6 +805,20 @@ function renderMatch(match) {
     <div class="opp-section">
       <label><span style="color:#4a90d9;margin-right:4px;">①</span>対戦相手</label>
       <div id="opp-area-${mid}"></div>
+      <div style="margin-top:8px;">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="custom-format-${mid}" onchange="toggleCustomFormat(${mid})">
+          <span style="font-size:12px;color:#888;">この試合だけ形式を変更</span>
+        </label>
+        <div id="custom-format-area-${mid}" style="display:none;margin-top:6px;">
+          <div class="format-custom" style="display:flex;">
+            <input type="number" id="custom-min-${mid}" value="15" min="1" max="90" onchange="setCustomFormat(${mid})">
+            <span>分 ×</span>
+            <input type="number" id="custom-per-${mid}" value="1" min="1" max="4" onchange="setCustomFormat(${mid})">
+            <span>本</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 1本形式モード -->
@@ -951,20 +966,6 @@ function renderMatch(match) {
       </div>
     </div>
 
-    <div style="margin-top:8px;">
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-        <input type="checkbox" id="custom-format-${mid}" onchange="toggleCustomFormat(${mid})">
-        <span style="font-size:13px;color:#666;">この試合だけ形式を変更</span>
-      </label>
-      <div id="custom-format-area-${mid}" style="display:none;margin-top:6px;">
-        <div class="format-custom" style="display:flex;">
-          <input type="number" id="custom-min-${mid}" value="15" min="1" max="90" onchange="setCustomFormat(${mid})">
-          <span>分 ×</span>
-          <input type="number" id="custom-per-${mid}" value="1" min="1" max="4" onchange="setCustomFormat(${mid})">
-          <span>本</span>
-        </div>
-      </div>
-    </div>
   `;
 
   document.getElementById('matches-container').appendChild(div);
@@ -1853,14 +1854,7 @@ function setCustomFormat(matchId) {
 }
 
 // ========== Generate ==========
-function generateOutput(mode) {
-  const useNames = (mode === 'name');
-  const fmt = n => {
-    if (n === 0) return '不明';
-    if (n === -1) return 'OG';
-    return useNames ? getName(n) : String(n);
-  };
-
+function buildOutputHeader(useNames) {
   const date = document.getElementById('match-date').value;
   const type = document.querySelector('#match-type-options .chip.active')?.dataset.val || 'TM';
   const tournament = document.getElementById('tournament-name').value.trim();
@@ -1878,107 +1872,108 @@ function generateOutput(mode) {
     fmtStr = formatPeriods === 2 ? `${formatMinutes}分ハーフ` : `${formatMinutes}分×${formatPeriods}`;
   }
 
-  let lines = [];
-  let header = `${dateStr} ${type}`;
-  if (tournament) header += ` ${tournament}`;
-  lines.push(header);
+  const lines = [];
+  lines.push(`${dateStr} 【${type}】`);
+  if (tournament) lines.push(tournament);
   lines.push(`会場：${venue}`);
   if (currentWeather) lines.push(`天気：${currentWeather}`);
   lines.push(`試合形式：${fmtStr}`);
-  lines.push('');
+  return lines;
+}
 
-  matches.forEach((m, i) => {
-    // 出場選手
-    const starters = [...m.players].sort((a,b) => a-b);
-    let pStr = starters.map(fmt).join(',');
-    if (m.gk !== null) { if (pStr) pStr += ','; pStr += `GK${fmt(m.gk)}`; }
+function buildMatchBlock(m, i, useNames) {
+  const fmt = n => {
+    if (n === 0) return '不明';
+    if (n === -1) return 'OG';
+    return useNames ? getName(n) : String(n);
+  };
 
-    // 後半出場選手（前後半形式）
-    let pStr2 = '';
-    if (isHalfMatch(m)) {
-      const starters2 = [...m.secondHalfPlayers].sort((a,b) => a-b);
-      pStr2 = starters2.map(fmt).join(',');
-      if (m.secondHalfGk !== null) { if (pStr2) pStr2 += ','; pStr2 += `GK${fmt(m.secondHalfGk)}`; }
-    }
+  // 出場選手
+  const starters = [...m.players].sort((a,b) => a-b);
+  let pStr = starters.map(fmt).join(',');
+  if (m.gk !== null) { if (pStr) pStr += ','; pStr += `GK${fmt(m.gk)}`; }
 
-    // 交代情報（1本形式のみ）
-    let subStr = '';
-    if (!isHalfMatch(m)) {
-      if (m.showSub && m.subMode === 'individual') {
-        const valid = m.subs.filter(s => s.out!==null && s.in!==null);
-        if (valid.length > 0) {
-          const subParts = valid.map(s => {
-            const isGkOut = s.out === m.gk;
-            const isGkIn = m.subGkChange === s.in;
-            const outStr = isGkOut ? `GK${fmt(s.out)}` : fmt(s.out);
-            const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
-            return `${outStr}→${inStr}`;
-          });
-          subStr = subParts.join(',');
-        }
-      } else if (m.showSub && m.subMode === 'fullswap') {
-        if (m.swapPlayers.length > 0 || m.swapGk !== null) {
-          const sf = [...m.swapPlayers].sort((a,b)=>a-b);
-          let ss = sf.map(fmt).join(',');
-          if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
-          subStr = `総入替→${ss}`;
-        }
+  // 後半出場選手（前後半形式）
+  let pStr2 = '';
+  if (isHalfMatch(m)) {
+    const starters2 = [...m.secondHalfPlayers].sort((a,b) => a-b);
+    pStr2 = starters2.map(fmt).join(',');
+    if (m.secondHalfGk !== null) { if (pStr2) pStr2 += ','; pStr2 += `GK${fmt(m.secondHalfGk)}`; }
+  }
+
+  // 交代情報（1本形式のみ）
+  let subStr = '';
+  if (!isHalfMatch(m)) {
+    if (m.showSub && m.subMode === 'individual') {
+      const valid = m.subs.filter(s => s.out!==null && s.in!==null);
+      if (valid.length > 0) {
+        const subParts = valid.map(s => {
+          const isGkOut = s.out === m.gk;
+          const isGkIn = m.subGkChange === s.in;
+          const outStr = isGkOut ? `GK${fmt(s.out)}` : fmt(s.out);
+          const inStr = isGkIn ? `GK${fmt(s.in)}` : fmt(s.in);
+          return `${outStr}→${inStr}`;
+        });
+        subStr = subParts.join(',');
+      }
+    } else if (m.showSub && m.subMode === 'fullswap') {
+      if (m.swapPlayers.length > 0 || m.swapGk !== null) {
+        const sf = [...m.swapPlayers].sort((a,b)=>a-b);
+        let ss = sf.map(fmt).join(',');
+        if (m.swapGk !== null) { if(ss) ss+=','; ss+=`GK${fmt(m.swapGk)}`; }
+        subStr = `総入替→${ss}`;
       }
     }
+  }
 
-    const us = m.scoreUs, opp = m.scoreOpponent;
-    let result = us > opp ? '○' : us === opp ? '△' : '×';
+  const us = m.scoreUs, opp = m.scoreOpponent;
+  let result = us > opp ? '○' : us === opp ? '△' : '×';
 
-    // PK戦の結果
-    let pkLines = [];
-    if (m.showPK && (m.pkOurs.length > 0 || m.pkTheirs.length > 0)) {
-      const pkOursScore = m.pkOurs.filter(k => k === '○').length;
-      const pkTheirsScore = m.pkTheirs.filter(k => k === '○').length;
-      if (pkOursScore > pkTheirsScore) result = '○';
-      else if (pkOursScore < pkTheirsScore) result = '×';
-      pkLines.push(`PK戦：${pkOursScore}-${pkTheirsScore}`);
-      pkLines.push(`JACPA：${m.pkOurs.join('')}`);
-      pkLines.push(`${m.opponent || '相手'}：${m.pkTheirs.join('')}`);
-    }
+  // PK戦の結果
+  let pkLines = [];
+  if (m.showPK && (m.pkOurs.length > 0 || m.pkTheirs.length > 0)) {
+    const pkOursScore = m.pkOurs.filter(k => k === '○').length;
+    const pkTheirsScore = m.pkTheirs.filter(k => k === '○').length;
+    if (pkOursScore > pkTheirsScore) result = '○';
+    else if (pkOursScore < pkTheirsScore) result = '×';
+    pkLines.push(`PK戦：${pkOursScore}-${pkTheirsScore}`);
+    pkLines.push(`JACPA：${m.pkOurs.join('')}`);
+    pkLines.push(`${m.opponent || '相手'}：${m.pkTheirs.join('')}`);
+  }
 
-    lines.push(`(${i+1}試合目)`);
-    if (m.opponent) lines.push(`対戦相手：${m.opponent}`);
-    if (m.customFormat) {
-      const mFmt = m.customPeriods === 2 ? `${m.customMinutes}分ハーフ` : `${m.customMinutes}分×${m.customPeriods}`;
-      lines.push(`試合形式：${mFmt}`);
-    }
-    if (isHalfMatch(m)) {
-      if (pStr) lines.push(`前半出場：${pStr}`);
-      if (pStr2) lines.push(`後半出場：${pStr2}`);
+  const lines = [];
+  lines.push(`(${i+1}試合目)`);
+  if (m.opponent) lines.push(`対戦相手：${m.opponent}`);
+  if (m.customFormat) {
+    const mFmt = m.customPeriods === 2 ? `${m.customMinutes}分ハーフ` : `${m.customMinutes}分×${m.customPeriods}`;
+    lines.push(`試合形式：${mFmt}`);
+  }
+
+  // スコアを先に
+  if (isHalfMatch(m) && (m.scoreUsFirst || m.scoreOppFirst || m.scoreUsSecond || m.scoreOppSecond)) {
+    lines.push(`スコア：${us}-${opp} ${result}（前半${m.scoreUsFirst||0}-${m.scoreOppFirst||0} / 後半${m.scoreUsSecond||0}-${m.scoreOppSecond||0}）`);
+  } else {
+    lines.push(`スコア：${us}-${opp} ${result}`);
+  }
+
+  // 出場選手・交代
+  if (isHalfMatch(m)) {
+    if (pStr) lines.push(`前半出場：${pStr}`);
+    if (pStr2) lines.push(`後半出場：${pStr2}`);
+  } else {
+    lines.push(`出場選手：${pStr}`);
+    if (subStr) lines.push(`交代：${subStr}`);
+  }
+
+  // 得点者
+  if (isHalfMatch(m)) {
+    const seq1 = m.goalSequenceFirst || [];
+    const seq2 = m.goalSequenceSecond || [];
+    if (seq1.length > 0 || seq2.length > 0) {
+      if (seq1.length > 0) lines.push(`前半得点者：${seq1.map(n => fmt(n)).join(',')}`);
+      if (seq2.length > 0) lines.push(`後半得点者：${seq2.map(n => fmt(n)).join(',')}`);
     } else {
-      lines.push(`出場選手：${pStr}`);
-      if (subStr) lines.push(`交代：${subStr}`);
-    }
-    if (isHalfMatch(m) && (m.scoreUsFirst || m.scoreOppFirst || m.scoreUsSecond || m.scoreOppSecond)) {
-      lines.push(`スコア：${us}-${opp} ${result}（前半${m.scoreUsFirst||0}-${m.scoreOppFirst||0} / 後半${m.scoreUsSecond||0}-${m.scoreOppSecond||0}）`);
-    } else {
-      lines.push(`スコア：${us}-${opp} ${result}`);
-    }
-
-    if (isHalfMatch(m)) {
-      const seq1 = m.goalSequenceFirst || [];
-      const seq2 = m.goalSequenceSecond || [];
-      if (seq1.length > 0 || seq2.length > 0) {
-        if (seq1.length > 0) lines.push(`前半得点者：${seq1.map(n => fmt(n)).join(',')}`);
-        if (seq2.length > 0) lines.push(`後半得点者：${seq2.map(n => fmt(n)).join(',')}`);
-      } else {
-        // 後方互換: 旧データのscorers/goalSequenceを使用
-        let scorerStr;
-        if (m.goalSequence && m.goalSequence.length > 0) {
-          scorerStr = m.goalSequence.map(n => fmt(n)).join(',');
-        } else {
-          let parts = [];
-          Object.entries(m.scorers || {}).forEach(([p, c]) => { for(let j=0;j<c;j++) parts.push(fmt(parseInt(p))); });
-          scorerStr = parts.length > 0 ? parts.join(',') : 'なし';
-        }
-        lines.push(`得点者：${scorerStr}`);
-      }
-    } else {
+      // 後方互換: 旧データのscorers/goalSequenceを使用
       let scorerStr;
       if (m.goalSequence && m.goalSequence.length > 0) {
         scorerStr = m.goalSequence.map(n => fmt(n)).join(',');
@@ -1989,45 +1984,99 @@ function generateOutput(mode) {
       }
       lines.push(`得点者：${scorerStr}`);
     }
-    // フォーメーション出力（前半・後半対応）
-    if (hasFormation(m)) {
-      lines.push(`フォーメーション：${m.formationType}`);
-      const periods = m.customFormat ? m.customPeriods : formatPeriods;
-      const hasFirst = (m.formationFirst && m.formationFirst.length === 8) || (m.formation && m.formation.length === 8);
-      const hasSecond = m.formationSecond && m.formationSecond.length === 8;
+  } else {
+    let scorerStr;
+    if (m.goalSequence && m.goalSequence.length > 0) {
+      scorerStr = m.goalSequence.map(n => fmt(n)).join(',');
+    } else {
+      let parts = [];
+      Object.entries(m.scorers || {}).forEach(([p, c]) => { for(let j=0;j<c;j++) parts.push(fmt(parseInt(p))); });
+      scorerStr = parts.length > 0 ? parts.join(',') : 'なし';
+    }
+    lines.push(`得点者：${scorerStr}`);
+  }
 
-      if (periods >= 2 && hasFirst) {
-        lines.push('（前半）');
-        const fmtText = generateFormationTextForMatch(m, useNames, 'first');
-        fmtText.split('\n').forEach(l => lines.push(l));
-      } else if (hasFirst) {
-        const fmtText = generateFormationTextForMatch(m, useNames, 'first');
-        fmtText.split('\n').forEach(l => lines.push(l));
-      }
+  // フォーメーション出力
+  if (hasFormation(m)) {
+    lines.push(`フォーメーション：${m.formationType}`);
+    const periods = m.customFormat ? m.customPeriods : formatPeriods;
+    const hasFirst = (m.formationFirst && m.formationFirst.length === 8) || (m.formation && m.formation.length === 8);
+    const hasSecond = m.formationSecond && m.formationSecond.length === 8;
 
-      if (periods >= 2 && hasSecond) {
-        // 前半と後半の配置が同じかチェック
-        const firstText = generateFormationTextForMatch(m, useNames, 'first');
-        const secondText = generateFormationTextForMatch(m, useNames, 'second');
-        if (firstText === secondText) {
-          lines.push('');
-          lines.push('（後半も同じ配置）');
-        } else {
-          lines.push('');
-          lines.push('（後半）');
-          secondText.split('\n').forEach(l => lines.push(l));
-        }
+    if (periods >= 2 && hasFirst) {
+      lines.push('（前半）');
+      generateFormationTextForMatch(m, useNames, 'first').split('\n').forEach(l => lines.push(l));
+    } else if (hasFirst) {
+      generateFormationTextForMatch(m, useNames, 'first').split('\n').forEach(l => lines.push(l));
+    }
+
+    if (periods >= 2 && hasSecond) {
+      const firstText = generateFormationTextForMatch(m, useNames, 'first');
+      const secondText = generateFormationTextForMatch(m, useNames, 'second');
+      lines.push('');
+      if (firstText === secondText) {
+        lines.push('（後半も同じ配置）');
+      } else {
+        lines.push('（後半）');
+        secondText.split('\n').forEach(l => lines.push(l));
       }
     }
-    pkLines.forEach(l => lines.push(l));
+  }
+
+  pkLines.forEach(l => lines.push(l));
+  return lines;
+}
+
+function generateOutput(mode) {
+  const useNames = (mode === 'name');
+  const headerLines = buildOutputHeader(useNames);
+  let lines = [...headerLines, ''];
+  matches.forEach((m, i) => {
+    buildMatchBlock(m, i, useNames).forEach(l => lines.push(l));
     lines.push('');
   });
 
   const output = lines.join('\n').trimEnd();
   document.getElementById('output-area').textContent = output;
   document.getElementById('output-area').style.display = 'block';
-  document.getElementById('copy-btn').style.display = 'block';
+  document.getElementById('copy-btn').style.display = 'none';
+  updatePartialCopyBtns(useNames);
   document.getElementById('output-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function updatePartialCopyBtns(useNames) {
+  const container = document.getElementById('partial-copy-btns');
+  if (!container) return;
+  container.innerHTML = '';
+  if (matches.length === 0) return;
+
+  matches.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.style.cssText = 'background:#6c757d;color:#fff;font-size:13px;padding:8px 14px;';
+    btn.textContent = `${i+1}試合目`;
+    btn.onclick = () => copyPartialOutput(i, useNames);
+    container.appendChild(btn);
+  });
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'btn';
+  allBtn.style.cssText = 'background:#27ae60;color:#fff;font-size:13px;padding:8px 14px;';
+  allBtn.textContent = '全体';
+  allBtn.onclick = copyOutput;
+  container.appendChild(allBtn);
+}
+
+function copyPartialOutput(index, useNames) {
+  const m = matches[index];
+  if (!m) return;
+  const lines = [...buildOutputHeader(useNames || false), '', ...buildMatchBlock(m, index, useNames || false)];
+  const text = lines.join('\n').trimEnd();
+  navigator.clipboard.writeText(text).then(()=>showToast(`${index+1}試合目をコピー！`)).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    showToast(`${index+1}試合目をコピー！`);
+  });
 }
 
 function copyOutput() {
@@ -2757,22 +2806,31 @@ function renderFormationModal() {
   const hasSubs = hasSubstitutions(m);
   const isMultiPeriod = periods >= 2 || hasSubs;
 
-  // 選手リスト（後半は交代を反映）
-  let allPlayers = [...m.players];
-  if (m.gk) allPlayers.push(m.gk);
-
-  if (currentHalf === 'second' && hasSubs) {
-    if (m.subMode === 'individual') {
-      // 個別交代: 入った選手を追加、出た選手を除外
-      const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
-      validSubs.forEach(sub => {
-        allPlayers = allPlayers.filter(n => n !== sub.out);
-        if (!allPlayers.includes(sub.in)) allPlayers.push(sub.in);
-      });
-    } else if (m.subMode === 'fullswap') {
-      // 総入れ替え: 交代後の全メンバーで置き換え
-      allPlayers = [...m.swapPlayers];
-      if (m.swapGk) allPlayers.push(m.swapGk);
+  // 選手リスト（後半は半ブロックまたは交代を反映）
+  let allPlayers;
+  if (currentHalf === 'second' && isHalfMatch(m)) {
+    // 前後半モード: 後半専用の選手リストを使用
+    allPlayers = [...(m.secondHalfPlayers || [])];
+    if (m.secondHalfGk) allPlayers.push(m.secondHalfGk);
+    if (allPlayers.length === 0) {
+      // 後半未選択の場合は前半と同じ
+      allPlayers = [...m.players];
+      if (m.gk) allPlayers.push(m.gk);
+    }
+  } else {
+    allPlayers = [...m.players];
+    if (m.gk) allPlayers.push(m.gk);
+    if (currentHalf === 'second' && hasSubs) {
+      if (m.subMode === 'individual') {
+        const validSubs = m.subs.filter(s => s.out !== null && s.in !== null);
+        validSubs.forEach(sub => {
+          allPlayers = allPlayers.filter(n => n !== sub.out);
+          if (!allPlayers.includes(sub.in)) allPlayers.push(sub.in);
+        });
+      } else if (m.subMode === 'fullswap') {
+        allPlayers = [...m.swapPlayers];
+        if (m.swapGk) allPlayers.push(m.swapGk);
+      }
     }
   }
 
