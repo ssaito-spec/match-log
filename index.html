@@ -2725,13 +2725,19 @@ function markDirty() {
   if (!isEditor) return;
   isDirty = true;
   const btn = document.getElementById('push-btn');
-  if (btn) btn.classList.add('dirty');
+  if (btn) {
+    btn.classList.add('dirty');
+    btn.childNodes[0].textContent = '↑ 更新してね！';
+  }
 }
 
 function clearDirty() {
   isDirty = false;
   const btn = document.getElementById('push-btn');
-  if (btn) btn.classList.remove('dirty');
+  if (btn) {
+    btn.classList.remove('dirty');
+    btn.childNodes[0].textContent = '↑ 情報更新';
+  }
 }
 
 function scheduleSync() {
