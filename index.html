@@ -600,7 +600,7 @@ function getActiveRoster() {
   return sorted.filter(r => sessionPlayers.includes(r.num));
 }
 
-function (roster.find(r=>r.num===num)||{name:String(num)}).name {
+function getLabel(num) {
   const p = roster.find(r => r.num === num);
   return p ? `${p.name}(${num})` : String(num);
 }
