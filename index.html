@@ -3390,6 +3390,9 @@ function drawJerseyCanvas(ctx, cx, cy, num, isGK, colorScheme, hw) {
 }
 
 function saveLineupImage() {
+  try { _saveLineupImage(); } catch(e) { alert('エラー: ' + e.message + '\n' + e.stack); }
+}
+function _saveLineupImage() {
   const m = getMatch(lineupMatchId);
   const slots = (lineupHalf === 'first' ? m.formationFirst : m.formationSecond) || [];
   const def = FORMATION_DEFS[m.formationType] || FORMATION_DEFS['3-3-1'];
