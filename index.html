@@ -600,7 +600,7 @@ function getActiveRoster() {
   return sorted.filter(r => sessionPlayers.includes(r.num));
 }
 
-function getLabel(num) {
+function (roster.find(r=>r.num===num)||{name:String(num)}).name {
   const p = roster.find(r => r.num === num);
   return p ? `${p.name}(${num})` : String(num);
 }
@@ -3304,7 +3304,7 @@ function renderLineupPitch() {
     nums.forEach((num, i) => {
       const isGK = row.pos === 'GK';
       const left = nums.length === 1 ? '50%' : (Math.round(15 + (i / (nums.length - 1)) * 70)) + '%';
-      const name = getPlayerName(num) || String(num);
+      const name = (roster.find(r=>r.num===num)||{name:String(num)}).name;
       playersHtml += `<div style="position:absolute;left:${left};top:${rowTops[ri]};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;">
         ${jerseyIconSVG(num, isGK, lineupColorScheme, 52)}
         <span style="color:white;font-size:11px;font-weight:800;text-shadow:1px 1px 3px rgba(0,0,0,0.9),-1px -1px 3px rgba(0,0,0,0.9);white-space:nowrap;">${name}</span>
@@ -3458,7 +3458,7 @@ function _saveLineupImage() {
       ctx.font = 'bold 11px Arial';
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
-      ctx.fillText(getPlayerName(num) || String(num), cx, cy + 24);
+      ctx.fillText((roster.find(r=>r.num===num)||{name:String(num)}).name, cx, cy + 24);
       ctx.shadowBlur = 0;
     });
   });
