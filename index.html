@@ -3292,7 +3292,7 @@ function renderLineupPitch() {
 
   // group by position
   const byPos = {};
-  slots.forEach(s => { if (!byPos[s.pos]) byPos[s.pos] = []; byPos[s.pos].push(s.num); });
+  slots.forEach(s => { const p = s.pos.replace(/\d+$/, ''); if (!byPos[p]) byPos[p] = []; byPos[p].push(s.num); });
 
   // row vertical positions (top → GK)
   const rc = def.rows.length;
@@ -3444,7 +3444,7 @@ function _saveLineupImage() {
 
   // 選手配置
   const byPos = {};
-  slots.forEach(s => { if (!byPos[s.pos]) byPos[s.pos] = []; byPos[s.pos].push(s.num); });
+  slots.forEach(s => { const p = s.pos.replace(/\d+$/, ''); if (!byPos[p]) byPos[p] = []; byPos[p].push(s.num); });
   const rc = def.rows.length;
   def.rows.forEach((row, ri) => {
     const nums = byPos[row.pos] || [];
