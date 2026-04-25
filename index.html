@@ -413,8 +413,14 @@
   <div id="room-join">
     <input type="hidden" id="room-id">
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-primary" onclick="joinToday('1')" style="flex:1;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合①</button>
-      <button class="btn" onclick="joinToday('2')" style="flex:1;padding:12px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;">⚽ 今日の試合②</button>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button class="btn btn-primary" onclick="joinToday('1')" style="width:100%;padding:12px;font-size:15px;font-weight:700;">⚽ 今日の試合①</button>
+        <span id="today-room-1-label" style="font-size:11px;color:#aaa;"></span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button class="btn" onclick="joinToday('2')" style="width:100%;padding:12px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;">⚽ 今日の試合②</button>
+        <span id="today-room-2-label" style="font-size:11px;color:#aaa;"></span>
+      </div>
     </div>
     <p style="font-size:11px;color:#aaa;margin-top:6px;text-align:center;">※ 2チーム活動の場合、お子さんのチームを確認してください</p>
     <div style="text-align:center;margin-top:6px;">
@@ -609,6 +615,20 @@ function init() {
   // 5(正斗)・23(惺渚)はU11帯同のためデフォルトでオフ
   sessionPlayers = roster.filter(r => r.num !== 5 && r.num !== 23).map(r => r.num);
   renderSessionPlayerGrid();
+
+  // 今日のルームの大会名をボタン下に表示
+  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  ['1','2'].forEach(num => {
+    firebaseGet(`${FIREBASE_URL}/rooms/${today}_${num}/data.json`)
+      .then(data => {
+        const label = document.getElementById(`today-room-${num}-label`);
+        if (!label) return;
+        if (data && data.tournament) {
+          label.textContent = data.tournament;
+        }
+      })
+      .catch(() => {});
+  });
 
   // Match type chips
   document.querySelectorAll('#match-type-options .chip').forEach(chip => {
