@@ -993,7 +993,7 @@ function renderMatch(match) {
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center;">
       <span class="sub-toggle" onclick="openFormation(${mid})">🏟️ フォーメーションを入力（任意）</span>
       <span id="lineup-card-btn-${mid}" class="sub-toggle" onclick="openLineupCard(${mid})" style="display:${hasFormation?'inline-block':'none'};color:#27ae60;">📸 スタメン画像を作る</span>
     </div>
@@ -3243,7 +3243,7 @@ function openLineupCard(matchId) {
   lineupCardModal = modal;
   modal.innerHTML = `
     <div class="formation-content" style="max-width:380px;">
-      <div class="formation-title">📋 ラインアップカード</div>
+      <div class="formation-title">📸 スタメン画像を作る</div>
       ${hasBoth ? `<div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
         <button id="lc-half-first" class="btn btn-primary" style="font-size:13px;padding:5px 16px;" onclick="switchLineupHalf('first')">前半</button>
         <button id="lc-half-second" class="btn btn-secondary" style="font-size:13px;padding:5px 16px;" onclick="switchLineupHalf('second')">後半</button>
@@ -3314,7 +3314,7 @@ function renderLineupPitch() {
 
   document.getElementById('lc-pitch-wrap').innerHTML = `
     <div id="lc-capture" style="background:#f5f5f5;border-radius:10px;overflow:hidden;">
-      <div style="padding:14px 16px 8px;font-size:18px;font-weight:900;color:#111;">vs${opp}　${halfLabel}</div>
+      <div style="padding:14px 16px 8px;font-size:18px;font-weight:900;color:#111;">vs${opp}　${halfLabel}${(m.scoreUs !== undefined && m.scoreUs !== '' && m.scoreOpponent !== undefined && m.scoreOpponent !== '') ? `　${m.scoreUs}-${m.scoreOpponent}` : ''}</div>
       <div style="margin:0 12px 12px;background:linear-gradient(180deg,#2d8a3e,#3da34d);border-radius:8px;position:relative;aspect-ratio:3/4;">
         <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
           <rect x="10" y="10" width="280" height="380" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
@@ -3414,7 +3414,8 @@ function _saveLineupImage() {
   ctx.fillStyle = '#111';
   ctx.font = 'bold 20px Arial';
   ctx.textAlign = 'left';
-  ctx.fillText(`vs${opp}　${halfLabel}`, 16, 38);
+  const scoreText = (m.scoreUs !== undefined && m.scoreUs !== '' && m.scoreOpponent !== undefined && m.scoreOpponent !== '') ? `　${m.scoreUs}-${m.scoreOpponent}` : '';
+  ctx.fillText(`vs${opp}　${halfLabel}${scoreText}`, 16, 38);
 
   // ピッチ
   const PX = 12, PY = 52, PW = W - 24, PH = H - 64;
