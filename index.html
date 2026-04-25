@@ -618,13 +618,25 @@ function init() {
 
   // 今日のルームの大会名をボタン下に表示
   const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const roomColors = { '1': '#4a90d9', '2': '#27ae60' };
   ['1','2'].forEach(num => {
     firebaseGet(`${FIREBASE_URL}/rooms/${today}_${num}/data.json`)
       .then(data => {
         const label = document.getElementById(`today-room-${num}-label`);
         if (!label) return;
+        const color = roomColors[num];
         if (data && data.tournament) {
           label.textContent = data.tournament;
+          label.style.color = color;
+        } else if (data) {
+          label.textContent = '大会名未入力';
+          label.style.color = color;
+          label.style.opacity = '0.5';
+        } else {
+          label.textContent = '未作成';
+          label.style.color = color;
+          label.style.opacity = '0.4';
+          label.style.fontStyle = 'italic';
         }
       })
       .catch(() => {});
