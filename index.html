@@ -378,7 +378,6 @@
   .step-label { font-size: 10px; font-weight: 600; color: #555; margin-top: 3px; white-space: nowrap; }
   .step-arrow { color: #ccc; font-size: 14px; flex-shrink: 0; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -3335,33 +3334,146 @@ function closeLineupCard() {
   if (lineupCardModal) { lineupCardModal.remove(); lineupCardModal = null; }
 }
 
-async function saveLineupImage() {
-  const el = document.getElementById('lc-capture');
-  if (!el) return;
-  if (typeof html2canvas === 'undefined') { showToast('画像ライブラリ読み込み中、少し待ってね'); return; }
-  showToast('画像を生成中...');
-  try {
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f5f5f5', useCORS: true, logging: false, allowTaint: true });
-    const dataUrl = canvas.toDataURL('image/png');
-
-    // モーダル内に画像を表示（長押し保存 or PCはダウンロード）
-    const wrap = document.getElementById('lc-pitch-wrap');
-    wrap.innerHTML = `
-      <div style="text-align:center;">
-        <p style="font-size:12px;color:#888;margin-bottom:8px;">📱 長押しで保存 / 💻 右クリックで保存</p>
-        <img src="${dataUrl}" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
-        <p style="font-size:11px;color:#e8a020;margin-top:8px;font-weight:600;">💡 スコアも入れたい場合は試合後にもう一度保存してね！</p>
-      </div>`;
-
-    // PCはダウンロードも併用
-    const m = getMatch(lineupMatchId);
-    const link = document.createElement('a');
-    link.download = `lineup_${m.opponent || '相手'}.png`;
-    link.href = dataUrl;
-    link.click();
-  } catch (e) {
-    showToast('生成できなかったばい: ' + e.message);
+function drawJerseyCanvas(ctx, cx, cy, num, isGK, colorScheme, hw) {
+  let body, panel, collar, textCol;
+  if (isGK) {
+    body = '#E87820'; panel = '#CC5500'; collar = '#C06010'; textCol = 'white';
+  } else if (colorScheme === 'home') {
+    body = '#1B3F8A'; panel = '#CC2222'; collar = '#0D1F5A'; textCol = 'white';
+  } else {
+    body = '#F0F0F0'; panel = '#1B3F8A'; collar = '#ccc'; textCol = '#1B3F8A';
   }
+  const s = (hw * 2) / 80;
+  const h = 90 * s;
+  const ox = cx - hw, oy = cy - h / 2;
+  const tx = x => ox + x * s, ty = y => oy + y * s;
+
+  // 胴体＋袖
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(tx(0),ty(18)); ctx.lineTo(tx(18),ty(10));
+  ctx.lineTo(tx(62),ty(10)); ctx.lineTo(tx(80),ty(18));
+  ctx.lineTo(tx(80),ty(36)); ctx.lineTo(tx(62),ty(32));
+  ctx.lineTo(tx(66),ty(90)); ctx.lineTo(tx(14),ty(90));
+  ctx.lineTo(tx(18),ty(32)); ctx.lineTo(tx(0),ty(36));
+  ctx.closePath(); ctx.fill();
+
+  // 左サイドパネル
+  ctx.fillStyle = panel; ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.moveTo(tx(18),ty(10)); ctx.lineTo(tx(18),ty(28));
+  ctx.lineTo(tx(24),ty(90)); ctx.lineTo(tx(14),ty(90));
+  ctx.closePath(); ctx.fill();
+
+  // 右サイドパネル
+  ctx.beginPath();
+  ctx.moveTo(tx(62),ty(10)); ctx.lineTo(tx(62),ty(28));
+  ctx.lineTo(tx(56),ty(90)); ctx.lineTo(tx(66),ty(90));
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Vネック
+  ctx.fillStyle = collar;
+  ctx.beginPath();
+  ctx.moveTo(tx(28),ty(10)); ctx.lineTo(tx(52),ty(10)); ctx.lineTo(tx(40),ty(28));
+  ctx.closePath(); ctx.fill();
+
+  // JACPA
+  ctx.fillStyle = textCol;
+  ctx.font = `bold ${Math.round(9*s)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('JACPA', tx(40), ty(52));
+
+  // 番号
+  ctx.font = `bold ${Math.round(14*s)}px Arial`;
+  ctx.fillText(String(num ?? '?'), tx(40), ty(67));
+}
+
+function saveLineupImage() {
+  const m = getMatch(lineupMatchId);
+  const slots = (lineupHalf === 'first' ? m.formationFirst : m.formationSecond) || [];
+  const def = FORMATION_DEFS[m.formationType] || FORMATION_DEFS['3-3-1'];
+  const periods = getMatchPeriods(m);
+  const halfLabel = periods >= 2 ? (lineupHalf === 'first' ? '前半' : '後半') : '';
+  const opp = m.opponent || '相手';
+
+  const SCALE = 2, W = 360, H = 520;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // 背景
+  ctx.fillStyle = '#f5f5f5';
+  ctx.fillRect(0, 0, W, H);
+
+  // タイトル
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 20px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(`vs${opp}　${halfLabel}`, 16, 38);
+
+  // ピッチ
+  const PX = 12, PY = 52, PW = W - 24, PH = H - 64;
+  ctx.fillStyle = '#2d8a3e';
+  ctx.beginPath();
+  ctx.moveTo(PX+8, PY); ctx.lineTo(PX+PW-8, PY);
+  ctx.arcTo(PX+PW, PY, PX+PW, PY+8, 8);
+  ctx.lineTo(PX+PW, PY+PH-8);
+  ctx.arcTo(PX+PW, PY+PH, PX+PW-8, PY+PH, 8);
+  ctx.lineTo(PX+8, PY+PH);
+  ctx.arcTo(PX, PY+PH, PX, PY+PH-8, 8);
+  ctx.lineTo(PX, PY+8);
+  ctx.arcTo(PX, PY, PX+8, PY, 8);
+  ctx.closePath(); ctx.fill();
+
+  // フィールドライン
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
+  const lx = PX+10, ly = PY+10, lw = PW-20, lh = PH-20;
+  ctx.strokeRect(lx, ly, lw, lh);
+  ctx.beginPath(); ctx.moveTo(lx, ly+lh/2); ctx.lineTo(lx+lw, ly+lh/2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(lx+lw/2, ly+lh/2, lh*0.09, 0, Math.PI*2); ctx.stroke();
+  const paW = lw*0.55, paH = lh*0.15;
+  ctx.strokeRect(lx+(lw-paW)/2, ly, paW, paH);
+  ctx.strokeRect(lx+(lw-paW)/2, ly+lh-paH, paW, paH);
+  ctx.strokeRect(lx+(lw-lw*0.3)/2, PY, lw*0.3, 10);
+  ctx.strokeRect(lx+(lw-lw*0.3)/2, PY+PH-10, lw*0.3, 10);
+
+  // 選手配置
+  const byPos = {};
+  slots.forEach(s => { if (!byPos[s.pos]) byPos[s.pos] = []; byPos[s.pos].push(s.num); });
+  const rc = def.rows.length;
+  def.rows.forEach((row, ri) => {
+    const nums = byPos[row.pos] || [];
+    const yFrac = rc === 1 ? 0.5 : 0.1 + (ri / (rc-1)) * 0.78;
+    const cy = PY + PH * yFrac;
+    nums.forEach((num, i) => {
+      const xFrac = nums.length === 1 ? 0.5 : 0.15 + (i / (nums.length-1)) * 0.70;
+      const cx = PX + PW * xFrac;
+      drawJerseyCanvas(ctx, cx, cy - 16, num, row.pos === 'GK', lineupColorScheme, 26);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
+      ctx.fillText(getPlayerName(num) || String(num), cx, cy + 24);
+      ctx.shadowBlur = 0;
+    });
+  });
+
+  const dataUrl = canvas.toDataURL('image/png');
+  const wrap = document.getElementById('lc-pitch-wrap');
+  wrap.innerHTML = `
+    <div style="text-align:center;">
+      <p style="font-size:12px;color:#888;margin-bottom:8px;">📱 長押しで保存 &nbsp;/&nbsp; 💻 右クリックで保存</p>
+      <img src="${dataUrl}" style="width:100%;border-radius:8px;" />
+      <p style="font-size:11px;color:#e8a020;margin-top:10px;font-weight:600;">💡 スコアも入れたい場合は試合後にもう一度保存してね！</p>
+    </div>`;
+
+  // PCはダウンロードも
+  const link = document.createElement('a');
+  link.download = `lineup_${opp}.png`;
+  link.href = dataUrl;
+  link.click();
 }
 
 // ========== Weather ==========
