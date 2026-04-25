@@ -3285,7 +3285,7 @@ function switchLineupColor(scheme) {
 function renderLineupPitch() {
   const m = getMatch(lineupMatchId);
   const slots = (lineupHalf === 'first' ? m.formationFirst : m.formationSecond) || [];
-  const def = FORMATION_DEFS[m.formationType] || FORMATION_DEFS['3-3-1'];
+  const def = FORMATIONS[m.formationType] || FORMATIONS['3-3-1'];
   const periods = getMatchPeriods(m);
   const halfLabel = periods >= 2 ? (lineupHalf === 'first' ? '前半' : '後半') : '';
   const opp = m.opponent || '相手';
@@ -3395,7 +3395,7 @@ function saveLineupImage() {
 function _saveLineupImage() {
   const m = getMatch(lineupMatchId);
   const slots = (lineupHalf === 'first' ? m.formationFirst : m.formationSecond) || [];
-  const def = FORMATION_DEFS[m.formationType] || FORMATION_DEFS['3-3-1'];
+  const def = FORMATIONS[m.formationType] || FORMATIONS['3-3-1'];
   const periods = getMatchPeriods(m);
   const halfLabel = periods >= 2 ? (lineupHalf === 'first' ? '前半' : '後半') : '';
   const opp = m.opponent || '相手';
