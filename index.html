@@ -3339,16 +3339,28 @@ async function saveLineupImage() {
   const el = document.getElementById('lc-capture');
   if (!el) return;
   if (typeof html2canvas === 'undefined') { showToast('画像ライブラリ読み込み中、少し待ってね'); return; }
+  showToast('画像を生成中...');
   try {
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f5f5f5', useCORS: true, logging: false });
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f5f5f5', useCORS: true, logging: false, allowTaint: true });
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // モーダル内に画像を表示（長押し保存 or PCはダウンロード）
+    const wrap = document.getElementById('lc-pitch-wrap');
+    wrap.innerHTML = `
+      <div style="text-align:center;">
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">📱 長押しで保存 / 💻 右クリックで保存</p>
+        <img src="${dataUrl}" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
+        <p style="font-size:11px;color:#e8a020;margin-top:8px;font-weight:600;">💡 スコアも入れたい場合は試合後にもう一度保存してね！</p>
+      </div>`;
+
+    // PCはダウンロードも併用
     const m = getMatch(lineupMatchId);
     const link = document.createElement('a');
     link.download = `lineup_${m.opponent || '相手'}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = dataUrl;
     link.click();
-    setTimeout(() => showToast('💡 スコアも入れたい場合は試合後にもう一度保存してね！'), 500);
   } catch (e) {
-    showToast('保存できなかったばい: ' + e.message);
+    showToast('生成できなかったばい: ' + e.message);
   }
 }
 
