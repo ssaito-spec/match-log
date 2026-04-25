@@ -625,18 +625,13 @@ function init() {
         const label = document.getElementById(`today-room-${num}-label`);
         if (!label) return;
         const color = roomColors[num];
+        label.style.color = color;
         if (data && data.tournament) {
           label.textContent = data.tournament;
-          label.style.color = color;
         } else if (data) {
           label.textContent = '大会名未入力';
-          label.style.color = color;
-          label.style.opacity = '0.5';
         } else {
           label.textContent = '未作成';
-          label.style.color = color;
-          label.style.opacity = '0.4';
-          label.style.fontStyle = 'italic';
         }
       })
       .catch(() => {});
